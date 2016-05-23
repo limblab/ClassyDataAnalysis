@@ -55,30 +55,35 @@ function sanitizeTimeWindows(cds)
     %then checking whether its empty should be MUCH faster in cases where
     %no truncation is needed (~30s vs ~.5s for my test dataset).
     if ~isempty(cds.kin)
+        %cds.kin.t=roundTime(cds.kin.t);
         mask=cds.kin.t<window(1) | cds.kin.t>window(2);
         if ~isempty(find(mask,1))
             cds.kin(mask,:)=[];
         end
     end
     if ~isempty(cds.force)
+        %cds.force.t=roundTime(cds.force.t);
         mask=cds.force.t<window(1) | cds.force.t>window(2);
         if ~isempty(find(mask,1))
             cds.force(mask,:)=[];
         end
     end
     if ~isempty(cds.emg)
+        %cds.emg.t=roundTime(cds.emg.t);
         mask=cds.emg.t<window(1) | cds.emg.t>window(2);
         if ~isempty(find(mask,1))
             cds.emg(mask,:)=[];
         end
     end
     if ~isempty(cds.lfp)
+        %cds.lfp.t=roundTime(cds.lfp.t);
         mask=cds.lfp.t<window(1) | cds.lfp.t>window(2);
         if ~isempty(find(mask,1))
             cds.lfp(mask,:)=[];
         end
     end
     if ~isempty(cds.triggers)
+        %cds.triggers.t=roundTime(cds.triggers.t);
         mask=cds.triggers.t<window(1) | cds.triggers.t>window(2);
         if ~isempty(find(mask,1))
             cds.triggers(mask,:)=[];
@@ -86,6 +91,7 @@ function sanitizeTimeWindows(cds)
     end
     if ~isempty(cds.analog)
         for i=1:length(cds.analog)
+            %cds.analog{i}.t=roundTime(cds.analog{i}.t);
             mask=cds.analog{i}.t<window(1) | cds.analog{i}.t>window(2);
             if ~isempty(find(mask,1))
                 cds.analog{i}(mask,:)=[];

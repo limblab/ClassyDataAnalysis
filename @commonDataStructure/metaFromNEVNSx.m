@@ -12,10 +12,14 @@ function metaFromNEVNSx(cds,opts)
 
     % source info
     meta.cdsVersion=cds.meta.cdsVersion;
+    meta.processedTime=date;
     meta.rawFileName=cds.NEV.MetaTags.Filename;
     meta.dataSource='NEVNSx';
-    meta.array=opts.array;
-
+    if(isfield(opts,'ranBy'))
+        meta.ranBy=opts.ranBy;
+    else
+        meta.ranBy='Unknown';
+    end
     meta.knownProblems=cds.meta.knownProblems;
 
     %timing
@@ -37,6 +41,12 @@ function metaFromNEVNSx(cds,opts)
     meta.hasBumps=~isempty(find(strcmp('bumpTime',cds.trials.Properties.VariableNames),1));
     meta.hasChaoticLoad=logical(opts.hasChaoticLoad);
     
+    if meta.hasUnits
+        meta.array=strjoin(unique({cds.units.array}),', ');
+    else
+        meta.array='No Array Data';
+    end
+        
     sortedMask=[cds.units.ID]>0 & [cds.units.ID]<255;
     meta.numSorted=sum(sortedMask);
     meta.hasSorting=meta.numSorted>0;
@@ -79,7 +89,9 @@ function metaFromNEVNSx(cds,opts)
     meta.numIncomplete=numel(strmatch('I',cds.trials.result));
     
     meta.aliasList=cds.aliasList;
-
+    
+    meta.cdsName=[meta.monkey,'_',meta.array,'_',meta.task,'_',meta.dateTime,'_lab',num2str(meta.lab)];
+    
     %put new meta structure into cds.meta
     set(cds,'meta',meta)
     %log the update to cds.meta

@@ -66,6 +66,8 @@ function NEVNSx2cds(cds,varargin)
                     opts.array=optStr(6:end);
                 elseif ischar(optStr) && length(optStr)>5 && strcmp(optStr(1:6),'monkey')
                     opts.monkey=optStr(7:end);
+                elseif ischar(optStr) && length(optStr)>5 && strcmp(optStr(1:5),'ranBy')
+                    opts.ranBy=optStr(6:end);
                 elseif isnumeric(varargin{i})
                     opts.labNum=varargin{i};    %Allow entering of the lab number               
                 else 
@@ -90,6 +92,10 @@ function NEVNSx2cds(cds,varargin)
         if ~isfield(opts,'monkey')
             flag=true;
             warning('NEVNSx2cds:monkeyNotSet','The monkey from which this data was collected was not passed as an input variable')
+        end
+        if ~isfield(opts,'ranBy')
+           flag=true;
+           warning('NEVNSx2cds:monkeyNotSet','The person who collected this data was not passed as an input variable')
         end
         if flag
             while 1

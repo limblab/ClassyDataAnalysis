@@ -76,8 +76,7 @@ function kinematicsFromNEV(cds,opts)
     
     enc=decimateData(enc,cds.kinFilterConfig);
     %clip the first 1s because analog data won't start recording for 1s:
-    enc=enc(enc(:,1)>=1,:);    
-    set(cds,'enc',table(enc(:,1),enc(:,2),enc(:,3),'VariableNames',{'t','th1','th2'}))
+    set(cds,'enc',table(roundTime(enc(:,1)),enc(:,2),enc(:,3),'VariableNames',{'t','th1','th2'}))
     clear enc
     
     %convert encoders to position:

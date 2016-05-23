@@ -171,13 +171,13 @@ function fitPds(binned)
             %now compose table for the full set of tuning data:
             fprintf(['  Inserting PD data into binned.pdTable(',num2str(toc),').'])
             %get our columns describing the units in the output table:
-            for i=1:numel(temp)
+            for i=1:numel(uList)
                 %get position of 'CH' in the name string:
-                CHLoc=strfind(temp{i},'CH');
-                IDLoc=strfind(temp{i},'ID');
-                arrayName(i)={temp{i}(1:CHLoc-1)};
-                chan(i)={temp{i}(CHLoc+2:IDLoc-1)};
-                ID(i)={temp{i}(IDLoc+2:end)};
+                CHLoc=strfind(uList{i},'CH');
+                IDLoc=strfind(uList{i},'ID');
+                arrayName(i)={uList{i}(1:CHLoc-1)};
+                chan(i)={uList{i}(CHLoc+2:IDLoc-1)};
+                ID(i)={uList{i}(IDLoc+2:end)};
             end
             pdTable=table(arrayName',chan',ID','VariableNames',{'array','chan','ID'});
             for i=1:numel(pdType)

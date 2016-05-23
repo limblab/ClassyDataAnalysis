@@ -81,7 +81,7 @@ function appendData(units,data,varargin)
         %now handle the stuff that's only in the dataKey
         inDataOnly=find(~inBoth);
         if ~isempty(inDataOnly)
-            units.data(end+1:end+1+length(inDataOnly))=data(inDataOnly);
+            units.data(end+1:end+length(inDataOnly))=data(inDataOnly);
         end
     end
     uInfo.added.numUnits=numel([data.ID]);

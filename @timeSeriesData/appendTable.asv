@@ -27,9 +27,6 @@ function appendTable(tsd,data,varargin)
     if isempty(find(cell2mat({strcmp(data.Properties.VariableNames,'t')}),1))
         error('appendTable:notATimeSeries',['The input table does not have a column labeled t. It is possible this table is misconfigured, or is not time series data. columns in the input table are: ',strjoin(data.Properties.VariableNames,', ')])
     end
-    if ~isempty(tsd.data) && mode(diff(tsd.data.t))~=mode(diff(data.t))
-        error('appendTable:differentSampleRates','the existing data and the new data are at different frequencies. Please decimate one of the two data sets')
-    end
     %get our state variables either from input or from defaults:
     if ~isempty(varargin)
         for i=1:2:length(varargin)
@@ -65,16 +62,14 @@ function appendTable(tsd,data,varargin)
             error('appendTable:timeShiftTooSmall','when attempting to append new data, the specified time shift must be larger than the largest existing time')
         end
         %offset the times:
-        data.t=data.t+timeShift-data.t(1);
+        data.t=data.t+timeShift;
+        %build a block of nan values to fill the gap, so we get the correct
+        %count when we use the mode timestep to estimate the number of
+        %points in decimate data or other functions:
         dt=mode(diff(data.t));
-        if timeShift-max(tsd.data.t)>dt
-            %build a block of nan values to fill the gap, so we get the correct
-            %count when we use the mode timestep to estimate the number of
-            %points in decimate data or other functions:
-            plug=[(max(tsd.data.t)+dt):dt:timeShift,nan(round(1/dt),size(data,2)-1)];
-            plug=array2table(plug,'VariabelNames',data.Properties.VariableNames);
-            data=[plug;data];
-        end
+        plug=[(timeShift-1+dt):dt:timeShift,nan(round(1/dt),size(data,2)-1)];
+        plug=array2table(plug,'VariabelNames',data.Properties.VariableNames);
+        data=[plug;data];
     end
     % put the data into the data field
     if isempty(tsd.data) || overWrite
