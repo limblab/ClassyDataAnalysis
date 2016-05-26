@@ -82,7 +82,8 @@ function nev2NEVNSx(cds,fname)
                 %field of the cds
                 
                 %load the NSx into a temporary variable:
-                NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
+                %NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
+                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','short');
                 %get the last timepoint in the digital data:
                 digitalLength = cds.NEV.Data.SerialDigitalIO.TimeStampSec(end);
                 %compute the pad by comparing the actual number of points
@@ -90,7 +91,12 @@ function nev2NEVNSx(cds,fname)
                 %the digital data
                 num_zeros = fix(digitalLength*frequencies(i)-size(NSx.Data,2));
                 %pad data in our temporary object
-                NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data];
+                NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data]/6.5584993;
+                        % 6.5584993 is the ratio when comparing the output of 
+                        % get_cerebus_data to the one from this script. It must come
+                        % from the data type conversion that happens when pulling 
+                        % analog data.
+                
                 %update the metadata associated with the padding:
                 NSx.MetaTags.DataPoints = NSx.MetaTags.DataPoints + num_zeros;
                 NSx.MetaTags.DataDurationSec = NSx.MetaTags.DataPoints/frequencies(i);

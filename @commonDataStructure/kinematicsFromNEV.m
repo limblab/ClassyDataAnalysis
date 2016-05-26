@@ -1,6 +1,8 @@
 function kinematicsFromNEV(cds,opts)
     %wrapper function for kinematic processing during cds generation
-    
+    if isempty(cds.NEV)
+        return
+    end
     %get events:
     event_data = double(cds.NEV.Data.SerialDigitalIO.UnparsedData);
     event_ts = cds.NEV.Data.SerialDigitalIO.TimeStampSec';       
@@ -84,6 +86,9 @@ function kinematicsFromNEV(cds,opts)
         pos=cds.enc2handlepos(opts.dateTime,opts.labNum);
     else
         pos=cds.enc2WFpos();
+    end
+    if isempty(pos)
+        return
     end
     %check for data skips and insert a 'known problem' entry if they exist:
     if ~isempty(skips)

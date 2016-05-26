@@ -15,15 +15,15 @@ function emgFromNSx(cds)
 
         for i = length(emgList):-1:1
             if cds.NSxInfo.NSx_sampling(emgList(i))==500
-                data(:,i+1) = double(cds.NS1.Data(cds.NSxInfo.NSx_idx(emgList(i)),:))/6.5584993;
+                data(:,i+1) = double(cds.NS1.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==1000
-                data(:,i+1) = double(cds.NS2.Data(cds.NSxInfo.NSx_idx(emgList(i)),:))/6.5584993;
+                data(:,i+1) = double(cds.NS2.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==2000
-                data(:,i+1) = double(cds.NS3.Data(cds.NSxInfo.NSx_idx(emgList(i)),:))/6.5584993;
+                data(:,i+1) = double(cds.NS3.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==10000
-                data(:,i+1) = double(cds.NS4.Data(cds.NSxInfo.NSx_idx(emgList(i)),:))/6.5584993;
+                data(:,i+1) = double(cds.NS4.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==30000
-                data(:,i+1) = double(cds.NS5.Data(cds.NSxInfo.NSx_idx(emgList(i)),:))/6.5584993;
+                data(:,i+1) = double(cds.NS5.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
             end
         end        
 

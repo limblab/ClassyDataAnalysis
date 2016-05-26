@@ -65,15 +65,16 @@ function eventsFromNEV(cds,opts)
                 end
             end
             %sanitize the databursts of any databursts that arent the apparent size of the databurst:
-            dbSize=mode(cellfun(@length,databursts(:,2)));
-            databursts=databursts(cellfun(@(x)length(x)==dbSize,databursts(:,2)),:);
-            %convert databursts into table:
-            databursts=table(cell2mat(databursts(:,1)),cell2mat(databursts(:,2:end)),'VariableNames',{'ts','db'});
-            databursts.Properties.VariableUnits={'s','int'};
-            databursts.Properties.VariableDescriptions={'timestamp of databurst in seconds','row vector containing databurst'};
-            databursts.Properties.Description='list of all databursts captured during data collection';  
-            set(cds,'databursts',databursts)
-
+            if ~isempty(databursts)
+                dbSize=mode(cellfun(@length,databursts(:,2)));
+                databursts=databursts(cellfun(@(x)length(x)==dbSize,databursts(:,2)),:);
+                %convert databursts into table:
+                databursts=table(cell2mat(databursts(:,1)),cell2mat(databursts(:,2:end)),'VariableNames',{'ts','db'});
+                databursts.Properties.VariableUnits={'s','int'};
+                databursts.Properties.VariableDescriptions={'timestamp of databurst in seconds','row vector containing databurst'};
+                databursts.Properties.Description='list of all databursts captured during data collection';  
+                set(cds,'databursts',databursts)
+            end
             %generate the words table from the non-databurst words:
             actual_words = actual_words( actual_words(:,2) < min_db_val, :);
             actual_words=table(actual_words(:,1),actual_words(:,2),'VariableNames',{'ts','word'});

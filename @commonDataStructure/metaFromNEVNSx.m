@@ -83,10 +83,17 @@ function metaFromNEVNSx(cds,opts)
     end
     
     meta.numTrials=size(cds.trials,1);
-    meta.numReward=numel(strmatch('R',cds.trials.result));
-    meta.numAbort=numel(strmatch('A',cds.trials.result));
-    meta.numFail=numel(strmatch('F',cds.trials.result));
-    meta.numIncomplete=numel(strmatch('I',cds.trials.result));
+    if ~isempty(cds.trials)
+        meta.numReward=numel(strmatch('R',cds.trials.result));
+        meta.numAbort=numel(strmatch('A',cds.trials.result));
+        meta.numFail=numel(strmatch('F',cds.trials.result));
+        meta.numIncomplete=numel(strmatch('I',cds.trials.result));
+    else
+        meta.numReward=0;
+        meta.numAbort=0;
+        meta.numFail=0;
+        meta.numIncomplete=0;
+    end
     
     meta.aliasList=cds.aliasList;
     

@@ -18,6 +18,18 @@ function mask=windows2mask(time,windows)
     if isrow(time)
         error('windows2mask:timeNotColumnVector','the time input to windows2mask must be a column vector')
     end
+    
+    
+    mask=false(size(time));
+    for i=1:size(windows,1)
+        time(time>=windows(i,1) & time <=windows(i,2))=true;
+    end
+    return
+    
+    
+    
+    
+    
     %% compose the matrixes we will use for comparison:
     %each column of testTime is a replicate of the input time. we will
     %compare each column to one pair of low and high windows so that the

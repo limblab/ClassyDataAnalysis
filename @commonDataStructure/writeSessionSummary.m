@@ -8,9 +8,10 @@ function writeSessionSummary(cds)
     %file for parsing by humans and scripts. It will also write a line to
     %the limblabDataHistory.xlsx file containing all the same information
     %so that people can sort/organize the data in excel
-    fnameDH='\\fsmresfiles.fsm.northwestern.edu\fsmresfiles\Basic_Sciences\Phys\L_MillerLab\data\cds_archive\limblabDataHistory.xlsx';
-    fnameSummary=['\\fsmresfiles.fsm.northwestern.edu\fsmresfiles\Basic_Sciences\Phys\L_MillerLab\data\cds_archive\summary_files',cds.meta.cdsName,'.txt'];
-    
+    folderpath=[filesep, filesep,'fsmresfiles.fsm.northwestern.edu',filesep,'fsmresfiles',filesep,'Basic_sciences',filesep,'Phys','L_MillerLab',filesep,'data',filesep,'cds_archive',filesep];
+    fnameDH=[folderpath,'limblabDataHistory.xlsx'];
+    fnameSummary=[folderpath,'summary_files',filesep,cds.meta.cdsName,'.txt'];
+    fnameBackup=[folderpath,'historyBackupMatlab.mat'];
     %build list of labels that we will want to write:
     dataLabels={'Source File',...
                     'dateTime',...
@@ -39,11 +40,23 @@ function writeSessionSummary(cds)
                     'numAbort',...
                     'numFail',...
                     'numIncomplete',...
+                    'percentStill',...
                     };
     
     %open the limblabDataHistory.xlsx file and find either the line with a
     %prior entry for this data, or the first empyt line of the workbook:
     [~,~,dataHistory]=xlsread(fnameDH,'dataHistory');
+    %load backupDH from mat file:
+    if isempty(dir(fnameBackup))
+        backupDH=[];
+    else
+        load(fnameBackup);
+    end
+    if ~isequal(backupDH,dataHistory)
+        reWriteFlag=true;
+    else
+        reWriteFlag=false;
+    end
     colNames=dataHistory(1,:);
     excelLineNum=find(strcmp(cds.meat.cdsName,dataHistory(:,strcmp('cdsName',colNames))));
     excelData=cell(1,length(colNames));
@@ -67,20 +80,16 @@ function writeSessionSummary(cds)
         excelData{strcmp(itemName,colNames)}=itemData;
     end
     
-    
-    %if units included, write unit info:
-    
-    %write trial count info:
-    
-    %write kinematic info:
-    
-    %if we have aliases, write alias list:
-    
-    
     %write line to limblabDataHistory.xlsx:
-    status=xlswrite(fnameDH,excelLineNum,'dataHistory');
+    if reWriteFlag
+        status=xlswrite(fnameDH,[dataHistory;excelData],'dataHistory');
+    else
+        status=xlswrite(fnameDH,excelData,'dataHistory',excelLineNum);
+    end
     if ~status
         warning('surrary data not written to limblabDataHistory.xlsx')
     end    
-      
+    
+    evntData=loggingListenerEventData('writeSessionSummary',[]);
+    notify(cds,'ranOperation',evntData)
 end

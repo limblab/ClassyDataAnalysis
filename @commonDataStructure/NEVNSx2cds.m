@@ -118,9 +118,6 @@ function NEVNSx2cds(cds,varargin)
         opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(1)) ...
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
-    %% get the info of data we have to work with
-        % Build catalogue of entities
-        unit_list = unique([cds.NEV.Data.Spikes.Electrode;cds.NEV.Data.Spikes.Unit]','rows');
 
     %% Events: 
         %if events are already in the cds, then we keep them and ignore any
@@ -138,9 +135,9 @@ function NEVNSx2cds(cds,varargin)
         
     %% the kinematics
         %convert event info into encoder steps:
-        if isempty(cds.words)
-            error('NEVNSx2cds:noWordsLoaded','Words have not been loaded into the cds yet. This means there was no encoder data in this NEVNSx, and no prior file was loaded that contained that data. If encoder data is in a different file, load that file to include kinematics, and use the noKin flag when loading this file')
-        end
+%         if isempty(cds.words)
+%             error('NEVNSx2cds:noWordsLoaded','Words have not been loaded into the cds yet. This means there was no encoder data in this NEVNSx, and no prior file was loaded that contained that data. If encoder data is in a different file, load that file to include kinematics, and use the noKin flag when loading this file')
+%         end
         cds.kinematicsFromNEV(opts)
        
 
@@ -148,6 +145,8 @@ function NEVNSx2cds(cds,varargin)
         cds.forceFromNSx(opts)
 
     %% The Units
+    % Build catalogue of entities
+        unit_list = unique([cds.NEV.Data.Spikes.Electrode;cds.NEV.Data.Spikes.Unit]','rows');
         if ~isempty(unit_list)   
             cds.unitsFromNEV(opts)
         end

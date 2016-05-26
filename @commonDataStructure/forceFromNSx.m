@@ -8,6 +8,11 @@ function forceFromNSx(cds,opts)
     handleforce=[];
     %forces for wf and other tasks that use force_ to denote force channels
     forceCols = find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'force_')));
+    robotForceChannels = find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,'ForceHandle')));
+    if isempty(forceCols)&&isempty(robotForceChannels)
+        %if we didn't find any forces skip force processing
+        return
+    end
     if ~isempty(forceCols)
         [loadCellData,t]=getFilteredFromNSx(cds.kinFilterConfig,forceCols);
         %build our table of force data:
@@ -29,8 +34,7 @@ function forceFromNSx(cds,opts)
     end
     %forces for robot:
     if opts.robot
-        force_channels = find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,'ForceHandle')));
-        if length(force_channels)==6
+        if length(robotForceChannels)==6
             if isempty(cds.enc)
                 warning('forceFromNEVNSx:noEncoderAngles','Encoder data is required to compute handle forces from raw load cell inputs. 6 load cell inputs are present, but no encoder data was found. Load cell data not included in cds')
                 cds.addProblem('missing encoder data: tried to load handle force data but had no encoder data to compute load direction from')
