@@ -4,7 +4,7 @@ function updateBins(bd,bins)
     % 
     %updateBins is a wrapper function allowing functions or methods to
     %update the actual binned data table of the binnedData class
-    set(bd,'bins',bins)
+    set(bd,'data',bins)
     evntData=loggingListenerEventData('updateBins',[]);
     notify(bd,'updatedBins',evntData)
 end

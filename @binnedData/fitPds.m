@@ -10,20 +10,20 @@ function fitPds(binned)
     %get our list of units
     if isempty(binned.pdConfig.units)
         %find all our units and make a cell array containing the whole list
-        unitMask=~cellfun(@(x)isempty(strfind(x,'CH')),binned.bins.Properties.VariableNames) & ~cellfun(@(x)isempty(strfind(x,'ID')),binned.bins.Properties.VariableNames);
-        uList=binned.bins.Properties.VariableNames(unitMask);
+        unitMask=~cellfun(@(x)isempty(strfind(x,'CH')),binned.data.Properties.VariableNames) & ~cellfun(@(x)isempty(strfind(x,'ID')),binned.data.Properties.VariableNames);
+        uList=binned.data.Properties.VariableNames(unitMask);
     else
         %use the list the user supplied
         uList=binned.pdConfig.units;
         if ~iscellstring(uList)
-            error('fitPds:unitListNotCellString','the list of units in binnedData.pdConfig.units must be a cell array of strings, where each string is the name of a unit column in binnedData.bins')
+            error('fitPds:unitListNotCellString','the list of units in binnedData.pdConfig.units must be a cell array of strings, where each string is the name of a unit column in binnedData.data')
         end
     end
     %get the mask for the rows of 
     if isempty(binned.pdConfig.windows)
-        rowMask=true(size(binned.bins.t));
+        rowMask=true(size(binned.data.t));
     else
-        rowMask=windows2mask(binned.bins.t,binned.pdConfig.windows);
+        rowMask=windows2mask(binned.data.t,binned.pdConfig.windows);
     end
     
     % check the method and compute PDs
@@ -42,7 +42,7 @@ function fitPds(binned)
             fullInput={'x+y','vx+vy','fx+fy','speed'};
             inputMask=[binned.pdConfig.pos,binned.pdConfig.vel,binned.pdConfig.force,binned.pdConfig.speed];
             if binned.pdConfig.speed
-                speedTable=table(sqrt(binned.bins.vx(rowMask).^2+binned.bins.vy(rowMask).^2),'VariableNames',{'speed'});
+                speedTable=table(sqrt(binned.data.vx(rowMask).^2+binned.data.vy(rowMask).^2),'VariableNames',{'speed'});
             end
             inputList=[];
             if binned.pdConfig.pos
@@ -72,17 +72,17 @@ function fitPds(binned)
             for i=1:numel(uList)
                 fprintf([uList{i},':','getting data subset(ET=',num2str(toc),'s).'])
                 %% set up a mask for the columns we will use for this unit
-                colMask=false(1,numel(binned.bins.Properties.VariableNames));
+                colMask=false(1,numel(binned.data.Properties.VariableNames));
                 for j=1:numel(inputList)
-                    colMask=colMask | strcmp(inputList{j},binned.bins.Properties.VariableNames);
+                    colMask=colMask | strcmp(inputList{j},binned.data.Properties.VariableNames);
                 end
                 %% get subset of the data we will use for fitting:
-                colMask=colMask | strcmp(uList{i},binned.bins.Properties.VariableNames);
-                %if you don't make a sub-table, then bootstrp will include a copy of the WHOLE binned.bins table in the output for EVERY iteration
+                colMask=colMask | strcmp(uList{i},binned.data.Properties.VariableNames);
+                %if you don't make a sub-table, then bootstrp will include a copy of the WHOLE binned.data table in the output for EVERY iteration
                 if binned.pdConfig.speed
-                    dataTable=[binned.bins(rowMask,colMask),speedTable];
+                    dataTable=[binned.data(rowMask,colMask),speedTable];
                 else
-                    dataTable=binned.bins(rowMask,colMask);
+                    dataTable=binned.data(rowMask,colMask);
                 end
                 %% run GLM
                 fprintf(['  Bootstrapping GLM PD computation(ET=',num2str(toc),'s).'])
@@ -188,7 +188,7 @@ function fitPds(binned)
                 end
             end
             set(binned,'pdData',pdTable)
-            evntData=loggingListenerEventData('fitPds',[]);
+            evntData=loggingListenerEventData('fitPds',binned.pdConfig);
             notify(binned,'ranPDFit',evntData)
             disp('done computing PDs')
         otherwise

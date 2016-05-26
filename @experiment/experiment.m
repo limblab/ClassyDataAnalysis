@@ -305,7 +305,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
 %             else
 %                 ex.analysis=anal;
 %             end
-ex.analysis=anal;
+            ex.analysis=anal;
         end
         %end of set methods    
     end

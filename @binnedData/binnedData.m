@@ -7,7 +7,7 @@ classdef binnedData < matlab.mixin.SetGet
         pdConfig
     end
     properties (SetAccess = protected,GetAccess=public,SetObservable=true)
-        bins
+        data
         meta
         weinerData
         glmData
@@ -27,7 +27,7 @@ classdef binnedData < matlab.mixin.SetGet
         %constructor
         function binned=binnedData()
             %source data
-            set(binned,'bins',cell2table(cell(0,2),'VariableNames',{'t','data'}));
+            set(binned,'data',cell2table(cell(0,2),'VariableNames',{'t','data'}));
             set(binned,'meta',struct('dateTime','noData','binSize',0,'numLags',0,'offset',0));
             %configs
             set(binned,'weinerConfig',struct('inputLabels',{'all'},'outputLabels',{'all'},'numFolds',0));
@@ -56,13 +56,13 @@ classdef binnedData < matlab.mixin.SetGet
     end
     methods
         %set methods
-        function set.bins(binned,data)
+        function set.data(binned,data)
             if ~istable(data)
                 error('bins:NotATable','the bins field of a binnedData class object must be a table')
             elseif isempty(find(strcmp('t',data.Properties.VariableNames),1))
                 error('bins:NoTimeColumn','the bins table of a binnedData class object must have a time column')
             else
-                binned.bins=data;
+                binned.data=data;
             end
         end
         function set.meta(binned,meta)
