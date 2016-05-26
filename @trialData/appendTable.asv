@@ -13,8 +13,7 @@ function appendTable(trials,data,varargin)
     %sanity check that existing trials and new trials have the same
     %columns:
     if ~isempty(trials.data) && ~isempty(setdiff(trials.data.Properties.VariableNames,data.Properties.VariableNames))
-        disp(['existing columns: ',strjoin(trials.data.Properties.VariableNames,', ')])
-        disp(['new data columns: ',strjoin(data.Properties.VariableNames,', ')])
+        disp(['existing columns: ',])
         error('appendTable:differentColumns','The existing trial data and the new data MUST have the same columns')
     end
     
@@ -38,11 +37,10 @@ function appendTable(trials,data,varargin)
         overWrite=false;
     end
     if ~exist('timeShift','var')
-        if ~isempty(trials.data) && ~overWrite
-            %if we are appending data to an existing table
+        if ~isempty(trials.data)
+            %
             timeShift=max(trials.data.endTime);
         else
-            %if no data exists, or we are overwriting existing data
             timeShift=0;
         end
     end   
@@ -57,16 +55,15 @@ function appendTable(trials,data,varargin)
         %start counting at the end of the old trials
         data.number=data.number+max(trials.data.number)+1;
     end
-    if isempty(trials.data) || overWrite
+    if isempty(trials.data)
         %just put the new trials in the field
         set(trials,'data',data)
     else
         %get the column index of time columns:
         set(trials,'data',[trials.data;data]);
     end
-    trialInfo.numAdded=size(data,1);
-    trialInfo.numTotal=size(trials.data,1);
-    trialInfo.overwritten=overWrite;
+    trialInfo.added.numTrials=size(data,1);
+    trialInfo.trialData.numTrials=size(trials.data,1);
     
     evntData=loggingListenerEventData('appendTable',trialInfo);
     notify(trials,'appended',evntData)

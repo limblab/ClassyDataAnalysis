@@ -22,32 +22,8 @@ function mask=windows2mask(time,windows)
     
     mask=false(size(time));
     for i=1:size(windows,1)
-        time(time>=windows(i,1) & time <=windows(i,2))=true;
+        
+        mask(time>=windows(i,1) & time <=windows(i,2))=true;
     end
     return
-    
-    
-    
-    
-    
-    %% compose the matrixes we will use for comparison:
-    %each column of testTime is a replicate of the input time. we will
-    %compare each column to one pair of low and high windows so that the
-    %resulting column is a logical mask for that window
-    testTime=repmat(time,1,size(windows,1));
-    %compose matrixes of the high and low windows so that we have matrices
-    %of the same size, where each column contains the same value replicated
-    %once for each point in time. This allows a single comparison operation
-    %to compare all elements in time without looping
-    lowWindow=repmat(windows(:,1)',numel(time),1);
-    highWindow=repmat(windows(:,2)',numel(time),1);
-    %get our final mask:
-    %the logical operation generates a matrix where each column is the mask
-    %   for a single time window.
-    %summing, converts this to a single column vector
-    %casting as logical converts points that might have occurred in
-    %   multiple windows and thus summed to >1, back to true for the final
-    %   mask
-    mask=logical(sum((testTime>=lowWindow & testTime<=highWindow),2));
-    
 end
