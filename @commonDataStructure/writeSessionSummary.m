@@ -8,7 +8,17 @@ function writeSessionSummary(cds)
     %file for parsing by humans and scripts. It will also write a line to
     %the limblabDataHistory.xlsx file containing all the same information
     %so that people can sort/organize the data in excel
-    folderpath=[filesep, filesep,'fsmresfiles.fsm.northwestern.edu',filesep,'fsmresfiles',filesep,'Basic_sciences',filesep,'Phys','L_MillerLab',filesep,'data',filesep,'cds_archive',filesep];
+    
+    %build path to fsmres folder on the fly so that this works on PC and
+    %mac/linux
+    folderpathParts={'fsmresfiles.fsm.northwestern.edu',...
+                        'fsmresfiles',...
+                        'Basic_sciences',...
+                        'Phys',...
+                        'L_MillerLab',...
+                        'data',...
+                        'cds_archive'};
+    folderpath=[filesep, filesep,strjoin(folderpathParts,filesep),filesep];
     fnameDH=[folderpath,'limblabDataHistory.xlsx'];
     fnameSummary=[folderpath,'summary_files',filesep,cds.meta.cdsName,'.txt'];
     fnameBackup=[folderpath,'historyBackupMatlab.mat'];
@@ -74,6 +84,8 @@ function writeSessionSummary(cds)
         itemData=cds.meta.(itemName);
         if ischar(itemData)
             fprintf(fhandle,'%s:\t%s\n\r',itemName,itemData);
+        elseif iscellstr(itemData)
+            fprintf(fhandle,'%s:\t%s\n\r',itemName,strjoin(itemData,'::'));
         else
             fprintf(fhandle,'%s:\t%s\n\r',itemName,itemData);
         end

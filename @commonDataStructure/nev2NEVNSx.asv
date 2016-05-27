@@ -83,7 +83,7 @@ function nev2NEVNSx(cds,fname)
                 
                 %load the NSx into a temporary variable:
                 %NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
-                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double');
+                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'uv','precision','double');
                 if iscell(NSx.Data)
                     NSx.Data=NSx.Data{end};
                 end

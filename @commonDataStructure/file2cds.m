@@ -38,7 +38,7 @@ function file2cds(cds,filePath,varargin)
         cds.nev2NEVNSx(filePath);
         cds.NEVNSx2cds(varargin{:});
         cds.clearTempFields()
-        cds.writeSessionSummary()
+%        cds.writeSessionSummary()
         evntData=loggingListenerEventData('file2cds',[]);
         notify(cds,'ranOperation',evntData)
 %     end
