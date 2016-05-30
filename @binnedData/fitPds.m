@@ -176,15 +176,15 @@ function fitPds(binned)
                 CHLoc=strfind(uList{i},'CH');
                 IDLoc=strfind(uList{i},'ID');
                 arrayName(i)={uList{i}(1:CHLoc-1)};
-                chan(i)={uList{i}(CHLoc+2:IDLoc-1)};
-                ID(i)={uList{i}(IDLoc+2:end)};
+                chan(i)=str2num({uList{i}(CHLoc+2:IDLoc-1)});
+                ID(i)=str2num({uList{i}(IDLoc+2:end)});
             end
             pdTable=table(arrayName',chan',ID','VariableNames',{'array','chan','ID'});
             for i=1:numel(pdType)
                 type=pdType{i};
                 if(binned.pdConfig.(type))
-                    vNames={[type,'Dir'],[type,'DirCI'],[type,'Moddepth'],[type,'ModdepthCI'],[type,'Istuned']};
-                    pdTable=[pdTable,table(data.(type).allPDs,data.(type).allPDCIs,data.(type).allModdepth,data.(type).allModdepthCI,data.(type).allIstuned,'VariableNames',vNames)];
+                    vNames={[type,'Dir'],[type,'DirCI'],[type,'Moddepth'],[type,'ModdepthCI'],[type,'IsTuned']};
+                    pdTable=[pdTable,table(data.(type).allPDs,data.(type).allPDCIs,data.(type).allModdepth,data.(type).allModdepthCI,logical(data.(type).allIstuned),'VariableNames',vNames)];
                 end
             end
             set(binned,'pdData',pdTable)
