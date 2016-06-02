@@ -12,6 +12,9 @@ function [uName,hName]=getUserHost(obj)
     elseif ismac
         [~,hostname]=unix('scutil --get ComputerName');
         [~,username]=unix('whoami');
+    elseif isunix
+        [~,hostname]=unix('hostname');
+        [~,username]=unix('whoami');
     else
         hostname=[];
         username=[];
