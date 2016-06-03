@@ -63,12 +63,11 @@ function varargout=getGitLog(obj,path,varargin)
             error('getGitLog:missingLinuxBashScript','operationLogger.getGitLog requries the bash script writeLocalLog.sh to be stored in the @operationLogger class definition folder')
         end
         %generate the repoGitLog.tmp and fileGitLog.tmp
-        system(['export TERM=ansi; ./writeLocalLog.sh ',temp,' ',path]);
+        system(['export TERM=ansi; ./writeLocalLog.sh ',temp,' ',path])
         %load data from the files into the string variables:
         fileLogString=obj.loadLogFile('fileGitLog.tmp');
         gitLogString=obj.loadLogFile('repoGitLog.tmp');
-        %clear the temporary files we generated:
-        system('export TERM=ansi; ./clearLocalLog.sh');
+        %clear the temporary 
     else
         error('getGitLog:untestedEnvironment','getGitLog is tested on windows and linux PCs, and my not run on macs')        
     end
