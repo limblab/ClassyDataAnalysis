@@ -176,8 +176,8 @@ function fitPds(binned)
                 CHLoc=strfind(uList{i},'CH');
                 IDLoc=strfind(uList{i},'ID');
                 arrayName(i)={uList{i}(1:CHLoc-1)};
-                chan(i)=str2num({uList{i}(CHLoc+2:IDLoc-1)});
-                ID(i)=str2num({uList{i}(IDLoc+2:end)});
+                chan(i)=str2num(uList{i}(CHLoc+2:IDLoc-1));
+                ID(i)=str2num(uList{i}(IDLoc+2:end));
             end
             pdTable=table(arrayName',chan',ID','VariableNames',{'array','chan','ID'});
             for i=1:numel(pdType)

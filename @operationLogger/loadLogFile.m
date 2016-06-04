@@ -28,6 +28,6 @@ function logEntry=loadLogFile(obj,fname)
     end
     %put the cells back into a single string in the format expected by
     %operationLogger.getGitLog
-    logEntry=strjoin(c{1}(end-4:end),'\n');
+    logEntry=strjoin(c{1}(end-3:end),'\n');
     fclose(fid);
 end

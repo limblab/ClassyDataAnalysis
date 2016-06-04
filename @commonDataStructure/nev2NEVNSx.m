@@ -50,7 +50,7 @@ function nev2NEVNSx(cds,fname)
                         NEVpath=NEVpath(find(fileNumList==max(fileNumList)));
                         disp(['continuing using file: ',NEVpath.name])
                     end
-                    spikeNEV=openNEVLimblab('read', [folderPath filesep NEVpath.name],'nosave');
+                    spikeNEV=openNEV('read', [folderPath filesep NEVpath.name],'nosave');
                     oldNEV=load([folderPath filesep digitalPath.name]);
                     oldNEVName=fieldnames(oldNEV);
                     oldNEV.(oldNEVName{1}).Data.Spikes=spikeNEV.Data.Spikes;
@@ -60,13 +60,13 @@ function nev2NEVNSx(cds,fname)
                 NEVpath = dir([folderPath filesep fileName '.nev']);
             end
         else
-            set(cds,'NEV',openNEVLimblab('read', [folderPath filesep NEVpath.name],'nosave'));
+            set(cds,'NEV',openNEV('read', [folderPath filesep NEVpath.name],'nosave'));
         end
     end
     if ~exist('spikeNEV','var')
         %if we didn't load the NEV specially to merge digital data, load
         %the nev directly into the cds:
-        set(cds,'NEV',openNEVLimblab('read', [folderPath filesep NEVpath.name],'nosave'));
+        set(cds,'NEV',openNEV('read', [folderPath filesep NEVpath.name],'nosave'));
     else
         set(cds,'NEV',oldNEV.(oldNEVName{1}));
     end

@@ -57,7 +57,7 @@ function varargout=getGitLog(obj,path,varargin)
         %get path to the shell script that pulls git logs and saves them in
         %a matlab friendly format. The script should be saved in the
         %@operationLogger folder
-        classFolder=obj.locateMethod('operationLogger','operationLogger');
+        [classFolder,~,~]=fileparts(obj.locateMethod('operationLogger','operationLogger'));
         cd(classFolder);
         if isempty(dir('*writeLocalLog.sh'))
             error('getGitLog:missingLinuxBashScript','operationLogger.getGitLog requries the bash script writeLocalLog.sh to be stored in the @operationLogger class definition folder')
