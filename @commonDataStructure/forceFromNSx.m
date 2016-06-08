@@ -58,7 +58,7 @@ function forceFromNSx(cds,opts)
         end
     end
     %write temp into the cds
-    timeTable=table(roundTime(t),'VariableNames',{'t'});
+    timeTable=table(roundTime(t(t>=min(cds.enc.t) & t<=max(cds.enc.t))),'VariableNames',{'t'});
     forces=[timeTable,handleforce,force];
     if ~isempty(forces)
         forces.Properties.VariableUnits=[{'s'} repmat({'N'},1,size(handleforce,2)+size(force,2))];
