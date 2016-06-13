@@ -3,6 +3,9 @@ classdef binnedData < matlab.mixin.SetGet
         weinerConfig
         glmConfig
         gpfaConfig
+        faConfig
+        pcaConfig
+        ppcaConfig
         kalmanConfig
         pdConfig
     end
@@ -13,12 +16,18 @@ classdef binnedData < matlab.mixin.SetGet
         glmData
         pdData
         gpfaData
+        faData
+        pcaData
+        ppcaData
         kalmanData
     end
     events
         ranGLMFit
         ranWeinerFit
         ranGPFAFit
+        ranPCAFit
+        ranPPCAFit
+        ranFAFit
         ranKalmanFit
         ranPDFit
         updatedBins
@@ -32,7 +41,10 @@ classdef binnedData < matlab.mixin.SetGet
             %configs
             set(binned,'weinerConfig',struct('inputLabels',{'all'},'outputLabels',{'all'},'numFolds',0));
             set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
-            set(binned,'gpfaConfig',struct('structData','this is a stub struct that needs to be coded'));
+            set(binned,'gpfaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
+            set(binned,'pcaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
+            set(binned,'ppcaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
+            set(binned,'faConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
             set(binned,'kalmanConfig',struct('structData','this is a stub struct that needs to be coded'));
             pdc.method='glm';
             pdc.units=[];
@@ -44,6 +56,13 @@ classdef binnedData < matlab.mixin.SetGet
             pdc.bootstrapReps=100;
             pdc.windows=[];
             pdc.useParallel=false;
+            
+            gpfac.units=[];
+            gpfac.windows=[];
+            gpfac.trials= [];
+            gpfac.dimension = 0;
+            gpfac.segLength = 0;
+            
             set(binned,'pdConfig',pdc);
             %output data
             set(binned,'weinerData',struct('structData','this is a stub struct that needs to be coded'));
@@ -51,6 +70,9 @@ classdef binnedData < matlab.mixin.SetGet
             set(binned,'pdData',PDs);
             set(binned,'glmData',[]);
             set(binned,'gpfaData',[]);
+            set(binned,'faData',[]);
+            set(binned,'pcaData',[]);
+            set(binned,'ppcaData',[]);
             set(binned,'kalmanData',[]);
         end
     end
@@ -105,6 +127,27 @@ classdef binnedData < matlab.mixin.SetGet
                 binned.kalmanConfig=kfc;
             end
         end
+                function set.faConfig(binned,fac)
+            if ~isstruct(fac)
+                error('faConfig:notAStruct','faConfig must be a struct')
+            else
+                binned.faConfig=fac;
+            end
+                end
+        function set.ppcaConfig(binned,ppcac)
+            if ~isstruct(ppcac)
+                error('ppcaConfig:notAStruct','ppcaConfig must be a struct')
+            else
+                binned.ppcaConfig=ppcac;
+            end
+                end
+        function set.pcaConfig(binned,pcac)
+            if ~isstruct(pcac)
+                error('pcaConfig:notAStruct','pcaConfig must be a struct')
+            else
+                binned.pcaConfig=pcac;
+            end
+        end
         function set.pdConfig(binned,pdc)
             if ~isstruct(pdc)
                 error('pdConfig:notAStruct','the pdConfig field must be a struct describing the way that PDs will be computed')
@@ -143,8 +186,16 @@ classdef binnedData < matlab.mixin.SetGet
             binned.glmData=[];
         end
         function set.gpfaData(binned,gpfaData)
-            warning('gpfaData:SetNotImplemented','set method for the gpfaData field of the binnedData class is not implemented')
-            binned.gpfaData=[];
+            binned.gpfaData=gpfaData;
+        end
+        function set.pcaData(binned,pcaData)
+            binned.pcaData = pcaData;
+        end
+        function set.ppcaData(binned,ppcaData)
+            binned.ppcaData = ppcaData;
+        end
+        function set.faData(binned,faData)
+            binned.faData = faData;
         end
         function set.kalmanData(binned,kfData)
             warning('kalmanData:SetNotImplemented','set method for the kalmanData field of the binnedData class is not implemented')
@@ -157,9 +208,13 @@ classdef binnedData < matlab.mixin.SetGet
         fitGlm(binned)
         fitWeiner(binned)
         fitGpfa(binned)
+        fitPCA(binned)
+        fitPPCA(binned)
+        fitFA(binned)
         fitKalman(binned)
         fitPds(binned)
         tuningCircle(binned,label)%plots an empirical tuning circle for a single neuron against the variable 'label'
-        polarPDs(binned,units)%makes a polar plot of the PDs associated with the units defined in 'units'    
+        polarPDs(binned,units)%makes a polar plot of the PDs associated with the units defined in 'units'
+        dat = dimRedHelper(binned, method)
     end
 end
