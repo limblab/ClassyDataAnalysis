@@ -66,14 +66,18 @@ function getTrialTable(cds,opts)
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
-                
+                error('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
             case 'BD' %Tucker's psychophysics bump direction task
+                error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 
             case 'UNT' %Brian Dekleva's uncertainty task
+                error('getTrialTable:taskNotImplemented','the code to create a trial table for the uncertainty task is not implemented. Please help by implementing it! ')
                 
             case 'RP' %Ricardo's resist perturbations task
+                error('getTrialTable:taskNotImplemented','the code to create a trial table for the resist perturbations task is not implemented. Please help by implementing it! ')
                 
             case 'DCO' %Ricardo's dynamic center out task
+                error('getTrialTable:taskNotImplemented','the code to create a trial table for the dynamic center out task is not implemented. Please help by implementing it! ')
                 
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')

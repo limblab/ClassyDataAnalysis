@@ -22,10 +22,81 @@ function unitsFromNEV(cds,opts)
     if ~isempty(cds.units) && ~isempty(unitList) && ~isempty(find(strcmp({cds.units.array},opts.array),1,'first'))
         error('unitsFromNEV:sameArrayName','the cds and the current data have the same array name, which will result in duplicate entries in the units field. Re-load one of the data files using a different array name to avoid this problem')
     end
+    %try loading a mapfile:
+    noMap=true;
+    if isfield(opts,'mapfile') && ~isempty(opts.mapFile)
+        try
+            arrayMap={};
+            fid=fopen(opts.mapFile,'r');
+            inheader=true;
+            while ~feof(fid)
+                tline=fgets(fid);
+                %skip header lines:
+                if inheader && ~isempty(strfind(tline,'Cerebus mapping'))
+                    %this is our last header line, set the flag false and
+                    %continue to the next line:
+                    inheader=false;
+                    continue
+                elseif inheader
+                    continue
+                end
+                if strcmp(tline(1:2),'//')
+                    %this should be our column labels
+                    colLabels=splitstr(tline(3:end));
+                    
+                    rowNumCol=strcmp(colLabels,'row');
+                    colNumCol=trcmp(colLabels,'col');
+                    bankCol=strcmp(colLabels,'bank');
+                    pinCol=strcmp(colLabels,'elec');
+                    labelCol=strcmp(colLabels,'label');
+                    continue
+                end
+                %if we got to this point we are on an actual data line:
+                tmp=textscan(tline,'%s');
+                tmp=tmp{1};
+                rowNum=num2str(tmp{rowNumCol});
+                colNum=num2str(tmp{colNumCol});
+                pin=num2str(tmp{pinCol});
+                bank=char(tmp{bankCol});
+                label=chan(tmp{labelCol});
+                switch bank
+                    case 'A'
+                        chan=pin;
+                    case 'B'
+                        chan=pin+32;
+                    case 'C'
+                        chan=pin+64;
+                    case 'D'
+                        chan=pin+96;
+                    otherwise
+                        error('unitsFromNEV:badBankLabel',['unitsFromNEV is not configured to handle arrays with bank label: ',bank])
+                end
+                arrayMap=[arrayMap;{chan,pin,rowNum,colNum,bank,label}];
+            end
+            arrayMap=cell2table(arrayMap,'VariableNames',{'chan','pin','row','col','bank','label'});
+            noMap=false;
+        catch ME
+            noMap=true;
+        end
+    end
+    if noMap
+        if exist('ME','var')
+            problemData.description='tried to load mapfile and failed';
+            problemData.error=ME;
+        else
+            problemData.description='no map file was passed';
+        end
+        cds.addProblem('No Map file. Electrode locations and bank ID are not available in the units structure',problemData);
+    end
     
     %initialize struct array:
-    cds.units=struct('chan',cell(numel(unitList),0),...
+    units=struct('chan',cell(numel(unitList),0),...
                             'ID',cell(numel(unitList),0),...
+                            'rowNum',cell(numel(unitList),0),...
+                            'colNum',cell(numel(unitList),0),...
+                            'pinNum',cell(numel(unitList),0),...
+                            'bank',cell(numel(unitList),0),...
+                            'label',cell(numel(unitList),0),...
                             'array',cell(numel(unitList),0),...
                             'wellSorted',cell(numel(unitList),0),...this is a stub as testSorting can't be run till the whole units field is populated
                             'monkey',cell(numel(unitList),0),...
@@ -46,12 +117,28 @@ function unitsFromNEV(cds,opts)
 %                                     double(cds.NEV.Data.Spikes.Waveform(:,cds.NEV.Data.Spikes.Electrode==unitList(i,1) ...
 %                                     &  cds.NEV.Data.Spikes.Unit==unitList(i,2))'),...
 %                                     'VariableNames',{'ts','wave'}));
-        cds.units(i).chan=unitList(i,1);
-        cds.units(i).ID=unitList(i,2);
-        cds.units(i).array=array;
-        cds.units(i).wellSorted=false;
-        cds.units(i).monkey=monkey;
-        cds.units(i).spikes=table(...timestamps for current unit from the NEV:
+        units(i).chan=unitList(i,1);
+        if noMap
+            units(i).rowNum=nan;
+            units(i).colNum=nan;
+            units(i).pinNum=nan;
+            units(i).bank=nan;
+            units(i).label=nan;
+        else
+            %find the correct row of our arrayMap:
+            idx=find(arrayMap.chan==units(i).chan,1);
+            %copy data from the map into the current unit entry:
+            units(i).rowNum=arrayMap.row(idx);
+            units(i).colNum=arrayMap.col(idx);
+            units(i).pinNum=arrayMap.pin(idx);
+            units(i).bank=arrayMap.bank(idx);
+            units(i).label=arrayMap.label(idx);
+        end
+        units(i).ID=unitList(i,2);
+        units(i).array=array;
+        units(i).wellSorted=false;
+        units(i).monkey=monkey;
+        units(i).spikes=table(...timestamps for current unit from the NEV:
                                      [double(cds.NEV.Data.Spikes.TimeStamp(cds.NEV.Data.Spikes.Electrode==unitList(i,1) & ...
                                         cds.NEV.Data.Spikes.Unit==unitList(i,2)))/30000]',... 
                                     ...waves for the current unit from the NEV:    
@@ -59,13 +146,15 @@ function unitsFromNEV(cds,opts)
                                     &  cds.NEV.Data.Spikes.Unit==unitList(i,2))'),...
                                     'VariableNames',{'ts','wave'});
         %check for resets in time vector
-        idx=cds.skipResets(cds.units(i).spikes.ts);
+        idx=cds.skipResets(units(i).spikes.ts);
         if ~isempty(idx) && idx>1
             %if there were resets, remove everything before the resets
-            cds.units(i).spikes{1:idx,:}=[];
+            units(i).spikes{1:idx,:}=[];
         end
         
     end
+    cds.units=[cds.units;units];
+    
 %    unitscds.testSorting; %tests each sorted unit to see if it is well-separated from background and other units on the same channel
     opData.array=array;
     opData.numUnitsAdded=size(unitList,1);
