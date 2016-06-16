@@ -48,9 +48,9 @@ function varargout=getGitLog(obj,path,varargin)
         %dont forget to restrict the log call to the first record, as returning
         %all records basically causes matlab to hang as it parses the input
         if strcmp(path(end-1:end),'.m')
-            [~,fileLogString]=system(['export TERM=ansi; git log -1 ',path]);
+            fileLogString=evalc(['!git log -n 1 -- ', path]);
         else
-            [~,fileLogString]=system(['export TERM=ansi; git log -1 ',path,'.m']);
+            fileLogString=evalc(['!git log -n 1 -- ', path, '.m']);
         end
         
     elseif isunix
