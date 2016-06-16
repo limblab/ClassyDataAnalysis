@@ -25,7 +25,7 @@ function fitFA(binned)
     method = 'fa';
     dat = dimRedHelper(binned, method);
     kernSD = binned.faConfig.kernSD;
-    runIdx =26;
+    runIdx =31;
     xDim = binned.faConfig.dimension;
     result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.faConfig.segLength);
     faData = result;
