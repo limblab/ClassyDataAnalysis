@@ -114,6 +114,10 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                 addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt));
                 %listeners on analysis:
                 addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
         end
     end
     methods
@@ -341,6 +345,10 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
             addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt));
             %listeners on analysis:
             addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+            addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+            addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+            addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+            addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
         end
     end
     methods
