@@ -24,8 +24,8 @@ function fitGpfa(binned)
 %           as a larger low pass filter on trajectories
     method = 'gpfa';
     dat = dimRedHelper(binned, method);
-    kernSD = binned.gpfaConfig.kernSD;
-    runIdx =100;
+    kernSD = 10;
+    runIdx =102;
     xDim = binned.gpfaConfig.dimension;
     result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.gpfaConfig.segLength);
     gpfaData = result;
