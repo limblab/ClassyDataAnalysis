@@ -129,7 +129,7 @@ function kinematicsFromNEV(cds,opts)
     end
     
     %find still periods, and build table of kinematics flags:
-    still=is_still(sqrt(pos(:,1).^2+pos(:,2).^2));
+    still=cds.isStill(sqrt(pos(:,1).^2+pos(:,2).^2));
     
     %use pos to compute vel:
     vx=gradient(pos(:,1),1/cds.kinFilterConfig.sampleRate);
