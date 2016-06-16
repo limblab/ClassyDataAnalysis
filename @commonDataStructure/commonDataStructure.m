@@ -358,13 +358,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         %data loading functions:
         file2cds(cds,filePath,varargin)
         database2cds(cds,conn,filepath,varargin)
-        %data preprocessing functions
-        checkEMG60hz(cds)
-        checkLFP60hz(cds)
-        %storage functions
-        upload2DB(cds)
-        save2fsmres(cds)
-        S=saveobj(cds)
+        
     end
     methods (Static = true)
         function cds=loadobj(cds)
@@ -396,10 +390,6 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             pos=enc2WFpos(cds)
             mergeTable(cds,fieldName,mergeData)
         [task,opts]=getTask(cds,task,opts)
-        writeSessionSummary(cds)
-        sanitizeTimeWindows(cds)
-        idx=skipResets(cds,time)
-        clearTempFields(cds)
         %trial table functions
         getTrialTable(cds,opts)
         getWFTaskTable(cds,times)
@@ -411,7 +401,18 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getRPTaskTable(cds,times)
         getDCOTaskTable(cds,times)
         %general functions
-        addProblem(cds,problem)
+        addProblem(cds,problem)%data preprocessing functions
+        checkEmg60hz(cds)
+        checkLfp60hz(cds)
+        still=isStill(cds,data)
+        writeSessionSummary(cds)
+        sanitizeTimeWindows(cds)
+        idx=skipResets(cds,time)
+        clearTempFields(cds)
+        %storage functions
+        upload2DB(cds)
+        save2fsmres(cds)
+        S=saveobj(cds)
     end
     methods (Access = protected, Hidden=true)
         %callbacks
