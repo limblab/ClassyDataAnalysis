@@ -28,6 +28,8 @@ function fitGpfa(binned)
     runIdx =102;
     xDim = binned.gpfaConfig.dimension;
     result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.gpfaConfig.segLength);
+    [result.estParamsPP, result.seqTrainPP] = postprocess(result, 'kernSD', kernSD);
+    result.method = 'gpfa';
     gpfaData = result;
     set(binned,'gpfaData', gpfaData);
     opData = binned.gpfaConfig;
