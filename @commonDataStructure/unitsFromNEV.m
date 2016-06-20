@@ -62,7 +62,7 @@ function unitsFromNEV(cds,opts)
         idx=cds.skipResets(cds.units(i).spikes.ts);
         if ~isempty(idx) && idx>1
             %if there were resets, remove everything before the resets
-            cds.units(i).spikes{1:idx,:}=[];
+            cds.units(i).spikes(1:idx,:)=[];
         end
         
     end
