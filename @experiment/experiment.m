@@ -319,6 +319,8 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
         
         calcFiringRate(ex)
         binData(ex,varargin)
+        
+        moveTimes=getMoveStart(ex)
     end
     methods (Static = false, Access = protected, Hidden=true)
         [lagData,lagPts,time]=timeShiftBins(ex,data,lags,varargin)

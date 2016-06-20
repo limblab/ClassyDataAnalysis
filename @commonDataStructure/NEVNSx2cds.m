@@ -4,7 +4,10 @@ function NEVNSx2cds(cds,varargin)
     %definition file and other method files. This method is not user
     %accessible, but rather is called by the file2cds method.
     %
-     
+    %this method is essentially a wrapper around the various processing
+    %routines like kinematicsFromNEV. NEVNSx2cds assumes that the NEV and
+    %NSx data is already loaded into the cds, so the nev2NEVNSx method must
+    %be called before NEVNSx2cds
     
     %% Initial setup
         % make sure LaTeX is turned off and save the old state so we can turn
@@ -36,10 +39,9 @@ function NEVNSx2cds(cds,varargin)
         
     %% the kinematics
         %convert event info into encoder steps:
-%         if isempty(cds.words)
-%             error('NEVNSx2cds:noWordsLoaded','Words have not been loaded into the cds yet. This means there was no encoder data in this NEVNSx, and no prior file was loaded that contained that data. If encoder data is in a different file, load that file to include kinematics, and use the noKin flag when loading this file')
-%         end
-        cds.kinematicsFromNEV(opts)
+        if ~isempty(cds.words)
+            cds.kinematicsFromNEV(opts)
+        end
        
 
     %% the kinetics
@@ -78,10 +80,6 @@ function NEVNSx2cds(cds,varargin)
         cds.sanitizeTimeWindows
     %% Set metadata. Some metadata will already be set, but this should finish the job
         cds.metaFromNEVNSx(opts)
-    %% write metadata to database
-        %cds.upload2DB
-    %% save to fsmres if possible
-        %cds.save2fsmres()
     %% reset the text interpreter:
         set(0, 'defaulttextinterpreter', defaultTextInterpreter);
         

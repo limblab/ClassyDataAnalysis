@@ -171,6 +171,9 @@ function file2cds(cds,filePath,varargin)
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
 %        cds.writeSessionSummary()
+%         if ~noDB && ~dataFromDB
+%             %write data to DB
+%         end
         evntData=loggingListenerEventData('file2cds',[]);
         notify(cds,'ranOperation',evntData)
 %     end
