@@ -402,8 +402,34 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                    analysis.notes='no notes entered';
                case 'fitGLM'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
-               case 'fitGPFA'
-                   error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
+               case 'fitGpfa'
+                   analysis.type = 'fitGpfa';
+                   anaylsis.config = ex.bin.gpfaConfig;
+                   analysis.date = date;
+                   [analysis.userName, analysis.PCName] = ex.getUserHost;
+                   analysis.data=ex.bin.gpfaData;
+                   analysis.notes = 'no notes entered';
+              case 'fitFA'
+                   analysis.type = 'fitFA';
+                   anaylsis.config = ex.bin.faConfig;
+                   analysis.date = date;
+                   [analysis.userName, analysis.PCName] = ex.getUserHost;
+                   analysis.data=ex.bin.faData;
+                   analysis.notes = 'no notes entered';
+              case 'fitPCA'
+                   analysis.type = 'fitPCA';
+                   anaylsis.config = ex.bin.pcaConfig;
+                   analysis.date = date;
+                   [analysis.userName, analysis.PCName] = ex.getUserHost;
+                   analysis.data=ex.bin.pcaData;
+                   analysis.notes = 'no notes entered';
+              case 'fitPPCA'
+                   analysis.type = 'fitPPCA';
+                   anaylsis.config = ex.bin.ppcaConfig;
+                   analysis.date = date;
+                   [analysis.userName, analysis.PCName] = ex.getUserHost;
+                   analysis.data=ex.bin.ppcaData;
+                   analysis.notes = 'no notes entered';
                case 'fitKalman'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
                case 'fitWeiner'

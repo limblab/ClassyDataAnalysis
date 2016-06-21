@@ -151,7 +151,6 @@ function unitsFromNEV(cds,opts)
             %if there were resets, remove everything before the resets
             units(i).spikes{1:idx,:}=[];
         end
-        
     end
     cds.units=[cds.units;units];
     
