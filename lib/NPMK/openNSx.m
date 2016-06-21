@@ -1,3 +1,4 @@
+
 function varargout = openNSx(varargin)
 
 % openNSx
@@ -804,7 +805,8 @@ end
 
 %% Adjusting for the data's unit.
 if strcmpi(waveformUnits, 'uV')
-    NSx.Data = NSx.Data / 4;
+    %NSx.Data = NSx.Data / 4;
+    NSx.Data = bsxfun(@rdivide, double(NSx.Data),  (double([NS2.ElectrodesInfo.MaxAnalogValue])./double([NS2.ElectrodesInfo.MaxDigiValue]))');
 end
 
 %% Calculating the DataPoints in seconds and adding it to MetaData
