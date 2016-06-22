@@ -1,4 +1,4 @@
-function NEVNSx2cds(cds,varargin)
+function NEVNSx2cds(cds,opts)
     %this is a method function for the common_data_structure (cds) class, and
     %should be located in a folder '@common_data_structure' with the class
     %definition file and other method files. This method is not user

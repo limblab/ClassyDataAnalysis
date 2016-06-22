@@ -8,5 +8,5 @@ fileLogFile="fileGitLog.tmp"
 repoLogFile="repoGitLog.tmp"
 cd $gitPath
 git log -1 > $currPath/$repoLogFile
-git log $filePath > $currPath/$fileLogFile
+git log -1 $filePath > $currPath/$fileLogFile
 

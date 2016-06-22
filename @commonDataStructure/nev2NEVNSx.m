@@ -94,7 +94,7 @@ function nev2NEVNSx(cds,fname)
                 %the digital data
                 num_zeros = fix(digitalLength*frequencies(i)-size(NSx.Data,2));
                 %pad data in our temporary object
-                NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data]/6.5584993;
+                NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data];
                         % 6.5584993 is the ratio when comparing the output of 
                         % get_cerebus_data to the one from this script. It must come
                         % from the data type conversion that happens when pulling 

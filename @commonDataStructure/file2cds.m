@@ -87,7 +87,7 @@ function file2cds(cds,filePath,varargin)
                     opts.monkey=optStr(7:end);
                 elseif ischar(optStr) && length(optStr)>5 && strcmp(optStr(1:5),'ranBy')
                     opts.ranBy=optStr(6:end);
-                elseif ischar(optStr) && length(optStr)>5 && strcmp(optStr(1:5),'mapFile')
+                elseif ischar(optStr) && length(optStr)>7 && strcmp(optStr(1:7),'mapFile')
                     opts.mapFile=optStr(8:end);
                 elseif isnumeric(varargin{i})
                     opts.labNum=varargin{i};    %Allow entering of the lab number               

@@ -24,13 +24,16 @@ function unitsFromNEV(cds,opts)
     end
     %try loading a mapfile:
     noMap=true;
-    if isfield(opts,'mapfile') && ~isempty(opts.mapFile)
+    if isfield(opts,'mapFile') && ~isempty(opts.mapFile)
         try
             arrayMap={};
             fid=fopen(opts.mapFile,'r');
             inheader=true;
             while ~feof(fid)
                 tline=fgets(fid);
+                if isempty(deblank(tline))
+                    continue
+                end
                 %skip header lines:
                 if inheader && ~isempty(strfind(tline,'Cerebus mapping'))
                     %this is our last header line, set the flag false and
@@ -42,10 +45,10 @@ function unitsFromNEV(cds,opts)
                 end
                 if strcmp(tline(1:2),'//')
                     %this should be our column labels
-                    colLabels=splitstr(tline(3:end));
-                    
+                    colLabels=textscan(tline(3:end),'%s')';%strsplit kind of works but leaves an empty string at the end that screws up the rest of processing
+                    colLabels=colLabels{1};
                     rowNumCol=strcmp(colLabels,'row');
-                    colNumCol=trcmp(colLabels,'col');
+                    colNumCol=strcmp(colLabels,'col');
                     bankCol=strcmp(colLabels,'bank');
                     pinCol=strcmp(colLabels,'elec');
                     labelCol=strcmp(colLabels,'label');
@@ -54,11 +57,12 @@ function unitsFromNEV(cds,opts)
                 %if we got to this point we are on an actual data line:
                 tmp=textscan(tline,'%s');
                 tmp=tmp{1};
-                rowNum=num2str(tmp{rowNumCol});
-                colNum=num2str(tmp{colNumCol});
-                pin=num2str(tmp{pinCol});
+                
+                rowNum=str2num(tmp{rowNumCol})+1;
+                colNum=str2num(tmp{colNumCol})+1;
+                pin=str2num(tmp{pinCol});
                 bank=char(tmp{bankCol});
-                label=chan(tmp{labelCol});
+                label=char(tmp{labelCol});
                 switch bank
                     case 'A'
                         chan=pin;
@@ -88,56 +92,31 @@ function unitsFromNEV(cds,opts)
         end
         cds.addProblem('No Map file. Electrode locations and bank ID are not available in the units structure',problemData);
     end
-    
+    NEVChanList=[cds.NEV.ElectrodesInfo.ElectrodeID]';
     %initialize struct array:
-    units=struct('chan',cell(numel(unitList),0),...
-                            'ID',cell(numel(unitList),0),...
-                            'rowNum',cell(numel(unitList),0),...
-                            'colNum',cell(numel(unitList),0),...
-                            'pinNum',cell(numel(unitList),0),...
-                            'bank',cell(numel(unitList),0),...
-                            'label',cell(numel(unitList),0),...
-                            'array',cell(numel(unitList),0),...
-                            'wellSorted',cell(numel(unitList),0),...this is a stub as testSorting can't be run till the whole units field is populated
-                            'monkey',cell(numel(unitList),0),...
-                            'spikes',repmat( cell2table(cell({0,2}),'VariableNames',{'ts','wave'}),numel(unitList),1));
+    units=struct(   'chan',cell(numel(unitList),0),...
+                    'ID',cell(numel(unitList),0),...
+                    'wellSorted',cell(numel(unitList),0),...this is a stub as testSorting can't be run till the whole units field is populated
+                    'spikes',repmat( cell2table(cell({0,2}),'VariableNames',{'ts','wave'}),numel(unitList),1),...
+                    'monkey',cell(numel(unitList),0),...
+                    'array',cell(numel(unitList),0),...
+                    'bank',cell(numel(unitList),0),...
+                    'pin',cell(numel(unitList),0),...
+                    'label',cell(numel(unitList),0),...
+                    'lowThreshold',cell(numel(unitList),0),...
+                    'highThreshold',cell(numel(unitList),0),...
+                    'lowPassCorner',cell(numel(unitList),0),...
+                    'lowPassOrder',cell(numel(unitList),0),...
+                    'lowPassType',cell(numel(unitList),0),...
+                    'highPassCorner',cell(numel(unitList),0),...
+                    'highPassOrder',cell(numel(unitList),0),...
+                    'highPassType',cell(numel(unitList),0)...
+                    );
     %loop through and unit entries for each unit
-    for i = 1:size(unitList,1)
-        %we are avoiding using the set methor here in order to avoid
-        %unnecessary duplication of data in memory.
-%         cds.units(i)=struct('chan',unitList(i,1),...
-%                             'ID',unitList(i,2),...
-%                             'array',array,...
-%                             'wellSorted',false,...this is a stub as testSorting can't be run till the whole units field is populated
-%                             'monkey',monkey,...
-%                             'spikes',table(...timestamps for current unit from the NEV:
-%                                      [double(cds.NEV.Data.Spikes.TimeStamp(cds.NEV.Data.Spikes.Electrode==unitList(i,1) & ...
-%                                         cds.NEV.Data.Spikes.Unit==unitList(i,2)))/30000]',... 
-%                                     ...waves for the current unit from the NEV:    
-%                                     double(cds.NEV.Data.Spikes.Waveform(:,cds.NEV.Data.Spikes.Electrode==unitList(i,1) ...
-%                                     &  cds.NEV.Data.Spikes.Unit==unitList(i,2))'),...
-%                                     'VariableNames',{'ts','wave'}));
+    for i = 1:size(unitList,1)        
         units(i).chan=unitList(i,1);
-        if noMap
-            units(i).rowNum=nan;
-            units(i).colNum=nan;
-            units(i).pinNum=nan;
-            units(i).bank=nan;
-            units(i).label=nan;
-        else
-            %find the correct row of our arrayMap:
-            idx=find(arrayMap.chan==units(i).chan,1);
-            %copy data from the map into the current unit entry:
-            units(i).rowNum=arrayMap.row(idx);
-            units(i).colNum=arrayMap.col(idx);
-            units(i).pinNum=arrayMap.pin(idx);
-            units(i).bank=arrayMap.bank(idx);
-            units(i).label=arrayMap.label(idx);
-        end
         units(i).ID=unitList(i,2);
-        units(i).array=array;
         units(i).wellSorted=false;
-        units(i).monkey=monkey;
         units(i).spikes=table(...timestamps for current unit from the NEV:
                                      [double(cds.NEV.Data.Spikes.TimeStamp(cds.NEV.Data.Spikes.Electrode==unitList(i,1) & ...
                                         cds.NEV.Data.Spikes.Unit==unitList(i,2)))/30000]',... 
@@ -151,9 +130,40 @@ function unitsFromNEV(cds,opts)
             %if there were resets, remove everything before the resets
             units(i).spikes{1:idx,:}=[];
         end
+        %now fill out the info structure for the unit
+        %find the appropriate row in NEV.ElectrodesInfo to get unit info:
+        NEVidx=find(NEVChanList==units(i).chan);
+        units(i).monkey=monkey;
+        units(i).array=array;
+        units(i).bank=cds.NEV.ElectrodesInfo(NEVidx).ConnectorBank;
+        units(i).pin=cds.NEV.ElectrodesInfo(NEVidx).ConnectorPin;
+        units(i).label=cds.NEV.ElectrodesInfo(NEVidx).ElectrodeLabel;
+        units(i).lowThreshold=cds.NEV.ElectrodesInfo(NEVidx).LowThreshold;
+        units(i).highThreshold=cds.NEV.ElectrodesInfo(NEVidx).HighThreshold;
+        units(i).lowPassCorner=cds.NEV.ElectrodesInfo(NEVidx).LowFreqCorner;
+        units(i).lowPassOrder=cds.NEV.ElectrodesInfo(NEVidx).LowFreqOrder;
+        units(i).lowPassType=cds.NEV.ElectrodesInfo(NEVidx).LowFilterType;
+        units(i).highPassCorner=cds.NEV.ElectrodesInfo(NEVidx).HighFreqCorner;
+        units(i).highPassOrder=cds.NEV.ElectrodesInfo(NEVidx).HighFreqOrder;
+        units(i).highPassType=cds.NEV.ElectrodesInfo(NEVidx).HighFilterType;
+        
+        if noMap
+            units(i).rowNum=nan;
+            units(i).colNum=nan;
+        else
+            %find the correct row of our arrayMap:
+            mapidx=find(arrayMap.chan==units(i).chan,1);
+            %copy data from the map into the current unit entry:
+            units(i).rowNum=arrayMap.row(mapidx);
+            units(i).colNum=arrayMap.col(mapidx);
+        end
+        
     end
-    cds.units=[cds.units;units];
-    
+    if isempty(cds.units)
+        cds.units=units;
+    else
+        cds.units=[cds.units;units];
+    end
 %    unitscds.testSorting; %tests each sorted unit to see if it is well-separated from background and other units on the same channel
     opData.array=array;
     opData.numUnitsAdded=size(unitList,1);
