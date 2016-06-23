@@ -10,13 +10,7 @@ function appendTable(trials,data,varargin)
     %the offset as a third argument to appendTable, or appendTable
     %will use the largest value in the stopTime column
 
-    %sanity check that existing trials and new trials have the same
-    %columns:
-    if ~isempty(trials.data) && ~isempty(setdiff(trials.data.Properties.VariableNames,data.Properties.VariableNames))
-        disp(['existing columns: ',strjoin(trials.data.Properties.VariableNames,', ')])
-        disp(['new data columns: ',strjoin(data.Properties.VariableNames,', ')])
-        error('appendTable:differentColumns','The existing trial data and the new data MUST have the same columns')
-    end
+    
     
     %get our state variables either from input or from defaults:
     if ~isempty(varargin)
@@ -37,6 +31,14 @@ function appendTable(trials,data,varargin)
     if ~exist('overWrite','var')
         overWrite=false;
     end
+    %sanity check that existing trials and new trials have the same
+    %columns:
+    if ~isempty(trials.data) && ~overWrite && ~isempty(setdiff(trials.data.Properties.VariableNames,data.Properties.VariableNames)) 
+        disp(['existing columns: ',strjoin(trials.data.Properties.VariableNames,', ')])
+        disp(['new data columns: ',strjoin(data.Properties.VariableNames,', ')])
+        error('appendTable:differentColumns','The existing trial data and the new data MUST have the same columns')
+    end
+    %if a time shift wasn't fed in, generate it:
     if ~exist('timeShift','var')
         if ~isempty(trials.data) && ~overWrite
             %if we are appending data to an existing table
@@ -46,7 +48,7 @@ function appendTable(trials,data,varargin)
             timeShift=0;
         end
     end   
-    
+        
     if ~isempty(timeShift) && timeShift>0
         %establish the mask that we use to select time columns
         mask=~cellfun('isempty',strfind(data.Properties.VariableNames,'Time'));

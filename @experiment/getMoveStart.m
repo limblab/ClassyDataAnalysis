@@ -37,16 +37,16 @@ function moveTimes=getMoveStart(ex,varargin)
         error('getMoveStart:noTrialData','there is no trial data in the experiment')
     end
     
-    if numel(varargin>0)
+    if numel(varargin)>0
         moveWindows=varargin{1};
         %set flag to put data directly into ex.trials.data:
         updateTrials=false;
     else
         %get the movement window for trials that got to the move phase and
         %weren't incomplete:
-        if isempty(find(strcmp('goCueTime',ex.trial.data.VariableNames),1))
+        if isempty(find(strcmp('goCueTime',ex.trials.data.Properties.VariableNames),1))
             error('getMoveStart:noGoCueTime','the trials table does not have goCueTimes')
-        elseif isempty(find(strcmp('endTime',ex.trial.data.VariableNames),1))
+        elseif isempty(find(strcmp('endTime',ex.trials.data.Properties.VariableNames),1))
             error('getMoveStart:noGoCueTime','the trials table does not have endTimes')
         end
         moveMask=~isnan(ex.trials.data.goCueTime);
@@ -65,13 +65,14 @@ function moveTimes=getMoveStart(ex,varargin)
         %get the index of the first point in the trial as the following
         %code will work only withing the trial and we need a reference back
         %to the whole timeseries:
-        offset=find(ex.kin.data.t>moveWindows(i),1,'first');
-        %get list of extrema
-        [peaks,ipeaks,valleys,ivalleys]=extrema(speed);
+        offset=find(ex.kin.data.t>moveWindows(i,1),1,'first');
+        idxEnd=find(ex.kin.data.t>moveWindows(i,2),1,'first');
+        %get list of extrema in this window
+        [peaks,ipeaks,valleys,ivalleys]=extrema(speed(offset:idxEnd));
         %get list of peaks sorted by when they happen in the window
-        peakData=sortrows([peaks',ipeaks'],2);
+        peakData=sortrows([peaks,ipeaks],2);
         %get list of valleys sorted by when they happen in the window
-        valleyData=sortrows([valleys',ivalleys'],2);
+        valleyData=sortrows([valleys,ivalleys],2);
         %find which peak is our max speed
         [~,imax]=max(peakData(:,1));
         if peakData(imax,2)>1
@@ -79,12 +80,13 @@ function moveTimes=getMoveStart(ex,varargin)
             %amplitude
             candidates=valleyData(valleyData(:,1)<.05*peakData(imax,1),:);
             if isempty(candidates)
-                %just get the global minima between the go cue and the peak
-                %speed:
+                %just get the global minima between the window start and 
+                %the peak speed:
                 [~,imin]=min(speed(offset:offset+peakData(imax,2)));
             else
                 %find the last candidate before peak speed:
-                imin=find(candidates(:,2)<peakData(imax,2),1,'last');
+                idxMin=find(candidates(:,2)<peakData(imax,2),1,'last');
+                imin=candidates(idxMin,2);
             end
             moveTime(i)=ex.kin.data.t(offset+imin);
         else
@@ -96,11 +98,18 @@ function moveTimes=getMoveStart(ex,varargin)
         end
         
     end
-    %append new timing data to the trials table
+    %append new timing data to the trials table:
     moveTimes=nan(size(ex.trials.data.endTime));
     moveTimes(moveMask)=moveTime;
     if updateTrials
-        trials=[ex.trials.data,table(moveTimes,'VariableNames',{'moveTime'})];
+        mask=true(size(ex.trials.data,2),1);
+        %if we already have a moveTimes column, set the mask to exclude it
+        %so we don't get a conflict:
+        idxMove=find(strcmp('moveTime',ex.trials.data.Properties.VariableNames),1);
+        mask(idxMove)=false;
+        %generate a new trials table with the new moveTimes
+        trials=[ex.trials.data(:,mask),table(moveTimes,'VariableNames',{'moveTime'})];
+        %set the ex.trials.data table to the new trials table
         ex.trials.appendTable(trials,'overWrite',true)
         evntData=loggingListenerEventData('getMoveStart',[]);
         notify(ex,'ranOperation',evntData)
