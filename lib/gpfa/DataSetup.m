@@ -6,8 +6,8 @@
 
     if ~exist('cds','var')
         cds=commonDataStructure();
-        cds.file2cds('C:\Users\csv057\Documents\MATLAB\GPFA\gpfa\Han_20160415_COBump_area2_tucker_001-01.nev','arrayS1Area2','monkeyHan',6,'ignoreJumps','taskCObump', 'ranByChris');
-        save('C:\Users\csv057\Documents\MATLAB\GPFA\gpfa\output-01.mat','cds','-v7.3')
+        cds.file2cds('C:\Users\csv057\Documents\Data\Han_20160415_COBump_area2_tucker_001-01.nev','arrayS1Area2','monkeyHan',6,'ignoreJumps','taskCObump', 'ranByChris', 'mapFileY:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.txt');
+        save('C:\Users\csv057\Documents\Data\output-01.mat','cds','-v7.3')
     end
     %
     
