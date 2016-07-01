@@ -77,6 +77,10 @@ function file2cds(cds,filePath,varargin)
                     opts.hasChaoticLoad=true;
                 elseif strcmp(optStr, 'ignoreJumps')
                     opts.ignore_jumps=true;
+                elseif strcmp(optStr,'noSummary')
+                    writeSummary=false;
+                elseif strcmp(optStr,'noDB')
+                    doDB=false;
                 elseif strcmp(optStr, 'ignoreFilecat')
                     opts.ignore_filecat=true;
                 elseif ischar(optStr) && length(optStr)>4 && strcmp(optStr(1:4),'task')
@@ -138,19 +142,17 @@ function file2cds(cds,filePath,varargin)
         if opts.labNum == 2 || opts.labNum == 3 || opts.labNum ==6
             opts.robot=true;
         end
+        if ~exist('writeSummary','var')
+            writeSummary=true;
+        end
+        if ~exist('doDB','var')
+            doDB=true;
+        end
     
-    
-%     %see if the 'noDB' flag was passed
-%     noDB=0;
-%     for i=1:length(varargin)
-%         if strcmp(varargin{i},'noDB')
-%             noDB=1;
-%         end
-%     end
 %     %check the database to see if the file has already been processed and
 %     %load it if it has:
 %     dataFromDB=0;
-%     if ~noDB
+%     if doDB
 %         try
 %             conn=database('LLTestingDB','LLMatlabScript','mvemjlht','Vendor','PostgreSQL','Server','vfsmmillerwiki.fsm.northwestern.edu');
 %             data=fetch(conn,['select *** from session where sourceFile = ',fileName]
@@ -170,8 +172,10 @@ function file2cds(cds,filePath,varargin)
         cds.nev2NEVNSx(filePath);
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
+        if writeSummary
 %        cds.writeSessionSummary()
-%         if ~noDB && ~dataFromDB
+        end
+%         if doDB && ~dataFromDB
 %             %write data to DB
 %         end
         evntData=loggingListenerEventData('file2cds',[]);

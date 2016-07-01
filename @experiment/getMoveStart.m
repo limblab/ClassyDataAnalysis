@@ -79,7 +79,7 @@ function moveTimes=getMoveStart(ex,varargin)
             %get the first minima before the peak that is below 5% of the peak
             %amplitude
             candidates=valleyData(valleyData(:,1)<.05*peakData(imax,1),:);
-            if isempty(candidates)
+            if isempty(candidates) || min(candidates(:,2))>peakData(imax,2)
                 %just get the global minima between the window start and 
                 %the peak speed:
                 [~,imin]=min(speed(offset:offset+peakData(imax,2)));

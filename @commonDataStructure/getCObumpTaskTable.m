@@ -332,7 +332,7 @@ function getCObumpTaskTable(cds,times)
     end
     
     trialsTable=[times,trialsTable];
-    trialsTable.Properties.Description='Trial table for the CO task';
+    trialsTable.Properties.Description='Trial table for the CObump task';
     %sanitize trial table by masking off corrupt databursts with nan's:
     mask= ( trialsTable.ctrHold<0           | trialsTable.ctrHold>10000 | ...
             trialsTable.delayHold<0         | trialsTable.delayHold>10000 |...

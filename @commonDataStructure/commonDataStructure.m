@@ -401,7 +401,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getRPTaskTable(cds,times)
         getDCOTaskTable(cds,times)
         %general functions
-        addProblem(cds,problem)%data preprocessing functions
+        addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)
         checkLfp60hz(cds)
         still=isStill(cds,data)

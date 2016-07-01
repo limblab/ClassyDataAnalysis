@@ -128,7 +128,7 @@ function unitsFromNEV(cds,opts)
         idx=cds.skipResets(units(i).spikes.ts);
         if ~isempty(idx) && idx>1
             %if there were resets, remove everything before the resets
-            units(i).spikes{1:idx,:}=[];
+            units(i).spikes=units(i).spikes(idx+1:end,:);
         end
         %now fill out the info structure for the unit
         %find the appropriate row in NEV.ElectrodesInfo to get unit info:
@@ -162,7 +162,7 @@ function unitsFromNEV(cds,opts)
     if isempty(cds.units)
         cds.units=units;
     else
-        cds.units=[cds.units;units];
+        cds.units=[cds.units,units];
     end
 %    unitscds.testSorting; %tests each sorted unit to see if it is well-separated from background and other units on the same channel
     opData.array=array;

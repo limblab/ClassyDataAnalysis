@@ -72,12 +72,13 @@ function fitPds(binned)
             for i=1:numel(uList)
                 fprintf([uList{i},':','getting data subset(ET=',num2str(toc),'s).'])
                 %% set up a mask for the columns we will use for this unit
-                colMask=false(1,numel(binned.data.Properties.VariableNames));
-                for j=1:numel(inputList)
-                    colMask=colMask | strcmp(inputList{j},binned.data.Properties.VariableNames);
-                end
-                %% get subset of the data we will use for fitting:
-                colMask=colMask | strcmp(uList{i},binned.data.Properties.VariableNames);
+%                 colMask=false(1,numel(binned.data.Properties.VariableNames));
+%                 for j=1:numel(inputList)
+%                     colMask=colMask | strcmp(inputList{j},binned.data.Properties.VariableNames);
+%                 end
+%                 %% get subset of the data we will use for fitting:
+%                 colMask=colMask | strcmp(uList{i},binned.data.Properties.VariableNames);
+                colMask=list2tableMask(binned.data,[inputList,uList(i)]);
                 %if you don't make a sub-table, then bootstrp will include a copy of the WHOLE binned.data table in the output for EVERY iteration
                 if binned.pdConfig.speed
                     dataTable=[binned.data(rowMask,colMask),speedTable];
