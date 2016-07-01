@@ -54,7 +54,7 @@ function appendTable(trials,data,varargin)
         mask=~cellfun('isempty',strfind(data.Properties.VariableNames,'Time'));
         data{:,mask}=data{:,mask}+timeShift;
     end
-    if ~isempty(trials.data)
+    if ~isempty(trials.data) && ~overWrite
         %incriment the trial number in data so that the new trials
         %start counting at the end of the old trials
         data.number=data.number+max(trials.data.number)+1;

@@ -50,8 +50,7 @@ function appendTable(tsd,data,varargin)
         overWrite=false;
     end
     if ~exist('timeShift','var')
-        if ~isempty(tsd.data)
-            %
+        if ~isempty(tsd.data) && ~overWrite
             timeShift=max(tsd.data.t)+mode(diff(data.t));
         else
             timeShift=0;
