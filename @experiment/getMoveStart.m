@@ -1,4 +1,4 @@
-function moveTimes=getMoveStart(ex,varargin)
+function varargout=getMoveStart(ex,varargin)
     %getMoveStart is a method of the experiment class.
     %ex.getMoveStart()
     %assumes that you want to find the initiation of movement between the
@@ -29,7 +29,9 @@ function moveTimes=getMoveStart(ex,varargin)
     %moveTimes is a single column vector containing the identified time of
     %motion onset for each time window
     
-    
+    if nargout>1
+        error('getMoveStart:tooManyOutputs','getMoveStart only supports a single output')
+    end
     
     if isempty(ex.kin.data)
         error('getMoveStart:missingKinmeaticData','there is no kinematic data in the experiment')
@@ -113,5 +115,10 @@ function moveTimes=getMoveStart(ex,varargin)
         ex.trials.appendTable(trials,'overWrite',true)
         evntData=loggingListenerEventData('getMoveStart',[]);
         notify(ex,'ranOperation',evntData)
+    end
+    if nargout==1
+        varargout{1}=moveTimes;
+    else
+        varargout{1}=[];
     end
 end
