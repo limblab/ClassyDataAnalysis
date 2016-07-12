@@ -20,8 +20,8 @@ function getUNTTaskTable(cds,times)
     %preallocate vectors:
     numTrials=numel(times.number);
     tgtDirList=nan(numTrials,1);
-    tgtPriorList=nan(numTrials,1);
-    cuePriorList=nan(numTrials,1);
+    tgtKappaList=nan(numTrials,1);
+    cueKappaList=nan(numTrials,1);
     goTime=nan(numTrials,1);
     OTTime=nan(numTrials,1);
     ctrOnTime=nan(numTrials,1);
@@ -32,15 +32,15 @@ function getUNTTaskTable(cds,times)
         %get target and prior info from databurst
         if ~isempty(idxDB) 
             tgtDirList(trial) = 180*bytes2float(cds.databursts.db(idxDB,10:13))/pi;
-            tgtPriorList(trial) = bytes2float(cds.databursts.db(idxDB,14:17));
-            cuePriorList(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
-            if cuePriorList > 100000 
-                cuePriorList(trial) = NaN;
+            tgtKappaList(trial) = bytes2float(cds.databursts.db(idxDB,14:17));
+            cueKappaList(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
+            if cueKappaList > 100000 
+                cueKappaList(trial) = NaN;
             end
         else
             tgtDirList(trial) = NaN;
-            tgtPriorList(trial) = NaN;
-            cuePriorList(trial) = NaN;
+            tgtKappaList(trial) = NaN;
+            cueKappaList(trial) = NaN;
         end
         % get the timestamp for the go cue
         gT = goCueTime(find(goCueTime<times.endTime(trial) & goCueTime>times.startTime(trial),1,'first'));
@@ -67,19 +67,19 @@ function getUNTTaskTable(cds,times)
 
     % Deal with weird prior databursts
     checkPrior = @(burst) burst < 10e-5 | burst > 1e5+1 | isnan(burst);
-    badBursts = find(checkPrior(tgtPriorList));
-    goodBursts = find(~checkPrior(tgtPriorList));
+    badBursts = find(checkPrior(tgtKappaList));
+    goodBursts = find(~checkPrior(tgtKappaList));
     for i = 1:length(badBursts)
         bb = badBursts(i);
         ind_dists = abs(goodBursts - bb);
         replacer_ind = goodBursts(find(ind_dists==min(ind_dists),1,'first'));
-        replacer = tgtPriorList(replacer_ind);
-        tgtPriorList(bb)= replacer;
+        replacer = tgtKappaList(replacer_ind);
+        tgtKappaList(bb)= replacer;
     end
 
     trialsTable=table(roundTime(ctrOnTime,.001),roundTime(goTime,.001),roundTime(OTTime,.001),...
-                        tgtDirList,cuePriorList,tgtPriorList,...
-                        'VariableNames',{'ctrOnTime','goCueTime','tgtOnTime','tgtDir','cuePrior','tgtPrior'});
+                        tgtDirList,cueKappaList,tgtKappaList,...
+                        'VariableNames',{'ctrOnTime','goCueTime','tgtOnTime','tgtDir','cueKappa','tgtKappa'});
     trialsTable.Properties.VariableUnits={'s','s','s','Deg','AU','AU'};
     trialsTable.Properties.VariableDescriptions={'center target onset time','go cue time','outer target onset time',...
                                                     'actual target direction','kappa of the von mises function for the visual cue','kappa for the von mises function for the actual target locations'};
