@@ -69,6 +69,15 @@ function varargout=getMoveStart(ex,varargin)
         %to the whole timeseries:
         offset=find(ex.kin.data.t>moveWindows(i,1),1,'first');
         idxEnd=find(ex.kin.data.t>moveWindows(i,2),1,'first');
+        if idxEnd==offset
+            %this can happen if there is no abort when the monkey leaves
+            %the center during a delay period, and is already in the target
+            %at the go-cue. The go-cue then immediatley triggers the trial
+            %end, in ~10ms, and there will be no kinematics between goCue
+            %and trial end
+            moveTime(i)=nan;
+            continue
+        end
         %get list of extrema in this window
         [peaks,ipeaks,valleys,ivalleys]=extrema(speed(offset:idxEnd));
         %get list of peaks sorted by when they happen in the window
