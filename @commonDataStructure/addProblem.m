@@ -1,4 +1,4 @@
-function addProblem(cds,problem, varargin)
+function addProblem(cds,problem,varargin)
     %this is a method function for the common_data_structure (cds) class, and
     %should be located in a folder '@common_data_structure' with the class
     %definition file and other method files
@@ -12,7 +12,7 @@ function addProblem(cds,problem, varargin)
     if isempty(varargin)
         problemData=[];
     else
-        problemData=varargind{i};
+        problemData=varargin{1};
     end
     meta=cds.meta;
     meta.knownProblems=[meta.knownProblems;{problem,problemData}];

@@ -118,6 +118,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                 addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
                 addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
                 addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                addlistener(ex.bin,'ranWeinerFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
         end
     end
     methods
@@ -433,7 +434,12 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                case 'fitKalman'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
                case 'fitWeiner'
-                   error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
+                   analysis.type = 'fitWeiner';
+                   anaylsis.config = ex.bin.weinerConfig;
+                   analysis.date = date;
+                   [analysis.userName, analysis.PCName] = ex.getUserHost;
+                   analysis.data=ex.bin.weinerData;
+                   analysis.notes = 'no notes entered';
                otherwise
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',['Did not recognize: ',evnt.operationName, ' as a valid analysis'])
            end

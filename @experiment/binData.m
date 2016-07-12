@@ -106,7 +106,7 @@ function binData(ex,varargin)
         %decimate the Fr data if necessary:
         if ex.binConfig.filterConfig.sampleRate<ex.firingRate.meta.sampleRate
             temp=decimateData(ex.firingRate.data{:,unitCols},ex.binConfig.filterConfig);
-            temp=table2mat(temp,'VariableNames',ex.firingRate.data.Properties.VariableNames(unitCols));
+            temp=mat2table(temp,'VariableNames',ex.firingRate.data.Properties.VariableNames(unitCols));
             temp.Properties.VariableUnits=ex.firingRate.data.Properties.VariableUnits(unitCols);
             temp.Properties.VariableDescriptions=ex.firingRate.data.Properties.VariableDescriptions(unitCols);
             temp.Properties.Description=ex.firingRate.data.Properties.Description;

@@ -71,8 +71,7 @@ function getTrialTable(cds,opts)
                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 
             case 'UNT' %Brian Dekleva's uncertainty task
-                error('getTrialTable:taskNotImplemented','the code to create a trial table for the uncertainty task is not implemented. Please help by implementing it! ')
-                
+                cds.getUNTTaskTable(times);
             case 'RP' %Ricardo's resist perturbations task
                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the resist perturbations task is not implemented. Please help by implementing it! ')
                 

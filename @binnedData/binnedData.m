@@ -1,11 +1,12 @@
 classdef binnedData < matlab.mixin.SetGet
     properties(Access = public)
         weinerConfig
+        dimReductionConfig
         glmConfig
-        gpfaConfig
-        faConfig
-        pcaConfig
-        ppcaConfig
+        %gpfaConfig
+        %faConfig
+        %pcaConfig
+        %ppcaConfig
         kalmanConfig
         pdConfig
     end
@@ -39,13 +40,28 @@ classdef binnedData < matlab.mixin.SetGet
             set(binned,'data',cell2table(cell(0,2),'VariableNames',{'t','data'}));
             set(binned,'meta',struct('dateTime','noData','binSize',0,'numLags',0,'offset',0));
             %configs
-            set(binned,'weinerConfig',struct('inputLabels',{'all'},'outputLabels',{'all'},'numFolds',0));
-            set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
-            set(binned,'gpfaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
-            set(binned,'pcaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
-            set(binned,'ppcaConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
-            set(binned,'faConfig',struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []));
-            set(binned,'kalmanConfig',struct('structData','this is a stub struct that needs to be coded'));
+            %set(binned,'weinerConfig',struct('inputLabels',{'all'},'outputLabels',{'all'},'numFolds',0));
+            wc.numFolds=10;
+            wc.inputList=[];
+            wc.outputList=[];
+            wc.polynomialOrder=0;
+            wc.windows=[];
+            set(binned,'weinerConfig',wc)
+            
+             set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
+%             gpfac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
+%             set(binned,'gpfaConfig',gpfac); 
+%             pcac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
+%             set(binned,'pcaConfig',pcac);
+%             ppcac=struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []);
+%             set(binned,'ppcaConfig',ppcac);
+%             fac=struct('units',[], 'windows',[], 'dimension', 8, 'segLength', inf, 'trialNums', -1, 'trials', []);
+%             set(binned,'faConfig',fac);
+%             kc=struct('structData','this is a stub struct that needs to be coded');
+%             set(binned,'kalmanConfig',kc);
+            drc=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
+            set(binned,'dimReductionConfig',drc);
+            
             pdc.method='glm';
             pdc.units=[];
             pdc.pos=false;
@@ -56,16 +72,9 @@ classdef binnedData < matlab.mixin.SetGet
             pdc.bootstrapReps=100;
             pdc.windows=[];
             pdc.useParallel=false;
-            
-            gpfac.units=[];
-            gpfac.windows=[];
-            gpfac.trials= [];
-            gpfac.dimension = 0;
-            gpfac.segLength = 0;
-            
             set(binned,'pdConfig',pdc);
             %output data
-            set(binned,'weinerData',struct('structData','this is a stub struct that needs to be coded'));
+            set(binned,'weinerData',[]);
             PDs=[];
             set(binned,'pdData',PDs);
             set(binned,'glmData',[]);
@@ -102,8 +111,35 @@ classdef binnedData < matlab.mixin.SetGet
         function set.weinerConfig(binned,wc)
             if ~isstruct(wc)
                 error('weinerConfig:notAStruct','weinerConfig must be a struct')
+            elseif ~isfield(wc,'numFolds')
+                error('weinerConfig:noNumFolds','the weinerConfig property must have a numFolds field enumerating the number of folds to usne for multifold crossvalidation')
+            elseif ~isfield(wc,'inputList')
+                error('weinerConfig:noOutput','the weinerconfig property must have a outputList field enumerating the signals to use as outputs of the weiner filter')
+            elseif ~isfield(wc,'outputList')
+                error('weinerConfig:noInput','the weinerconfi property must have a inputList field enumerating the signals to use as inputs to the weiner filter')
+            elseif ~isfield(wc,'polynomialOrder')
+                error('weinerConfig:noPolynomialOrder','the weinerConfig property must have a polynomialOrder field indicating the order of the static nonlinearity applied to the filter output')
+            elseif ~isfield(wc,'windows')
+                error('weinerConfig:noWindows','the weinerConfig property must have a windows field with the time windows to use when fiting the filter')
             else
                 binned.weinerConfig=wc;
+            end
+        end
+        function set.dimReductionConfig(binned,drc)
+            if ~isstruct(drc)
+                error('dimReductionConfig:notAStruct','dimReductionConfig must be a struct')
+            elseif ~isfield(drc,'units')
+                error('dimReductionConfig:noUnits','the dimReductionConfig must have a units property containing a list of units to use in the dimensionalty reduction')
+            elseif ~isfield(drc,'windows')
+                error('dimReductionConfig:noWindows','the dimReductionConfig must have a windows field giving the time windows for the trials of interest')
+            elseif ~isfield(drc,'dimension')
+                error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionalit of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
+            elseif ~isfield(drc,'segLength')
+                error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLenght field')
+            elseif ~isfield(drc,'trials')
+                error('dimReductionConfig:noTrials','the dimReductionConfig must have a trials field')
+            else
+                binned.glmConfig=drc;
             end
         end
         function set.glmConfig(binned,glmc)
@@ -113,13 +149,13 @@ classdef binnedData < matlab.mixin.SetGet
                 binned.glmConfig=glmc;
             end
         end
-        function set.gpfaConfig(binned,gpfac)
-            if ~isstruct(gpfac)
-                error('gpfaConfig:notAStruct','gpfaConfig must be a struct')
-            else
-                binned.gpfaConfig=gpfac;
-            end
-        end
+%         function set.gpfaConfig(binned,gpfac)
+%             if ~isstruct(gpfac)
+%                 error('gpfaConfig:notAStruct','gpfaConfig must be a struct')
+%             else
+%                 binned.gpfaConfig=gpfac;
+%             end
+%         end
         function set.kalmanConfig(binned,kfc)
             if ~isstruct(kfc)
                 error('kalmanConfig:notAStruct','kalmanConfig must be a struct')
@@ -127,27 +163,27 @@ classdef binnedData < matlab.mixin.SetGet
                 binned.kalmanConfig=kfc;
             end
         end
-                function set.faConfig(binned,fac)
-            if ~isstruct(fac)
-                error('faConfig:notAStruct','faConfig must be a struct')
-            else
-                binned.faConfig=fac;
-            end
-                end
-        function set.ppcaConfig(binned,ppcac)
-            if ~isstruct(ppcac)
-                error('ppcaConfig:notAStruct','ppcaConfig must be a struct')
-            else
-                binned.ppcaConfig=ppcac;
-            end
-                end
-        function set.pcaConfig(binned,pcac)
-            if ~isstruct(pcac)
-                error('pcaConfig:notAStruct','pcaConfig must be a struct')
-            else
-                binned.pcaConfig=pcac;
-            end
-        end
+%         function set.faConfig(binned,fac)
+%             if ~isstruct(fac)
+%                 error('faConfig:notAStruct','faConfig must be a struct')
+%             else
+%                 binned.faConfig=fac;
+%             end
+%                 end
+%         function set.ppcaConfig(binned,ppcac)
+%             if ~isstruct(ppcac)
+%                 error('ppcaConfig:notAStruct','ppcaConfig must be a struct')
+%             else
+%                 binned.ppcaConfig=ppcac;
+%             end
+%                 end
+%         function set.pcaConfig(binned,pcac)
+%             if ~isstruct(pcac)
+%                 error('pcaConfig:notAStruct','pcaConfig must be a struct')
+%             else
+%                 binned.pcaConfig=pcac;
+%             end
+%         end
         function set.pdConfig(binned,pdc)
             if ~isstruct(pdc)
                 error('pdConfig:notAStruct','the pdConfig field must be a struct describing the way that PDs will be computed')
@@ -172,8 +208,29 @@ classdef binnedData < matlab.mixin.SetGet
             end
         end
         function set.weinerData(binned,wData)
-            warning('weinerData:SetNotImplemented','set method for the weinerData field of the binnedData class is not implemented')
-            binned.weinerData=[];
+            if isempty(wData)
+                binned.weinerData=[];
+                return
+            end
+            if ~isstruct(wData)
+                error('weinerData:NotAStruct','binnedData.weinerData must be a struct')
+            elseif ~isfield(wData,'model')
+                error('weinerData:noModelField','binnedData.weinerData must have a model field')
+            elseif ~isfield(wData,'poly')
+                error('weinerData:noPolyField','binnedData.weinerData must have a poly field')
+            elseif ~isfield(wData,'R2')
+                error('weinerData:noR2Field','binnedData.weinerData must have a R2 field')
+            elseif ~isfield(wData,'VAF')
+                error('weinerData:noVAFField','binnedData.weinerData must have a VAF field')
+            elseif ~isfield(wData,'MSE')
+                error('weinerData:noMSEField','binnedData.weinerData must have a MSE field')
+            elseif ~isfield(wData,'foldMask')
+                error('weinerData:noFoldMaskField','binnedData.weinerData must have a foldMask field')
+            elseif ~isfield(wData,'reserveMask')
+                error('weinerData:noReserveMaskField','binnedData.weinerData must have a reserveMask field')
+            else
+                binned.weinerData=wData;
+            end
         end
         function set.pdData(binned,pdData)
             if ~isempty(pdData) && ~istable(pdData)
@@ -216,5 +273,9 @@ classdef binnedData < matlab.mixin.SetGet
         tuningCircle(binned,label)%plots an empirical tuning circle for a single neuron against the variable 'label'
         polarPDs(binned,units)%makes a polar plot of the PDs associated with the units defined in 'units'
         dat = dimRedHelper(binned, method)
+    end
+    methods (Static = true)
+        [H,v,mcc]=filMIMO4(X,Y,numlags,numsides,fs)
+        [Ypred,Xnew,Ynew]=predMIMO4(X,H,numsides,fs,Yact)
     end
 end
