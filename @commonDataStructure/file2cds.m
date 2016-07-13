@@ -63,10 +63,10 @@ function file2cds(cds,filePath,varargin)
     %Chips, Tucker conducted the experiment and the map file can be found
     %in map.cmp.
     
-    
     %% construct opts structure:
     opts=struct('labNum',-1,'rothandle',false,'ignore_jumps',false,'ignore_filecat',false,'robot',false,'task','Unknown','hasChaoticLoad',false); 
 
+    %%
         % Parse arguments
         if ~isempty(varargin)
             for i = 1:length(varargin)
@@ -100,6 +100,24 @@ function file2cds(cds,filePath,varargin)
                 end
             end
         end
+        
+        %check OS standard for file path and fix filename accordingly
+        dirpth = cd;
+        if ismember('\',dirpth)~=ismember('\',filePath) % We need to switch the slash type
+            slashindsdir = cell2mat(cellfun(@(x) strfind(dirpth,x),{'\','/'},'UniformOutput',0));
+            slashindsfile = cell2mat(cellfun(@(x) strfind(filePath,x),{'\','/'},'UniformOutput',0));
+
+            filePath(slashindsfile) = dirpth(slashindsdir(1)); % Replace with correct slashes in filePath
+            if isfield(opts,'mapFile')
+                slashindsmap = cell2mat(cellfun(@(x) strfind(opts.mapFile,x),{'\','/'},'UniformOutput',0));
+                opts.mapFile(slashindsmap) = dirpth(slashindsdir(1));
+            end
+        end
+        
+        %check if monkey was provided. If not, insert 'unknown' as monkey name
+        if ~isfield(opts,'monkey')
+            opts.monkey = 'unknown';
+        end
         %check the options and throw warnings if some things aren't set:
         flag=0;
         if strcmp(opts.task,'Unknown')
@@ -113,10 +131,6 @@ function file2cds(cds,filePath,varargin)
         if opts.labNum==-1
             flag=true;
             warning('NEVNSx2cds:labNotSet','The lab number where this data was collected was not passed as an input variable')
-        end
-        if ~isfield(opts,'monkey')
-            flag=true;
-            warning('NEVNSx2cds:monkeyNotSet','The monkey from which this data was collected was not passed as an input variable')
         end
         if ~isfield(opts,'ranBy')
            flag=true;
@@ -138,6 +152,22 @@ function file2cds(cds,filePath,varargin)
                 end
             end
         end
+        %check to make sure our file isn't too big
+        fp = dir(filePath); fsize = round(fp.bytes/2^30);
+        if fp.bytes > 1
+            while 1
+                s=input(sprintf('This file is %.1fGB. Continue anyway? (y/n)\n',fsize),'s');
+                if strcmpi(s,'n')
+                    error('NEVNSx2cds:UserCancelled','User cancelled execution due to large file size')
+                elseif strcmpi(s,'y')
+                    break
+                else
+                    disp([s,' is not a valid response'])
+                end
+            end
+        end
+                
+        
         %set the robot flag if we are using one of the robot labs:
         if opts.labNum == 2 || opts.labNum == 3 || opts.labNum ==6
             opts.robot=true;
