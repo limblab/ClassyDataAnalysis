@@ -154,7 +154,7 @@ function file2cds(cds,filePath,varargin)
         end
         %check to make sure our file isn't too big
         fp = dir(filePath); fsize = round(fp.bytes/2^30);
-        if fp.bytes > 1
+        if fsize > 1
             while 1
                 s=input(sprintf('This file is %.1fGB. Continue anyway? (y/n)\n',fsize),'s');
                 if strcmpi(s,'n')
