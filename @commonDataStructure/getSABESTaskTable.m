@@ -94,6 +94,6 @@ function getSABESTaskTable(cds,times)
     trialsTable=[times,trialsTable];
     trialsTable.Properties.Description='Trial table for the center-out Sabes task';
     set(cds,'trials',trialsTable)
-    evntData=loggingListenerEventData('getSABTaskTable',[]);
+    evntData=loggingListenerEventData('getSABESTaskTable',[]);
     notify(cds,'ranOperation',evntData)
 end
