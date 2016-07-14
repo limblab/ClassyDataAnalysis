@@ -72,18 +72,6 @@ function getSABESTaskTable(cds,times)
         end
     end
 
-    % Deal with weird prior databursts
-    checkPrior = @(burst) burst < 10e-5 | burst > 1e5+1 | isnan(burst);
-    badBursts = find(checkPrior(cursShiftList));
-    goodBursts = find(~checkPrior(cursShiftList));
-    for i = 1:length(badBursts)
-        bb = badBursts(i);
-        ind_dists = abs(goodBursts - bb);
-        replacer_ind = goodBursts(find(ind_dists==min(ind_dists),1,'first'));
-        replacer = cursShiftList(replacer_ind);
-        cursShiftList(bb)= replacer;
-    end
-
     trialsTable=table(roundTime(ctrOnTime,.001),roundTime(OTTime,.001),roundTime(goTime,.001),...
                         roundTime(holdTime,.001),tgtDirList,cursShiftList,tgtShiftList,...
                         'VariableNames',{'ctrOnTime','OTTime','goTime','holdTime','tgtDir','cursShift','tgtShift'});
