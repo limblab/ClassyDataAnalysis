@@ -78,6 +78,8 @@ function getTrialTable(cds,opts)
             case 'DCO' %Ricardo's dynamic center out task
                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the dynamic center out task is not implemented. Please help by implementing it! ')
                 
+            case 'SABES' % Brian Dekleva's center out sabes task
+                cds.getSABESTaskTable(times);
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
         end
