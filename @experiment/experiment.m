@@ -15,6 +15,9 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
         bin
         analysis
     end
+    properties (Transient = true, Access=private)
+        listenerList
+    end
     properties (Transient = true)
         scratch
     end
@@ -95,30 +98,32 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                 %LISTENERS SHOULD ALSO BE INSTANTIATED IN THE ex.loadobj
                 %METHOD, OR THEY WILL NOT BE RE-CREATED WHEN LOADING AN
                 %EXPERIMENT FROM A FILE
-                addlistener(ex,'ranOperation',@(src,evnt)ex.experimentLoggingEventCallback(src,evnt));
+                LL=[];
+                LL=[LL,{addlistener(ex,'ranOperation',@(src,evnt)ex.experimentLoggingEventCallback(src,evnt))}];
                 %data event listners
-                addlistener(ex.kin,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.kin,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.force,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.force,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.lfp,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.lfp,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.emg,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.emg,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.triggers,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.triggers,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+                LL=[LL,{addlistener(ex.kin,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.kin,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.force,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.force,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.lfp,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.lfp,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.emg,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.emg,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.triggers,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.triggers,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
                 %no listners on analog since its empty. we will add them
                 %when we insert data
-                addlistener(ex.trials,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.units,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+                LL=[LL,{addlistener(ex.trials,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.units,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt))}];
                 %listeners on analysis:
-                addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-                addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-                addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-                addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-                addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-                addlistener(ex.bin,'ranWeinerFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+                LL=[LL,{addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                LL=[LL,{addlistener(ex.bin,'ranWeinerFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))}];
+                ex.listenerList=LL;
         end
     end
     methods
@@ -326,32 +331,57 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
     methods (Static = false, Access = protected, Hidden=true)
         [lagData,lagPts,time]=timeShiftBins(ex,data,lags,varargin)
     end
+    methods ( Access = 'private' )
+        %delete method. This is called when the cds is cleared, and is an
+        %overload of the normal delete method that all handle classes
+        %implemement
+        function ex = delete( ex )
+            %this function exists to make sure all listeners in the cds are
+            %properly deleted prior to attempting to clear the class
+            %object. Matlab does not seem to have any 
+            
+             for i=1:numel(ex.listenerList)
+                 delete(ex.listenerList{i})
+             end
+             %check to see whether we still have any listeners and issue a
+             %warning
+             eventList=findAllListeners(ex);
+             if ~isempty(eventList)
+                 warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+                 disp('the following events still have listeners')
+                 disp(eventList)
+             end
+        end
+    end
     methods (Static=true)
         function ex=loadobj(ex)
             %re-creates listeners on loading experiment from saved file:
-            addlistener(ex,'ranOperation',@(src,evnt)ex.experimentLoggingEventCallback(src,evnt));
-                %data event listners
-            addlistener(ex.kin,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.kin,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.force,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.force,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.lfp,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.lfp,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.emg,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.emg,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.triggers,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.triggers,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+            
+            LL=[];
+            LL=[LL,addlistener(ex,'ranOperation',@(src,evnt)ex.experimentLoggingEventCallback(src,evnt))];
+            %data event listners
+            LL=[LL,addlistener(ex.kin,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.kin,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.force,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.force,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.lfp,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.lfp,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.emg,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.emg,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.triggers,'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.triggers,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
             %no listners on analog since its empty. we will add them
             %when we insert data
-            addlistener(ex.trials,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.units,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-            addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+            LL=[LL,addlistener(ex.trials,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.units,'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.bin,'updatedBins',@(src,evnt)ex.dataLoggingCallback(src,evnt))];
             %listeners on analysis:
-            addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-            addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-            addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-            addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
-            addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt));
+            LL=[LL,addlistener(ex.bin,'ranPDFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.bin,'ranPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.bin,'ranPPCAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.bin,'ranFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))];
+            LL=[LL,addlistener(ex.bin,'ranGPFAFit',@(src,evnt)ex.binAnalysisLoggingCallback(src,evnt))];
+            ex.listenerList=LL;
         end
     end
     methods
@@ -393,60 +423,42 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
            %the ex.analysis structure
            idx=numel(ex.analysis)+1;
            
+           %fill all the analysis fields we can generically:
+           a.date=date;
+           [a.userName,a.PCName]=ex.getUserHost;
+           a.type=evnt.operationName;
+           a.notes='no notes entered';
+           %now get the operation specific data and config info
            switch evnt.operationName
                case 'fitPds'
-                   analysis.type='fitPDs';
-                   analysis.config=ex.bin.pdConfig;
-                   analysis.date=date;
-                   [analysis.userName,analysis.PCName]=ex.getUserHost;
-                   analysis.data=ex.bin.pdData;
-                   analysis.notes='no notes entered';
+                   a.config=ex.bin.pdConfig;
+                   a.data=ex.bin.pdData;
                case 'fitGLM'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
                case 'fitGpfa'
-                   analysis.type = 'fitGpfa';
-                   anaylsis.config = ex.bin.gpfaConfig;
-                   analysis.date = date;
-                   [analysis.userName, analysis.PCName] = ex.getUserHost;
-                   analysis.data=ex.bin.gpfaData;
-                   analysis.notes = 'no notes entered';
+                   a.config = ex.bin.gpfaConfig;
+                   a.data=ex.bin.gpfaData;
               case 'fitFA'
-                   analysis.type = 'fitFA';
-                   anaylsis.config = ex.bin.faConfig;
-                   analysis.date = date;
-                   [analysis.userName, analysis.PCName] = ex.getUserHost;
-                   analysis.data=ex.bin.faData;
-                   analysis.notes = 'no notes entered';
+                   a.config = ex.bin.faConfig;
+                   a.data=ex.bin.faData;
               case 'fitPCA'
-                   analysis.type = 'fitPCA';
-                   anaylsis.config = ex.bin.pcaConfig;
-                   analysis.date = date;
-                   [analysis.userName, analysis.PCName] = ex.getUserHost;
-                   analysis.data=ex.bin.pcaData;
-                   analysis.notes = 'no notes entered';
+                   a.config = ex.bin.pcaConfig;
+                   a.data=ex.bin.pcaData;
               case 'fitPPCA'
-                   analysis.type = 'fitPPCA';
-                   anaylsis.config = ex.bin.ppcaConfig;
-                   analysis.date = date;
-                   [analysis.userName, analysis.PCName] = ex.getUserHost;
-                   analysis.data=ex.bin.ppcaData;
-                   analysis.notes = 'no notes entered';
+                   a.config = ex.bin.ppcaConfig;
+                   a.data=ex.bin.ppcaData;
                case 'fitKalman'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
                case 'fitWeiner'
-                   analysis.type = 'fitWeiner';
-                   anaylsis.config = ex.bin.weinerConfig;
-                   analysis.date = date;
-                   [analysis.userName, analysis.PCName] = ex.getUserHost;
-                   analysis.data=ex.bin.weinerData;
-                   analysis.notes = 'no notes entered';
+                   a.config = ex.bin.weinerConfig;
+                   a.data=ex.bin.weinerData;
                otherwise
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',['Did not recognize: ',evnt.operationName, ' as a valid analysis'])
            end
            if isempty(ex.analysis)
-               ex.analysis=analysis;
+               ex.analysis=a;
            else
-               ex.analysis(idx)=analysis;
+               ex.analysis(idx)=a;
            end
         end
     end

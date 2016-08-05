@@ -24,6 +24,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         enc
         words
         databursts
+        listenerList
     end
     properties (Transient = true, Access = public)
         aliasList%allows user to set aliases for incoming data streams in order to process correctly. 
@@ -107,7 +108,9 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             %% empty list of aliases to apply when loading analog data
                 cds.aliasList=cell(0,2);
             %% set up listners
-                addlistener(cds,'ranOperation',@(src,evnt)cds.cdsLoggingEventCallback(src,evnt));
+                LL=[];
+                LL{numel(LL)+1}=addlistener(cds,'ranOperation',@(src,evnt)cds.cdsLoggingEventCallback(src,evnt));
+                cds.listenerList=LL;
         end
     end
     methods
@@ -338,6 +341,28 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             else
                 cds.meta=meta;
             end
+        end
+    end
+    methods ( Access = 'private' )
+        %delete method. This is called when the cds is cleared, and is an
+        %overload of the normal delete method that all handle classes
+        %implemement
+        function cds = delete( cds )
+            %this function exists to make sure all listeners in the cds are
+            %properly deleted prior to attempting to clear the class
+            %object. Matlab does not seem to have any 
+            disp('clearing listeners')
+             for i=1:numel(cds.listenerList)
+                 delete(cds.listenerList{i})
+             end
+             %check to see whether we still have any listeners and issue a
+             %warning
+             eventList=findAllListeners(cds);
+             if ~isempty(eventList)
+                 warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+                 disp('the following events still have listeners')
+                 disp(eventList)
+             end
         end
     end
     methods (Static = false)
