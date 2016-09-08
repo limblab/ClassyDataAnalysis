@@ -25,7 +25,7 @@ function eventsWithListeners=findAllListeners(obj)
              warning('findAllListeners:FailedToCheckListeners','failed to check whether the listeners to cds events were properly cleared')
              disp('the event.hasListeners method is not available in some distirbutions (linux?). All listeners may be cleared but the cds destructor is not able to confirm')
              disp('check failed with the following error:')
-             disp(err2CellStr(ME))
+             disp(error2CellStr(ME))
              return
          end
      end
@@ -46,7 +46,7 @@ function eventsWithListeners=findAllListeners(obj)
                      warning('findAllListeners:FailedToCheckListeners','failed to check whether the listeners to cds events were properly cleared')
                      disp('the event.hasListeners method is not available in some distirbutions (linux?). All listeners may be cleared but the cds destructor is not able to confirm')
                      disp('check failed with the following error:')
-                     disp(err2CellStr(ME))
+                     disp(error2CellStr(ME))
                      return
                  end
             end

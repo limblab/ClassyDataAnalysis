@@ -152,21 +152,40 @@ function file2cds(cds,filePath,varargin)
                 end
             end
         end
-        %check to make sure our file isn't too big
-        fp = dir(filePath); fsize = round(fp.bytes/2^30);
-        if fsize > 1
-            while 1
-                s=input(sprintf('This file is %.1fGB. Continue anyway? (y/n)\n',fsize),'s');
-                if strcmpi(s,'n')
-                    error('NEVNSx2cds:UserCancelled','User cancelled execution due to large file size')
-                elseif strcmpi(s,'y')
-                    break
-                else
-                    disp([s,' is not a valid response'])
-                end
+        %check whether the file has an extension and warn the user if it
+        %doesn't:
+        [~,~,ext]=fileparts(filePath);
+        if isempty(ext)
+            warning('file2cds:noFileExtension','the file name was given with no extension.')
+            testExt='.nev';
+            tmp=dir([filePath,testExt]);
+            if ~isempty(tmp)
+                disp('found matching *.nev file. Continuing assuming user wants to load:')
+                disp([filePath,testExt])
+                filePath=[filePath,testExt];
+            else
+                error('file2cds:noMatchingFile',['failed to find a file matching the input path:',filePath,'. Please check the path string'])
             end
         end
-                
+        
+        %check to make sure our file isn't too big. Only works under
+        %windows:
+        if ispc
+            mem=memory;
+            fp=dir(filePath);
+            if fp.bytes > mem.MemAvailableAllArrays*.75
+                while 1
+                    s=input(sprintf('This file is %.1fGB, and matlab only has %.1fGB available. Continue anyway? (y/n)\n',round(fp.bytes/2^30),mem.MemAvailableAllArrays),'s');
+                    if strcmpi(s,'n')
+                        error('NEVNSx2cds:UserCancelled','User cancelled execution due to large file size')
+                    elseif strcmpi(s,'y')
+                        break
+                    else
+                        disp([s,' is not a valid response'])
+                    end
+                end
+            end
+        end 
         
         %set the robot flag if we are using one of the robot labs:
         if opts.labNum == 2 || opts.labNum == 3 || opts.labNum ==6

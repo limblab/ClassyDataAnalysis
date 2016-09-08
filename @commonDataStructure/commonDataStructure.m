@@ -343,25 +343,37 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             end
         end
     end
-    methods ( Access = 'private' )
-        %delete method. This is called when the cds is cleared, and is an
-        %overload of the normal delete method that all handle classes
-        %implemement
-        function cds = delete( cds )
+    methods 
+        function clear(cds)
+        %overload clear so that the delete method is called instead,
+        %purging the callbacks
+            cds.delete();
+            
+        end
+        function delete( cds )
+            %delete method. This is called when the cds is cleared, and is an
+            %overload of the normal delete method that all handle classes
+            %implemement
+            %
             %this function exists to make sure all listeners in the cds are
             %properly deleted prior to attempting to clear the class
-            %object. Matlab does not seem to have any 
-            disp('clearing listeners')
+            %object. Matlab does not seem to have any way to find listeners
+            %in Linux, so we have to use the list and hope there aren't
+            %rantom other listeners out there
              for i=1:numel(cds.listenerList)
                  delete(cds.listenerList{i})
              end
              %check to see whether we still have any listeners and issue a
              %warning
-             eventList=findAllListeners(cds);
-             if ~isempty(eventList)
-                 warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
-                 disp('the following events still have listeners')
-                 disp(eventList)
+             if ispc
+                 eventList=findAllListeners(cds);
+                 if ~isempty(eventList)
+                     warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+                     disp('the following events still have listeners')
+                     disp(eventList)
+                 end
+             else
+                 warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this cds instance may hide in background memory until any listeners not in the listener list are cleared')
              end
         end
     end
