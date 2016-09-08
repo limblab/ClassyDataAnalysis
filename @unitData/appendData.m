@@ -190,6 +190,8 @@ function appendData(units,data,varargin)
                                 %now see where we are on the distribution of
                                 %known different cells to estimate p-value:
                                 pISI=min([sum(tsISI>=ks),sum(tsISI<=ks)]/numel(tsISI))/2;%the min and divide by 2 business is to handle the 2sided nature of the statistic
+                            else
+                                pISI=1;
                             end
                             if ~isempty(strfind(method, 'number'))
                                 %check to see if we have a number match, and if set
