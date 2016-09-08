@@ -158,8 +158,9 @@ function appendData(units,data,varargin)
                     %them if match is found
 
                     for k=1:numel(dataList)
-                        if ~dataFlags(k)
-                            %if this unit in data was already handled, skip it
+                        if ~dataFlags(k) || ~strcmp(units.data(unitsList(j)).array,data(dataList(k)).array)
+                            %if this unit in data was already handled, or
+                            %if the array name doesn't match, skip it
                             continue
                         else
                             %compare data(dataList(k)) to
