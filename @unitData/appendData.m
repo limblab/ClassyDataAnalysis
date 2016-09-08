@@ -32,7 +32,15 @@ function appendData(units,data,varargin)
     %           -invalid relabels unmatched units as invalid
     %           -delete removes unmatched units from unitData
     %
-    %The matching portions of this code are adapted from B-Dekleva's code
+    %appendData does not return anything, instead, the unitData.data field
+    %is updated. appendData also returns information via a notification to
+    %listeners, including the number of units in the new data, as well as
+    %the distributions of shape and ISI parameters in the dataset. The
+    %experiment class has a listener that will catch this notification and
+    %store the data, in the operationLog property (inherited from the
+    %operationLogger class)
+    %
+    %The unit matching portions of this code are adapted from B-Dekleva's code
     %that is based on the method outlined in Rebesco etal, 'Rewiring neural
     %interactions by micro-stimulation' in frontiers in systems
     %neuroscience from 2012. The major modification here is that we use

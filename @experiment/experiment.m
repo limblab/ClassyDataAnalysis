@@ -1,7 +1,6 @@
 classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet is a subclass of the handle class, and implements set & get methods on top of the attributes of handle classes
     properties (Access = public)
         meta
-        mergeConfig
         kin
         force
         lfp
@@ -15,6 +14,8 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
         binConfig
         bin
         analysis
+        %experiment also inherits the operationLog property from the
+        %operationLogger class
     end
     properties (Transient = true, SetAccess=private,GetAccess=public)
         listenerList
@@ -56,8 +57,6 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                 m.numFail=0;
                 m.numIncomplete=0;
                 set(ex,'meta',m)
-            %% merge configuration
-                mc.unitMerge='shapeOnly';%alternatives: 'shapeISI','clearUnits'
             %% kin
                 set(ex,'kin',kinematicData());%empty kinematicData class object
             %% force
