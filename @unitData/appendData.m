@@ -6,10 +6,41 @@ function appendData(units,data,varargin)
     %the current units structure. appendUnits uses the value in
     %offset to time shift all the spikes of the new data
     %
-    %this method skips using set(units,'data',units) calls because
-    %that would result in duplicating the whole data field of the
-    %units object. Instead units.data.spikes fields are set
-    %one at a time, by direct reference
+    %appendData accesses the appendConfig property of the unitData class
+    %in order to append new units onto the existing unit data. This
+    %property defines the tests and thresholds that appendData will use to
+    %determine whether units are the same across multipel files. The
+    %appendConfig proptery MUST have the following fields:
+    %method:    'shape' | 'ISI' | 'shapeISI' | 'number'
+    %           -shape uses cohen's D (d') between pairs of waves, and an
+    %           LDA classifier to estimate whether a pair of waves is drawn
+    %           from the distribution of 2 different units, or the
+    %           distribution of same units
+    %           -ISI uses the KS-test statistic to parameterize differences
+    %           in ISI between 2 units. the ISI parameter should only be
+    %           used for merging the same task, as task differences WILL
+    %           change the ISI properties of a unit.
+    %           -shapeISI uses both the shape and ISI as described above.
+    %           P-values for the 2 tests are multiplied together and
+    %           compared to threshold^2
+    %           -number just matches the unit number and assumes that the
+    %           user has sorted the files so that the units are the same.
+    %threshold: # on range 0-1 corresponding to p-value for rejecting
+    %           similiarity
+    %default:   'unsorted' | 'invalid' | 'delete'
+    %           -unsorted relabels unmatched units as unsorted
+    %           -invalid relabels unmatched units as invalid
+    %           -delete removes unmatched units from unitData
+    %
+    %The matching portions of this code are adapted from B-Dekleva's code
+    %that is based on the method outlined in Rebesco etal, 'Rewiring neural
+    %interactions by micro-stimulation' in frontiers in systems
+    %neuroscience from 2012. The major modification here is that we use
+    %Cohen's D (d') rather than simple euclidean norms to compare wave
+    %shapes, thus capturing the noise within a specific wave as part of
+    %our discrimination. The Rabesco result relies on the variance of
+    %means, ignoring the variation of waves within a single unit
+    %
 
     if nargin>3
         error('appendData:tooManyInputs','appendData accpts up to 3 imputs')
@@ -25,7 +56,7 @@ function appendData(units,data,varargin)
     if isempty(units.data)
         if ~isempty(offset) && offset>0
             %this case is here to make the unit times behave the
-            %same way as timeSeriesData times in the case where the
+            %same way as timeSeriesData in the case where the
             %user passes an offset. In theory this case should
             %never be used
             warning('appendData:shiftedNewData','applying a time shift to data that is being placed in an empty unitData.data field')
@@ -90,7 +121,7 @@ function appendData(units,data,varargin)
         unitsChannels=unique(units.data.chan);
         dataChannels=unique(data.chan);
         % [inBoth,unitsIdxList]=ismember(dataChannels,unitsChannels);
-
+        disp(['compiling population statistics using method: ',method])
         %compute population level stats:
         if ~isempty(strfind(method,'shape') )
             %compute the population shape distribution:
@@ -104,23 +135,23 @@ function appendData(units,data,varargin)
 
         for i=1:numel(unitsChannels)
         %loop through all the channels in the existing units data
+        disp(['working on channel: ',num2str(unitsChannels(i))])
             %find all units on this channel:
             unitsList=find(units.data.chan==unitsChannels(i));
             dataList=find(data.chan==unitsChannels(i));
-            %
+            %clear/reset our working vars
             dataFlags=true(numel(dataList,1));
             unitFlags=true(numel(unitsList,1));
             tmpUnitData=[];
-            %get invalid and unsorted from our old data and put them into tmpUnitData
-            %without doing any tests:
+            %get invalid and unsorted and put them into tmpUnitData:
             [unitFlags,tmpUnitData]=addUnit(0,units.data,tmpUnitData,unitFlags,unitsList,0);
             [unitFlags,tmpUnitData]=addUnit(255,units.data,tmpUnitData,unitFlags,unitsList,0);
             [dataFlags,tmpUnitData]=addUnit(0,data,dataFlags,tmpUnitData,dataList,offset);
             [dataFlags,tmpUnitData]=addUnit(255,data,dataFlags,tmpUnitData,dataList,offset);
-
+            %loop across all the units on this channel:
             for j=1:numel(unitsList)
                 if ~unitFlags(j)
-                    %if this unit was already handled, skip it
+                    %if this unit in units was already handled, skip it
                     continue
                 else
                     %test all units in data for match, and append
@@ -128,7 +159,7 @@ function appendData(units,data,varargin)
 
                     for k=1:numel(dataList)
                         if ~dataFlags(k)
-                            %if this unit was already handled, skip it
+                            %if this unit in data was already handled, skip it
                             continue
                         else
                             %compare data(dataList(k)) to
@@ -202,13 +233,13 @@ function appendData(units,data,varargin)
                 end
                 %use units.appendConfig.default to assign any unmatched units:
                 tmpData=data(dataList(dataFlags));
-                for i=1:numel(tmpData)
-                    tmpData(i).spikes.ts=tmpData(i).spikes.ts+offset;
+                for k=1:numel(tmpData)
+                    tmpData(k).spikes.ts=tmpData(k).spikes.ts+offset;
                 end
                 unmatched=[ units.data(unitsList(unitsFlags)) ; 
                            tmpData];
                        
-                for j=1:numel(unmatched)
+                for k=1:numel(unmatched)
                     switch units.appendConfig.default
                         case 'unsorted'
                             idx=find([tmpUnitData.ID]==0);
@@ -222,10 +253,10 @@ function appendData(units,data,varargin)
                     end
                     if ~isempty(idx)
                         %add our data to the unsorted unit
-                        tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(j)],'ts');
+                        tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(k)],'ts');
                     else
                         %append our data:
-                        tmpUnitData=[tmpUnitData;unmatched(j)];
+                        tmpUnitData=[tmpUnitData;unmatched(k)];
                     end
                 end
                 newUnitData=[newUnitData;tmpUnitData];
@@ -273,16 +304,18 @@ end
 function [ldaProj,coeff]=getShapeComps(units,data)
     %loop through all units and get mean and stdev of wave
     numUnits=numel(units.data);
-    unitsMean=ones(numUnits,size(units.data(1).spikes.wave,2));
+    unitsMean=nan(numUnits,size(units.data(1).spikes.wave,2));
     unitsStdev=unitsMean;
+    unitsCount=nan(numUnits,1);
     for i=1:numUnits
         unitsMean(i,:)=mean(units.data(i).spikes.wave);
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
     end
     numData=numel(data);
-    dataMean=ones(numData,size(data(1).spikes.wave,2));
+    dataMean=nan(numData,size(data(1).spikes.wave,2));
     dataStdev=dataMean;
+    dataCount=nan(numUnits,1);
     for i=1:numData
         dataMean(i,:)=mean(data(i).spikes.wave);
         dataStdev(i,:)=std(data(i).spikes.wave);
@@ -317,7 +350,7 @@ function [ldaProj,coeff]=getShapeComps(units,data)
 % % % %     %Also use abs to convert to separation, rather than signed distance:
 % % % %     sepMat=abs(sepMat(isnan(sepMat(:,1)),:));
     numWaves=size(allMean,1);
-    numPoints=size(allMean,2)]);
+    numPoints=size(allMean,2);
     waveMat=repmat(reshape(allMean,[1,numWaves,numPoints]),[numWaves,1,1]);
     stdevMat=repmat(reshape(allStdev,[1,numWaves,numPoints]),[numWaves,1,1]);
     spikesMat=repmat(allCount,[1,numWaves,numPoints]);
@@ -325,20 +358,35 @@ function [ldaProj,coeff]=getShapeComps(units,data)
     alphaStdMat=alphaMat;
     for i=1:size(waveMat,1)
         for j=1:size(waveMat,2)
+            %now get the alpha (gain) factor to multiply the transpose
+            %element in order to match the scale of the non-transpose
+            %element
             [alphaMat(i,j),alphaCI]=regress(squeeze(waveMat(i,j,:)),squeeze(waveMat(j,i,:)));
             alphaStdMat(i,j)=diff(alphaCI)/(2*1.96);
         end
     end
-    %compute all distances in wavespace:
-    waveMat=waveMat-permute(waveMat,[2,1,3])*repmat(alphaMat,[1,1,numPoints]);%note this results in a symmetric matrix, with duplicate entries
-    mask=triu(true(numWaves),1);%creates an upper triangular mask excluding the self comparisons and duplicates in the bottom half
+    %compute all distances in wavespace. Subtract the scaled transpose from
+    %the non-transpose (recall that alphas are scales to apply to the
+    %transpose). note this results in a symmetric matrix, with duplicate 
+    %entries.
+    waveMat=waveMat-permute(waveMat,[2,1,3])*repmat(alphaMat,[1,1,numPoints]);
+    %create an upper triangular mask excluding the self comparisons and 
+    %duplicates in the bottom half
+    mask=triu(true(numWaves),1);
+    %use the mask to get a list of differences in wavespace
     diffs=waveMat(repmat(mask,[1,1,numPoints]));
-    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), alphaMat(mask)];%include the alpha values here as the last difference
-    %now compute joint standard deviation:
-    stdevMat=sqrt((stdevMat.*spikesMat+permute(stdevMat,[2,1,3]).*permute(spikesMat,[2,1,3]))    ./...
+    %reshape the differences into a column matrix where each row is a
+    %difference observation include the alpha values here as the last 
+    %difference:
+    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), alphaMat(mask)];
+    %now compute joint standard deviation (S1*N1+S2*N2)/(N1+N2):
+    stdevMat=sqrt((stdevMat.*spikesMat+permute(stdevMat,[2,1,3]).*permute(spikesMat,[2,1,3]))  ./ ...
                     (spikesMat+permute(spikesMat,[2,1,3])));
+    %convert the 3D standard deviation matrix into a 2D matrix to match the
+    %diffs matrix. Again, we add on the value for the alpha
     stdevs=stdevMat(repmat(mask,[1,1,numPoints]));
     stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask)];
+    %calculted dPrime from the differences and standard deviations
     dPrime=diffs./stdevs;
     %now get the logical index for things that are the same channel:
     diffMask=true(numWaves,numWaves);
