@@ -59,7 +59,9 @@ function appendData(units,data,varargin)
     else
         offset=[];
     end
-
+    newUnitData=[];
+    tsISI=[];
+    ldaProj=[];
     %if units is empty, simply fill it
     if isempty(units.data)
         if ~isempty(offset) && offset>0
@@ -283,12 +285,9 @@ function appendData(units,data,varargin)
     uInfo.inUnits.numUnits=numel([units.data.ID]);
     uInfo.inUnits.numChan=numel(unique([units.data.chan]));
     uInfo.inUnits.hasSorting=~isempty(find([units.data.ID]>0 & [units.data.ID]<255,1,'first'));
-    uInfo.newUnitData.numUnits=numel(newUnitData);
-    uInfo.newUnitData.numChan=numel(unique(newUnitData.chan));
-    uInfo.newUnitData.hasSorting=~isempty(find([newUnitData.ID]>0 & [newUnitData.ID]<255,'first'));
     uInfo.sepTime=offset;
-    uInfo.ksDist=tsISI;
-    uInfo.shaprDist=ldaProj;
+    uInfo.distribution.ksDist=tsISI;
+    uInfo.distribution.shaprDist=ldaProj;
     evntData=loggingListenerEventData('appendData',uInfo);
     notify(units,'appended',evntData)
     

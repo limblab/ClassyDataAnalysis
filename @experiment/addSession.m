@@ -45,7 +45,9 @@ function addSession(ex,cds)
         elseif strcmp(ex.meta.task,cds.meta.task)
             m.task=ex.meta.task;
         else
-            error('addSession:taskMismatch','The existing experiment data and the cds data do not have the same task')
+            warning('addSession:taskMismatch','The existing experiment data and the cds data do not have the same task')
+            disp('the addSession method is not well tested for merging data from two tasks')
+            disp('please take care to manually check that the resulting merge worked correctly')
         end
         
         m.hasEmg=ex.meta.hasEmg;
