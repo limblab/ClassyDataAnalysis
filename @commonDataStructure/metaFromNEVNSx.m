@@ -94,10 +94,17 @@ function metaFromNEVNSx(cds,opts)
         meta.numFail=0;
         meta.numIncomplete=0;
     end
-    
+    %parse a few of our variables to make them file-name friendly
     meta.aliasList=cds.aliasList;
-    
-    meta.cdsName=[meta.monkey,'_',meta.array,'_',meta.task,'_',meta.dateTime,'_lab',num2str(meta.lab)];
+    splitDate=strsplit(meta.dateTime,' ');
+    splitDate{1}(strfind(splitDate{1},'/'))='-';
+    arrayNames=meta.array;
+    idx=strfind(arrayNames,', ');
+    if ~isempty(idx)
+        arrayNames(idx)=[];
+        arrayNames(idx)='_';
+    end
+    meta.cdsName=[meta.monkey,'_',arrayNames,'_',meta.task,'_',splitDate{1},'_lab',num2str(meta.lab)];
     
     %put new meta structure into cds.meta
     set(cds,'meta',meta)

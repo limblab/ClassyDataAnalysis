@@ -13,7 +13,7 @@ classdef unitData < matlab.mixin.SetGet
         %constructor
         function units=unitData()
             units.data=struct('chan',[],'ID',[],'array',{},'spikes',cell2table(cell(0,2),'VariableNames',{'ts','wave'}));
-            units.appendConfig=struct('method','shape','threshold',.05,'default','unsorted');
+            units.appendConfig=struct('method','shape','threshold',.05,'SNRThreshold',2,'default','unsorted');
         end
     end
     methods
@@ -48,11 +48,13 @@ classdef unitData < matlab.mixin.SetGet
             end
         end
         function set.appendConfig(units,adata)
-            if ~isfield(adata,'method') && ~ischar(adata.method) && ~( strcmp(adata.method,'shape') || strcmp(adata.method,'ISI') || strcmp(adata.method,'shapeISI') || strcmp(adata.method,'number'))
-                error('unitData:badAppendMethod','unitData.appendConfig must have a method field, which must contain a string with one of the following values: shape, isi, shapeISI, or number')
-            elseif ~isfield(adata,'threshold') && ~isnumeric(adata.threshold)
+            if ~isfield(adata,'method') || ~ischar(adata.method) || ~( strcmp(adata.method,'shape') || strcmp(adata.method,'ISI') || strcmp(adata.method,'shapeISI') || strcmp(adata.method,'number'))
+                error('unitData:badAppendMethod','unitData.appendConfig must have a method field, which must contain a string with one of the following values: shape, ISI, shapeISI, or number')
+            elseif ~isfield(adata,'threshold') || ~isnumeric(adata.threshold)
                 error('unitData:badAppendThreshold','unitData.appendConfig must have a threshold field containing the p-value deliniating different vs same')
-            elseif ~isfield(adata,'default') && ~ischar(adata.default) && ~(strcmp(adata.default,'unsorted') || strcmp(adata.default,'delete') || strcmp(adata.default,'invalid'))
+            elseif ~isfield(adata,'SNRThreshold') || ~isnumeric(adata.SNRThreshold)
+                error('unitData:badAppendSNRThreshold','unitData.appendConfig must have a field named SNRThreshold with a number indicating the minmum allowable value for SNR before unit sorting is rejected')
+            elseif ~isfield(adata,'default') || ~ischar(adata.default) || ~(strcmp(adata.default,'unsorted') || strcmp(adata.default,'delete') || strcmp(adata.default,'invalid'))
                 error('unitData:badAppendDefault','unitData.appendConfig must have a default field containing a string that defines what to do when units do not match. allowed values are unsorted, invalid or delete')
             else
                 units.appendConfig=adata;

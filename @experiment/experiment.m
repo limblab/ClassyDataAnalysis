@@ -337,6 +337,12 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
         %delete method. This is called when the cds is cleared, and is an
         %overload of the normal delete method that all handle classes
         %implemement
+        function clear(ex)
+            %overload clear to call the delete method instead. This should
+            %force the callbacks to purge allowing matlab to free the
+            %memory instead of holding the experiment in memory invisibly
+            ex.delete();
+        end
         function ex = delete( ex )
             %this function exists to make sure all listeners in the cds are
             %properly deleted prior to attempting to clear the class
@@ -350,7 +356,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
              if ispc
                  eventList=findAllListeners(ex);
                  if ~isempty(eventList)
-                     warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+                     warning('delete:failedToRemoveAllListeners','there are still listeners to the experiment. Matlab will keep the experiment in memory until all listeners are cleared.')
                      disp('the following events still have listeners')
                      disp(eventList)
                  end

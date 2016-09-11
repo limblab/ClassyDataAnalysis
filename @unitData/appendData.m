@@ -128,153 +128,169 @@ function appendData(units,data,varargin)
         newUnitData=[];
         
 
-        unitsChannels=unique(units.data.chan);
-        dataChannels=unique(data.chan);
+        unitsChannels=unique([units.data.chan]);
+        arrays=unique({units.data.array});
+        dataChannels=unique([data.chan]);
         % [inBoth,unitsIdxList]=ismember(dataChannels,unitsChannels);
         disp(['compiling population statistics using method: ',method])
         %compute population level stats:
         if ~isempty(strfind(method,'shape') )
             %compute the population shape distribution:
-            [ldaProj,coeff]=getShapeComps(units,data);
+            [ldaProj,coeff]=getShapeComps(units,data,units.appenConfig.SNRThreshold);
         end
 
         if ~isempty(strfind(units.appendConfig.method,'ISI') )
             %compute the population ISI distribution:
             [tsISI]=getISIcomps(units,data);
         end
-
-        for i=1:numel(unitsChannels)
-        %loop through all the channels in the existing units data
-        disp(['working on channel: ',num2str(unitsChannels(i))])
-            %find all units on this channel:
-            unitsList=find(units.data.chan==unitsChannels(i));
-            dataList=find(data.chan==unitsChannels(i));
-            %clear/reset our working vars
-            dataFlags=true(numel(dataList,1));
-            unitFlags=true(numel(unitsList,1));
-            tmpUnitData=[];
-            %get invalid and unsorted and put them into tmpUnitData:
-            [unitFlags,tmpUnitData]=addUnit(0,units.data,tmpUnitData,unitFlags,unitsList,0);
-            [unitFlags,tmpUnitData]=addUnit(255,units.data,tmpUnitData,unitFlags,unitsList,0);
-            [dataFlags,tmpUnitData]=addUnit(0,data,dataFlags,tmpUnitData,dataList,offset);
-            [dataFlags,tmpUnitData]=addUnit(255,data,dataFlags,tmpUnitData,dataList,offset);
-            %loop across all the units on this channel:
-            for j=1:numel(unitsList)
-                if ~unitFlags(j)
-                    %if this unit in units was already handled, skip it
-                    continue
-                else
+        %handle each array separately since we can duplicate channel
+        %numbers across arrays:
+        for m=1:numel(arrays)
+            currArr=arrays{m};
+            for i=1:numel(unitsChannels)
+                %loop through all the channels in the existing units data
+                disp(['working on array: ',currArr,' channel: ',num2str(unitsChannels(i))])
+                %find all units on this array&channel:
+                unitsList=find([units.data.chan]==unitsChannels(i) & strcmp({units.data.array},currArr));
+                dataList=find([data.chan]==unitsChannels(i) & strcmp({data.array},currArr));
+                %clear/reset our working vars
+                dataFlags=true(numel(dataList),1);
+                unitFlags=true(numel(unitsList),1);
+                tmpUnitData=[];
+                %get invalid and unsorted and put them into tmpUnitData:
+                [unitFlags,tmpUnitData]=addUnit(0,units.data,tmpUnitData,unitFlags,unitsList,0);
+                [unitFlags,tmpUnitData]=addUnit(255,units.data,tmpUnitData,unitFlags,unitsList,0);
+                [dataFlags,tmpUnitData]=addUnit(0,data,tmpUnitData,dataFlags,dataList,offset);
+                [dataFlags,tmpUnitData]=addUnit(255,data,tmpUnitData,dataFlags,dataList,offset);
+                
+                
+                
+                %loop across all the units on this channel:
+                for j=1:numel(unitsList)
+                    if ~unitFlags(j)
+                        %if this unit in units was already handled, skip it
+                        continue
+                    else
+                    unitMean=mean(units(unitsList(j)).spikes.wave);
+                    unitStdev=std(units(unitsList(j)).spikes.wave);
+                    %skip this unit if the SNR is too low
+                    if max(unitMean./unitStdev)<units.appenConfig.SNRThreshold;
+                        continue
+                    end
+                    
                     %test all units in data for match, and append
                     %them if match is found
 
-                    for k=1:numel(dataList)
-                        if ~dataFlags(k) || ~strcmp(units.data(unitsList(j)).array,data(dataList(k)).array)
-                            %if this unit in data was already handled, or
-                            %if the array name doesn't match, skip it
-                            continue
-                        else
-                            %compare data(dataList(k)) to
-                            %units.data(unitsList(j)) :
-
-                            if ~isempty(strfind( method,'shape'))
-                                %get the difference in the mean waveshapes\
-                                unitMean=mean(units(unitsList(j)).spikes.wave);
-                                unitStdev=std(units(unitsList(j)).spikes.wave);
-                                dataMean=mean(data(dataList(k).spikes.wave));
-                                dataStdev=std(data(dataList(k).spikes.wave));
-
-                                [alpha,alphaCI]=regress(unitMean,dataMean);
-                                alphaStdev=diff(alphaCI)/(2*1.96);
-
-                                dPrime=[abs(unitMean-dataMean)./sqrt(dataStdev+unitStdev) , alpha/alphaStdev];
-                                %now project dPrime onto the LDA axis:
-                                proj = dPrime*coeff(1,2).linear;
-                                %now see where we are on the distribution of
-                                %known different cells to estimate p-value:
-                                pShape=sum(ldaProj>=proj)/numel(ldaProj);
+                        for k=1:numel(dataList)
+                            if ~dataFlags(k) || ~strcmp(units.data(unitsList(j)).array,data(dataList(k)).array)
+                                %if this unit in data was already handled, or
+                                %if the array name doesn't match, skip it
+                                continue
                             else
-                                pShape=1;
-                            end
-                            if ~isempty(strfind(method, 'ISI'))
-                                [~,~,ks]=kstest2(units.data(unitsList(j)).spikes.ts,data(dataList(k)).spikes.ts);
-                                %now see where we are on the distribution of
-                                %known different cells to estimate p-value:
-                                pISI=min([sum(tsISI>=ks),sum(tsISI<=ks)]/numel(tsISI))/2;%the min and divide by 2 business is to handle the 2sided nature of the statistic
-                            else
-                                pISI=1;
-                            end
-                            if ~isempty(strfind(method, 'number'))
-                                %check to see if we have a number match, and if set
-                                %an arbitrary pval that is larger than the
-                                %threshold so we trigger a merge, otherwise set one
-                                %smaller than the threshold so we skip merging
-                                if units.data(unitsList(j)).ID==data(dataList(k)).ID
-                                    pNum=units.appendConfig.threshold+1;
+                                %compare data(dataList(k)) to
+                                %units.data(unitsList(j)) :
+
+                                if ~isempty(strfind( method,'shape'))
+                                    %get the difference in the mean waveshapes\
+                                    dataMean=mean(data(dataList(k).spikes.wave));
+                                    dataStdev=std(data(dataList(k).spikes.wave));
+                                    %skip this unit if the SNR is too low
+                                    if max(dataMean./dataStdev)<units.appenConfig.SNRThreshold;
+                                        continue
+                                    end
+                                    [alpha,alphaCI]=regress(unitMean,dataMean);
+                                    alphaStdev=diff(alphaCI)/(2*1.96);
+
+                                    dPrime=[abs(unitMean-dataMean)./sqrt(dataStdev+unitStdev) , alpha/alphaStdev];
+                                    %now project dPrime onto the LDA axis:
+                                    proj = dPrime*coeff(1,2).linear;
+                                    %now see where we are on the distribution of
+                                    %known different cells to estimate p-value:
+                                    pShape=sum(ldaProj>=proj)/numel(ldaProj);
                                 else
-                                    pNum=units.appendConfig.threshold-1;
+                                    pShape=1;
                                 end
-                            else
-                                pNum=1;
-                            end
-                            %now merge p-vals:
-                            %at this point we need to think about how we will compare
-                            %to threshold in cases where we have multiple p-values. for
-                            %instance if we have threshold=.05, and we have 2 tests, do
-                            %we want both to attain significance? if one is SUPER
-                            %significant is that enough? In this instance we are
-                            %asserting that one highly significant value can compensate
-                            %for a marginal/non-significant p-value. We will insist
-                            %that the joint p-value for 2 merged tests be equivalent to
-                            %threshold^2. That is if threshold=.05, then the joint p
-                            %must be less than .05*.05=.0025 to attain significance.
-                            %Since we don't want to mess with things later, we will
-                            %simply compute the joint P here and then sqrt it to let us
-                            %compare to the original threshold value:
-                            pVal=(pShape*pISI*pNum)^(1/sum([~isempty(strfind( method,'shape')),~isempty(strfind( method,'ISI')),~isempty(strfind( method,'number'))]));
-                            if pVal>=units.appendConfig.threshold
-                                %merge
-                                tmpUnitData=[tmpUnitData;units.data(unitsList(j))];
-                                tmpData=data(dataList(k)).spikes;
-                                tmpData.ts=tmpData.ts+offset;
-                                tmpUnitData(end).spikes=[tmpUnitData(end).spikes;tmpData];
-                                unitFlags(j)=false;
-                                dataFlags(k)=false;
+                                if ~isempty(strfind(method, 'ISI'))
+                                    [~,~,ks]=kstest2(units.data(unitsList(j)).spikes.ts,data(dataList(k)).spikes.ts);
+                                    %now see where we are on the distribution of
+                                    %known different cells to estimate p-value:
+                                    pISI=min([sum(tsISI>=ks),sum(tsISI<=ks)]/numel(tsISI))/2;%the min and divide by 2 business is to handle the 2sided nature of the statistic
+                                else
+                                    pISI=1;
+                                end
+                                if ~isempty(strfind(method, 'number'))
+                                    %check to see if we have a number match, and if set
+                                    %an arbitrary pval that is larger than the
+                                    %threshold so we trigger a merge, otherwise set one
+                                    %smaller than the threshold so we skip merging
+                                    if units.data(unitsList(j)).ID==data(dataList(k)).ID
+                                        pNum=units.appendConfig.threshold+1;
+                                    else
+                                        pNum=units.appendConfig.threshold-1;
+                                    end
+                                else
+                                    pNum=1;
+                                end
+                                %now merge p-vals:
+                                %at this point we need to think about how we will compare
+                                %to threshold in cases where we have multiple p-values. for
+                                %instance if we have threshold=.05, and we have 2 tests, do
+                                %we want both to attain significance? if one is SUPER
+                                %significant is that enough? In this instance we are
+                                %asserting that one highly significant value can compensate
+                                %for a marginal/non-significant p-value. We will insist
+                                %that the joint p-value for 2 merged tests be equivalent to
+                                %threshold^2. That is if threshold=.05, then the joint p
+                                %must be less than .05*.05=.0025 to attain significance.
+                                %Since we don't want to mess with things later, we will
+                                %simply compute the joint P here and then sqrt it to let us
+                                %compare to the original threshold value:
+                                pVal=(pShape*pISI*pNum)^(1/sum([~isempty(strfind( method,'shape')),~isempty(strfind( method,'ISI')),~isempty(strfind( method,'number'))]));
+                                if pVal>=units.appendConfig.threshold
+                                    %merge
+                                    tmpUnitData=[tmpUnitData;units.data(unitsList(j))];
+                                    tmpData=data(dataList(k)).spikes;
+                                    tmpData.ts=tmpData.ts+offset;
+                                    tmpUnitData(end).spikes=[tmpUnitData(end).spikes;tmpData];
+                                    unitFlags(j)=false;
+                                    dataFlags(k)=false;
 
+                                end
                             end
                         end
                     end
-                end
-                %use units.appendConfig.default to assign any unmatched units:
-                tmpData=data(dataList(dataFlags));
-                for k=1:numel(tmpData)
-                    tmpData(k).spikes.ts=tmpData(k).spikes.ts+offset;
-                end
-                unmatched=[ units.data(unitsList(unitsFlags)) ; 
-                           tmpData];
-                       
-                for k=1:numel(unmatched)
-                    switch units.appendConfig.default
-                        case 'unsorted'
-                            idx=find([tmpUnitData.ID]==0);
-                        case 'invalid'
-                            idx=find([tmpUnitData.ID]==255);
-                        case 'delete'
-                            %just skip adding unmatched units to newUnitData
-                            idx=[];
-                        otherwise
-                            error('appendData:badDefault',['appendData does not recognize the option: ', units.appendConfig.default,'. please update unitData.set:appendConfig so that it catches this error, or update this method to handle this option'])
+                    %use units.appendConfig.default to assign any unmatched units:
+                    tmpData=data(dataList(dataFlags));
+                    for k=1:numel(tmpData)
+                        tmpData(k).spikes.ts=tmpData(k).spikes.ts+offset;
                     end
-                    if ~isempty(idx)
-                        %add our data to the unsorted unit
-                        tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(k)],'ts');
-                    else
-                        %append our data:
-                        tmpUnitData=[tmpUnitData;unmatched(k)];
-                    end
-                end
-                newUnitData=[newUnitData;tmpUnitData];
-            end
+                    unmatched=[ units.data(unitsList(unitsFlags)) ; 
+                               tmpData];
 
+                    for k=1:numel(unmatched)
+                        switch units.appendConfig.default
+                            case 'unsorted'
+                                idx=find([tmpUnitData.ID]==0);
+                            case 'invalid'
+                                idx=find([tmpUnitData.ID]==255);
+                            case 'delete'
+                                %just skip adding unmatched units to newUnitData
+                                idx=[];
+                            otherwise
+                                error('appendData:badDefault',['appendData does not recognize the option: ', units.appendConfig.default,'. please update unitData.set:appendConfig so that it catches this error, or update this method to handle this option'])
+                        end
+                        if ~isempty(idx)
+                            %add our data to the unsorted unit
+                            tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(k)],'ts');
+                        else
+                            %append our data:
+                            tmpUnitData=[tmpUnitData;unmatched(k)];
+                        end
+                    end
+                    newUnitData=[newUnitData;tmpUnitData];
+                end
+
+            end
         end
         %now that we have handled every channel, put our data into units:
         set(units,'data',newUnitData)
@@ -296,32 +312,55 @@ end
 function [flags,tmpUnitData]=addUnit(ID,UD,tmpUnitData,flags,uList,offset)
     chanIdx=find([UD(uList).ID]==ID);
     if ~isempty(chanIdx)
-        tmpData=UD(uList(chanIdx)).spikes;
-        tmpData.ts=tmpData.ts+offset;
+        tmpData=UD(uList(chanIdx));
+        tmpData.spikes.ts=tmpData.spikes.ts+offset;
         %check to see if we already have a matching unit:
-        idx=find([tmpUnitData.ID]==ID);
+        idx=[];
+        if ~isempty(tmpUnitData)
+            idx=find([tmpUnitData.ID]==ID);
+        end
         if ~isempty(idx)
             % merge if we do:
-            tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;tmpData],'ts');
+            tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;tmpData.spikes],'ts');
         else
-            %just append the data
+            %just append the whole struct to tmpUnitData
             tmpUnitData=[tmpUnitData;tmpData];
         end
         %now flag this unit as dealt with and move on 
         flags(chanIdx)=false;
     end
 end
-function [ldaProj,coeff]=getShapeComps(units,data)
+function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     %loop through all units and get mean and stdev of wave
+    disp('compiling sorted units already in unitData')
     numUnits=numel(units.data);
     unitsMean=nan(numUnits,size(units.data(1).spikes.wave,2));
     unitsStdev=unitsMean;
     unitsCount=nan(numUnits,1);
     for i=1:numUnits
+        if(units.data(i).ID==0 || units.data(i).ID==255)
+            %don't bother with invalid or unsorted
+            continue
+        end
         unitsMean(i,:)=mean(units.data(i).spikes.wave);
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
     end
+    %clear out the empty rows from unsorted and invalid units
+    mask=~isnan(unitsCount);
+    unitsMean=unitsMean(mask,:);
+    unitsStdev=unitsStdev(mask,:);
+    unitsCount=unitsCount(mask);
+    %now remove anything with max SNR below SNRThresh
+    SNR=unitsMean./unitsStdev;
+    peakSNR=max(SNR);
+    mask=peakSNR>=SNRThresh;
+    unitsMean=unitsMean(mask,:);
+    unitsStdev=unitsStdev(mask,:);
+    unitsCount=unitsCount(mask);
+    
+    %now work on the data
+    disp('compiling sorted units already in new data')
     numData=numel(data);
     dataMean=nan(numData,size(data(1).spikes.wave,2));
     dataStdev=dataMean;
@@ -331,11 +370,24 @@ function [ldaProj,coeff]=getShapeComps(units,data)
         dataStdev(i,:)=std(data(i).spikes.wave);
         dataCount(i)=size(data(i).spikes,1);
     end
-    %concatenate data together:
+    %clear out the empty rows from unsorted and invalid units
+    mask=~isnan(dataCount);
+    dataMean=dataMean(mask,:);
+    dataStdev=dataStdev(mask,:);
+    dataCount=dataCount(mask);
+    %now remove anything with max SNR below SNRThresh
+    SNR=dataMean./dataStdev;
+    peakSNR=max(SNR);
+    mask=peakSNR>=SNRThresh;
+    dataMean=dataMean(mask,:);
+    dataStdev=dataStdev(mask,:);
+    dataCount=dataCount(mask);
+    disp('merging units')    
+    %concatenate data& units together:
     allMean=[unitsMean;dataMean];
     allStdev=[unitsStdev;dataStdev];
     allCount=[unitsCount;dataCount];
-    chans=[units.data.chan;data.chan];
+    chans=[[units.data.chan]';[data.chan]'];
 % % % %     %now loop through the units and construct d' distances for all units on
 % % % %     %different channels:
 % % % %     sepMat=nan(0.5*numel(chans)^2,size(allMean,2)+1);
@@ -364,6 +416,7 @@ function [ldaProj,coeff]=getShapeComps(units,data)
     waveMat=repmat(reshape(allMean,[1,numWaves,numPoints]),[numWaves,1,1]);
     stdevMat=repmat(reshape(allStdev,[1,numWaves,numPoints]),[numWaves,1,1]);
     spikesMat=repmat(allCount,[1,numWaves,numPoints]);
+    disp('computing scaling factors for best shape-matching')
     alphaMat=nan(numWaves,numWaves);
     alphaStdMat=alphaMat;
     for i=1:size(waveMat,1)
@@ -379,7 +432,8 @@ function [ldaProj,coeff]=getShapeComps(units,data)
     %the non-transpose (recall that alphas are scales to apply to the
     %transpose). note this results in a symmetric matrix, with duplicate 
     %entries.
-    waveMat=waveMat-permute(waveMat,[2,1,3])*repmat(alphaMat,[1,1,numPoints]);
+    disp('computing distances metrics')
+    waveMat=waveMat-permute(waveMat,[2,1,3]).*repmat(alphaMat,[1,1,numPoints]);
     %create an upper triangular mask excluding the self comparisons and 
     %duplicates in the bottom half
     mask=triu(true(numWaves),1);
@@ -397,11 +451,12 @@ function [ldaProj,coeff]=getShapeComps(units,data)
     stdevs=stdevMat(repmat(mask,[1,1,numPoints]));
     stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask)];
     %calculted dPrime from the differences and standard deviations
-    dPrime=diffs./stdevs;
+    dPrime=abs(diffs./stdevs);
     %now get the logical index for things that are the same channel:
+    disp('getting projections onto LDA')
     diffMask=true(numWaves,numWaves);
     for i=1:numel(chans)
-        tmp=find(allChans==chans(i));
+        tmp=find(chans==chans(i));
         diffMask(tmp,tmp)=false;
     end
     knownDiff=diffMask(mask);
