@@ -333,7 +333,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
     methods (Static = false, Access = protected, Hidden=true)
         [lagData,lagPts,time]=timeShiftBins(ex,data,lags,varargin)
     end
-    methods ( Access = 'private' )
+    methods
         %delete method. This is called when the cds is cleared, and is an
         %overload of the normal delete method that all handle classes
         %implemement

@@ -136,7 +136,7 @@ function appendData(units,data,varargin)
         %compute population level stats:
         if ~isempty(strfind(method,'shape') )
             %compute the population shape distribution:
-            [ldaProj,coeff]=getShapeComps(units,data,units.appenConfig.SNRThreshold);
+            [ldaProj,coeff]=getShapeComps(units,data,units.appendConfig.SNRThreshold);
         end
 
         if ~isempty(strfind(units.appendConfig.method,'ISI') )
@@ -174,7 +174,10 @@ function appendData(units,data,varargin)
                     unitMean=mean(units(unitsList(j)).spikes.wave);
                     unitStdev=std(units(unitsList(j)).spikes.wave);
                     %skip this unit if the SNR is too low
-                    if max(unitMean./unitStdev)<units.appenConfig.SNRThreshold;
+                    %compute SNR as range of mean wave normalized by mean
+                    %stdev of each point.
+                    SNR=(max(unitMean)-min(unitMean))/mean(unitStdev);
+                    if SNR<units.appenConfig.SNRThreshold;
                         continue
                     end
                     
@@ -195,7 +198,10 @@ function appendData(units,data,varargin)
                                     dataMean=mean(data(dataList(k).spikes.wave));
                                     dataStdev=std(data(dataList(k).spikes.wave));
                                     %skip this unit if the SNR is too low
-                                    if max(dataMean./dataStdev)<units.appenConfig.SNRThreshold;
+                                    %compute SNR as range of mean wave normalized by mean
+                                    %stdev of each point.
+                                    SNR=(max(dataMean)-min(dataMean))/mean(dataStdev);
+                                    if SNR<units.appenConfig.SNRThreshold;
                                         continue
                                     end
                                     [alpha,alphaCI]=regress(unitMean,dataMean);
@@ -352,9 +358,9 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     unitsStdev=unitsStdev(mask,:);
     unitsCount=unitsCount(mask);
     %now remove anything with max SNR below SNRThresh
-    SNR=unitsMean./unitsStdev;
-    peakSNR=max(SNR);
-    mask=peakSNR>=SNRThresh;
+    range=max(unitsMean,[],2)-min(unitsMean,[],2);
+    SNR=range./mean(unitsStdev,2);
+    mask=SNR>=SNRThresh;
     unitsMean=unitsMean(mask,:);
     unitsStdev=unitsStdev(mask,:);
     unitsCount=unitsCount(mask);
