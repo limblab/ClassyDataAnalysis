@@ -171,13 +171,13 @@ function appendData(units,data,varargin)
                         %if this unit in units was already handled, skip it
                         continue
                     else
-                    unitMean=mean(units(unitsList(j)).spikes.wave);
-                    unitStdev=std(units(unitsList(j)).spikes.wave);
+                    unitMean=mean(units.data(unitsList(j)).spikes.wave);
+                    unitStdev=std(units.data(unitsList(j)).spikes.wave);
                     %skip this unit if the SNR is too low
                     %compute SNR as range of mean wave normalized by mean
                     %stdev of each point.
                     SNR=(max(unitMean)-min(unitMean))/mean(unitStdev);
-                    if SNR<units.appenConfig.SNRThreshold;
+                    if SNR<units.appendConfig.SNRThreshold;
                         continue
                     end
                     
@@ -195,16 +195,16 @@ function appendData(units,data,varargin)
 
                                 if ~isempty(strfind( method,'shape'))
                                     %get the difference in the mean waveshapes\
-                                    dataMean=mean(data(dataList(k).spikes.wave));
-                                    dataStdev=std(data(dataList(k).spikes.wave));
+                                    dataMean=mean(data(dataList(k)).spikes.wave);
+                                    dataStdev=std(data(dataList(k)).spikes.wave);
                                     %skip this unit if the SNR is too low
                                     %compute SNR as range of mean wave normalized by mean
                                     %stdev of each point.
                                     SNR=(max(dataMean)-min(dataMean))/mean(dataStdev);
-                                    if SNR<units.appenConfig.SNRThreshold;
+                                    if SNR<units.appendConfig.SNRThreshold;
                                         continue
                                     end
-                                    [alpha,alphaCI]=regress(unitMean,dataMean);
+                                    [alpha,alphaCI]=regress(unitMean',dataMean');
                                     alphaStdev=diff(alphaCI)/(2*1.96);
 
                                     dPrime=[abs(unitMean-dataMean)./sqrt(dataStdev+unitStdev) , alpha/alphaStdev];
@@ -260,7 +260,9 @@ function appendData(units,data,varargin)
                                     tmpUnitData(end).spikes=[tmpUnitData(end).spikes;tmpData];
                                     unitFlags(j)=false;
                                     dataFlags(k)=false;
-
+                                    %since we found a match, break from the
+                                    %loop across the units in data
+                                    break
                                 end
                             end
                         end
@@ -270,8 +272,8 @@ function appendData(units,data,varargin)
                     for k=1:numel(tmpData)
                         tmpData(k).spikes.ts=tmpData(k).spikes.ts+offset;
                     end
-                    unmatched=[ units.data(unitsList(unitsFlags)) ; 
-                               tmpData];
+                    unmatched=[ units.data(unitsList(unitFlags)) ; 
+                               tmpData'];
 
                     for k=1:numel(unmatched)
                         switch units.appendConfig.default
@@ -286,8 +288,8 @@ function appendData(units,data,varargin)
                                 error('appendData:badDefault',['appendData does not recognize the option: ', units.appendConfig.default,'. please update unitData.set:appendConfig so that it catches this error, or update this method to handle this option'])
                         end
                         if ~isempty(idx)
-                            %add our data to the unsorted unit
-                            tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(k)],'ts');
+                            %add our data to the unsorted/invalid unit
+                            tmpUnitData(idx).spikes=sortrows([tmpUnitData(idx).spikes;unmatched(k).spikes],'ts');
                         else
                             %append our data:
                             tmpUnitData=[tmpUnitData;unmatched(k)];

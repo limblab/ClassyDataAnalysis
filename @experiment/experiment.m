@@ -343,7 +343,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
             %memory instead of holding the experiment in memory invisibly
             ex.delete();
         end
-        function ex = delete( ex )
+        function delete( ex )
             %this function exists to make sure all listeners in the cds are
             %properly deleted prior to attempting to clear the class
             %object. Matlab does not seem to have any 
