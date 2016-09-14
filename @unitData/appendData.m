@@ -345,6 +345,9 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     unitsMean=nan(numUnits,size(units.data(1).spikes.wave,2));
     unitsStdev=unitsMean;
     unitsCount=nan(numUnits,1);
+    unitsChans=[units.data.chan];
+    unitsArray={units.data.array};
+    unitsInUnits=ones(size(unitsChans));
     for i=1:numUnits
         if(units.data(i).ID==0 || units.data(i).ID==255)
             %don't bother with invalid or unsorted
@@ -354,11 +357,32 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
     end
+%     range=max(unitsMean,[],2)-min(unitsMean,[],2);
+%     SNR=range./mean(unitsStdev,2);
+%     %build mask to remove undesireable units:
+%     mask=(~isnan(unitsCount) & ... stuff leftover from units 0 and 255
+%             unitsChans<128 & ... sorted units on the analog front panel of the cerebus
+%             SNR>=SNRThresh);% lowSNR units
+    
     %clear out the empty rows from unsorted and invalid units
     mask=~isnan(unitsCount);
     unitsMean=unitsMean(mask,:);
     unitsStdev=unitsStdev(mask,:);
     unitsCount=unitsCount(mask);
+    unitsChans=unitsChans(mask);
+    unitsArray=unitsArray(mask);
+    unitsInUnits=unitsInUnits(mask);
+    %check for and clear out any sorted stuff from the analog front panel:
+    mask=unitsChans<128;
+    if ~isempty(find(~mask))
+        warning('appendData:unitsHasHighChannel','the existing unit data has sorted units above 128 channels. This is not normally neural data so we are removing it. If you need this data, you should take care of it prior to merging units')
+        unitsMean=unitsMean(mask,:);
+        unitsStdev=unitsStdev(mask,:);
+        unitsCount=unitsCount(mask);
+        unitsChans=unitsChans(mask);
+        unitsArray=unitsArray(mask);
+        unitsInUnits=unitsInUnits(mask);
+    end
     %now remove anything with max SNR below SNRThresh
     range=max(unitsMean,[],2)-min(unitsMean,[],2);
     SNR=range./mean(unitsStdev,2);
@@ -366,14 +390,22 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     unitsMean=unitsMean(mask,:);
     unitsStdev=unitsStdev(mask,:);
     unitsCount=unitsCount(mask);
-    
+    unitsChans=unitsChans(mask);
+    unitsArray=unitsArray(mask);
+    unitsInUnits=unitsInUnits(mask);
     %now work on the data
     disp('compiling sorted units already in new data')
     numData=numel(data);
     dataMean=nan(numData,size(data(1).spikes.wave,2));
     dataStdev=dataMean;
     dataCount=nan(numUnits,1);
+    dataChans=[data.chan];
+    dataArray={data.array};
+    dataInUnits=zeros(size(dataChans));
     for i=1:numData
+        if(data(i).ID==0 || data(i).ID==255)
+            continue
+        end
         dataMean(i,:)=mean(data(i).spikes.wave);
         dataStdev(i,:)=std(data(i).spikes.wave);
         dataCount(i)=size(data(i).spikes,1);
@@ -383,42 +415,40 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     dataMean=dataMean(mask,:);
     dataStdev=dataStdev(mask,:);
     dataCount=dataCount(mask);
+    dataChans=dataChans(mask);
+    dataArray=dataArray(mask);
+    dataInUnits=dataInUnits(mask);
+    %check for and clear out any sorted stuff from the analog front panel:
+    mask=dataChans<128;
+    if ~isempty(find(~mask))
+        warning('appendData:unitsHasHighChannel','the existing unit data has sorted units above 128 channels. This is not normally neural data so we are removing it. If you need this data, you should take care of it prior to merging units')
+        dataMean=dataMean(mask,:);
+        dataStdev=dataStdev(mask,:);
+        dataCount=dataCount(mask);
+        dataChans=dataChans(mask);
+        dataArray=dataArray(mask);
+        dataInUnits=dataInUnits(mask);
+    end
     %now remove anything with max SNR below SNRThresh
-    SNR=dataMean./dataStdev;
-    peakSNR=max(SNR);
-    mask=peakSNR>=SNRThresh;
+    range=max(dataMean,[],2)-min(dataMean,[],2);
+    SNR=range./mean(dataStdev,2);
+    mask=SNR>=SNRThresh;
     dataMean=dataMean(mask,:);
     dataStdev=dataStdev(mask,:);
     dataCount=dataCount(mask);
-    disp('merging units')    
+    dataChans=dataChans(mask);
+    dataArray=dataArray(mask);
+    dataInUnits=dataInUnits(mask);
     %concatenate data& units together:
+    disp('merging units')    
     allMean=[unitsMean;dataMean];
     allStdev=[unitsStdev;dataStdev];
     allCount=[unitsCount;dataCount];
-    chans=[[units.data.chan]';[data.chan]'];
-% % % %     %now loop through the units and construct d' distances for all units on
-% % % %     %different channels:
-% % % %     sepMat=nan(0.5*numel(chans)^2,size(allMean,2)+1);
-% % % %     sameChan=nan(size(sepMat,1));
-% % % %     idx=1;
-% % % %     for i=1:numel(chans)
-% % % %         for j=i:numel(chans)
-% % % %             sameChan= chans(i)==chans(j);
-% % % %             %get scaling factor:
-% % % %             [alpha,alphaCI]=regress(allMean(i,:),allMean(j,:));
-% % % %             %convert CI into stdev:
-% % % %             alphaStdev=diff(alphaCI)/(2*1.96);
-% % % %             %now get distance between the waves in wavespace:
-% % % %             dist=alpha*allMean(i,:)-allMean(j,:);
-% % % %             jointStdev=sqrt(allStdev(i)+allStdev(j));
-% % % %             %now use stdev and values to put d' measures into sepMat:
-% % % %             sepMat(idx,:)=[dist./jointStdev , alpha/alphaStdev];
-% % % %             idx=idx+1;
-% % % %         end
-% % % %     end
-% % % %     %now clear any the residual nans so they don't cause problems later.
-% % % %     %Also use abs to convert to separation, rather than signed distance:
-% % % %     sepMat=abs(sepMat(isnan(sepMat(:,1)),:));
+    allChans=[unitsChans';dataChans'];
+    allArray=[unitsArray';dataArray'];
+    allInUnits=[unitsInUnits';dataInUnits'];
+    
+    %now loop through the units and get scaling factors:
     numWaves=size(allMean,1);
     numPoints=size(allMean,2);
     waveMat=repmat(reshape(allMean,[1,numWaves,numPoints]),[numWaves,1,1]);
@@ -426,14 +456,14 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     spikesMat=repmat(allCount,[1,numWaves,numPoints]);
     disp('computing scaling factors for best shape-matching')
     alphaMat=nan(numWaves,numWaves);
-    alphaStdMat=alphaMat;
+    alphaCIMat=nan(numWaves,numWaves,2);
     for i=1:size(waveMat,1)
         for j=1:size(waveMat,2)
             %now get the alpha (gain) factor to multiply the transpose
             %element in order to match the scale of the non-transpose
             %element
-            [alphaMat(i,j),alphaCI]=regress(squeeze(waveMat(i,j,:)),squeeze(waveMat(j,i,:)));
-            alphaStdMat(i,j)=diff(alphaCI)/(2*1.96);
+            [alphaMat(i,j),alphaCIMat(i,j,:)]=regress(squeeze(waveMat(i,j,:)),squeeze(waveMat(j,i,:)));
+%            alphaStdMat(i,j)=diff(alphaCI)/(2*1.96);
         end
     end
     %compute all distances in wavespace. Subtract the scaled transpose from
@@ -446,35 +476,46 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     %duplicates in the bottom half
     mask=triu(true(numWaves),1);
     %use the mask to get a list of differences in wavespace
-    diffs=waveMat(repmat(mask,[1,1,numPoints]));
+    diffs=abs(waveMat(repmat(mask,[1,1,numPoints])));
     %reshape the differences into a column matrix where each row is a
     %difference observation include the alpha values here as the last 
     %difference:
+    %convert alpha into 1 sided distribution:
+    alphaMat=abs(alphaMat-1);
     diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), alphaMat(mask)];
+    %diffs=[sqrt(sum(reshape(diffs,numel(diffs)/numPoints,numPoints).^2,2)), alphas];
     %now compute joint standard deviation (S1*N1+S2*N2)/(N1+N2):
-    stdevMat=sqrt((stdevMat.*spikesMat+permute(stdevMat,[2,1,3]).*permute(spikesMat,[2,1,3]))  ./ ...
-                    (spikesMat+permute(spikesMat,[2,1,3])));
+    stdevMat=stdevMat.*spikesMat;
+    stdevMat=stdevMat+permute(stdevMat,[2,1,3]);
+    stdevMat= stdevMat./ (spikesMat+permute(spikesMat,[2,1,3]));
     %convert the 3D standard deviation matrix into a 2D matrix to match the
     %diffs matrix. Again, we add on the value for the alpha
     stdevs=stdevMat(repmat(mask,[1,1,numPoints]));
+    alphaStdMat=diff(alphaCIMat,1,3);
+    %convert CI into stdev for the scaling factor. Remember to convert CI
+    %values for alphas<1 so the CI range matches the range for the
+    %converted alpha:
+    alphaStdMat=abs(alphaStdMat)/(2*1.96);
     stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask)];
-    %calculted dPrime from the differences and standard deviations
-    dPrime=abs(diffs./stdevs);
+    %stdevs=[mean(reshape(stdevs,numel(stdevs)/numPoints,numPoints),2),alphaStdMat(mask)];
+    %calculte dPrime from the differences and standard deviations. Log
+    %transform to get from a positive only, skewed distribution to 
+    %something that looks normal
+    dPrime=log(diffs./stdevs);
     %now get the logical index for things that are the same channel:
     disp('getting projections onto LDA')
     diffMask=true(numWaves,numWaves);
-    for i=1:numel(chans)
-        tmp=find(chans==chans(i));
-        diffMask(tmp,tmp)=false;
+    for i=1:numel(allChans)
+        tmp=find(allChans==allChans(i) & strcmp(allArray,allArray{i}) & allInUnits~=allInUnits(i));
+        diffMask(i,tmp)=false;
+        diffMask(tmp,i)=false;
     end
     knownDiff=diffMask(mask);
-    
-    %now lets make an LDA classifier to maximally separate units on same
-    %and different channels:
-    [~,~,~,~,coeff]=classify([],dPrime,knownDiff);
-    %now project our same channel data onto the LDA axis:
-    ldaProj = dPrime(knownDiff,:)*coeff(1,2).linear;
-    ldaProj=sort(ldaProj);
+    %now lets get the axis between the mean cluster position for our dPrime
+    %data. This is the same as the LDA axis, but we get to skip all the
+    %logic associated with classifying individual points:
+    coeff=mean(dPrime(knownDiff,:))-mean(dPrime(~knownDiff,:));
+    ldaProj=sort(dPrime(knownDiff,:)*coeff');
 end
 function [tsISI]=getISIcomps(units,data)
     numUnits=numel(units.data);
