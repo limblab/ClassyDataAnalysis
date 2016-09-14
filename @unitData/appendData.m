@@ -357,42 +357,20 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
     end
-%     range=max(unitsMean,[],2)-min(unitsMean,[],2);
-%     SNR=range./mean(unitsStdev,2);
-%     %build mask to remove undesireable units:
-%     mask=(~isnan(unitsCount) & ... stuff leftover from units 0 and 255
-%             unitsChans<128 & ... sorted units on the analog front panel of the cerebus
-%             SNR>=SNRThresh);% lowSNR units
-    
-    %clear out the empty rows from unsorted and invalid units
-    mask=~isnan(unitsCount);
-    unitsMean=unitsMean(mask,:);
-    unitsStdev=unitsStdev(mask,:);
-    unitsCount=unitsCount(mask);
-    unitsChans=unitsChans(mask);
-    unitsArray=unitsArray(mask);
-    unitsInUnits=unitsInUnits(mask);
-    %check for and clear out any sorted stuff from the analog front panel:
-    mask=unitsChans<128;
-    if ~isempty(find(~mask))
-        warning('appendData:unitsHasHighChannel','the existing unit data has sorted units above 128 channels. This is not normally neural data so we are removing it. If you need this data, you should take care of it prior to merging units')
-        unitsMean=unitsMean(mask,:);
-        unitsStdev=unitsStdev(mask,:);
-        unitsCount=unitsCount(mask);
-        unitsChans=unitsChans(mask);
-        unitsArray=unitsArray(mask);
-        unitsInUnits=unitsInUnits(mask);
-    end
-    %now remove anything with max SNR below SNRThresh
     range=max(unitsMean,[],2)-min(unitsMean,[],2);
     SNR=range./mean(unitsStdev,2);
-    mask=SNR>=SNRThresh;
+    %build mask to remove undesireable units:
+    mask=(~isnan(unitsCount) & ... stuff leftover from units 0 and 255
+            unitsChans<128 & ... sorted units on the analog front panel of the cerebus
+            SNR>=SNRThresh);% lowSNR units
+
     unitsMean=unitsMean(mask,:);
     unitsStdev=unitsStdev(mask,:);
     unitsCount=unitsCount(mask);
     unitsChans=unitsChans(mask);
     unitsArray=unitsArray(mask);
     unitsInUnits=unitsInUnits(mask);
+
     %now work on the data
     disp('compiling sorted units already in new data')
     numData=numel(data);
@@ -410,35 +388,20 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
         dataStdev(i,:)=std(data(i).spikes.wave);
         dataCount(i)=size(data(i).spikes,1);
     end
-    %clear out the empty rows from unsorted and invalid units
-    mask=~isnan(dataCount);
-    dataMean=dataMean(mask,:);
-    dataStdev=dataStdev(mask,:);
-    dataCount=dataCount(mask);
-    dataChans=dataChans(mask);
-    dataArray=dataArray(mask);
-    dataInUnits=dataInUnits(mask);
-    %check for and clear out any sorted stuff from the analog front panel:
-    mask=dataChans<128;
-    if ~isempty(find(~mask))
-        warning('appendData:unitsHasHighChannel','the existing unit data has sorted units above 128 channels. This is not normally neural data so we are removing it. If you need this data, you should take care of it prior to merging units')
-        dataMean=dataMean(mask,:);
-        dataStdev=dataStdev(mask,:);
-        dataCount=dataCount(mask);
-        dataChans=dataChans(mask);
-        dataArray=dataArray(mask);
-        dataInUnits=dataInUnits(mask);
-    end
-    %now remove anything with max SNR below SNRThresh
     range=max(dataMean,[],2)-min(dataMean,[],2);
     SNR=range./mean(dataStdev,2);
-    mask=SNR>=SNRThresh;
+    %build mask to remove undesireable units:
+    mask=(~isnan(dataCount) & ... stuff leftover from units 0 and 255
+            dataChans<128 & ... sorted units on the analog front panel of the cerebus
+            SNR>=SNRThresh);% lowSNR units
+
     dataMean=dataMean(mask,:);
     dataStdev=dataStdev(mask,:);
     dataCount=dataCount(mask);
     dataChans=dataChans(mask);
     dataArray=dataArray(mask);
     dataInUnits=dataInUnits(mask);
+
     %concatenate data& units together:
     disp('merging units')    
     allMean=[unitsMean;dataMean];
