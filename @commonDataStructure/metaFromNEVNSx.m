@@ -13,7 +13,15 @@ function metaFromNEVNSx(cds,opts)
     % source info
     meta.cdsVersion=cds.meta.cdsVersion;
     meta.processedTime=date;
-    meta.rawFileName=cds.NEV.MetaTags.Filename;
+    if ischar(meta.rawFileName) && strcmp(meta.rawFileName.'Unknown')
+        meta.rawFileName=cds.NEV.MetaTags.Filename;
+    else
+        if iscell(meta.rawFileName)
+            meta.rawFileName=[meta.rawFileName,{cds.NEV.MetaTags.Filename}];
+        else
+            meta.rawFileName={meta.rawFileName,cds.NEV.MetaTags.Filename};
+        end
+    end
     meta.dataSource='NEVNSx';
     if(isfield(opts,'ranBy'))
         meta.ranBy=opts.ranBy;
