@@ -38,7 +38,7 @@ function emgFromNSx(cds)
         if isempty(cds.emg)
             set(cds,'emg',emg);
         elseif ~isempty(emg)
-            cds.mergeTable('emg',emg)
+            set(cds,'emg',mergeTables(cds.emg,emg));
         end
         evntData=loggingListenerEventData('emgFromNSx',[]);
         notify(cds,'ranOperation',evntData)

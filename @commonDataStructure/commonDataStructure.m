@@ -425,7 +425,6 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             metaFromNEVNSx(cds,opts)
             pos=enc2handlepos(cds,dateTime,lab)
             pos=enc2WFpos(cds)
-            mergeTable(cds,fieldName,mergeData)
         [task,opts]=getTask(cds,task,opts)
         %trial table functions
         getTrialTable(cds,opts)

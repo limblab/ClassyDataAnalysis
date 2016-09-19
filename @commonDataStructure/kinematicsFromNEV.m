@@ -153,7 +153,7 @@ function kinematicsFromNEV(cds,opts)
     if isempty(cds.kin)
         set(cds,'kin',kin);
     elseif ~isempty(kin)
-        cds.mergeTable('kin',kin)
+        set(cds,'kin',mergeTables(cds.kin,kin));
     end
     evntData=loggingListenerEventData('kinematicsFromNEV',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)

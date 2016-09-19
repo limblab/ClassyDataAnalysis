@@ -53,7 +53,7 @@ function lfpFromNSx(cds)
             if isempty(cds.lfp)
                 set(cds,'lfp',lfp);
             elseif ~isempty(lfp)
-                cds.mergeTable('lfp',lfp)
+                set(cds,'lfp',mergeTables(cds.lfp,lfp));
             end
             evntData=loggingListenerEventData('lfpFromNSx',[]);
             notify(cds,'ranOperation',evntData)

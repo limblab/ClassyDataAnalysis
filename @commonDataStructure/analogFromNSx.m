@@ -56,7 +56,7 @@ function analogFromNSx(cds)
                 temp=table(a{:},'VariableNames',[{'t'};cds.NSxInfo.NSx_labels(analogList(subset))]);
                 temp.Properties.VariableDescriptions=[{'time'},repmat({'analog data'},1,numel(subset))];
                 temp.Properties.Description=['table of analog data with collection frequency of: ', num2str(frequencies(i))];
-                analogData{i}=mergeAnalogTables(a,cds.analog{match});
+                analogData{i}=mergeTables(a,cds.analog{match});
             else
                 analogData{i}=table(a{:},'VariableNames',[{'t'},reshape(cds.NSxInfo.NSx_labels(analogList(subset)),1,numel(cds.NSxInfo.NSx_labels(analogList(subset))))]);
                 analogData{i}.Properties.VariableDescriptions=[{'time'},repmat({'analog data'},1,numel(subset))];
@@ -83,31 +83,4 @@ function analogFromNSx(cds)
         evntData=loggingListenerEventData('analogFromNSx',[]);
         notify(cds,'ranOperation',evntData)
     end
-end
-function merged=mergeAnalogTables(table1,table2)
-    %this local function is a copy of the mergeTables method of the cds.
-    %Its copied here since the mergeTables method works on fields of the
-    %cds that are tables, and cds.analog is a cell array requiring that the
-    %function return the merged table into the proper cell and then setting
-    %the cds field.
-    tstart=table1.t(1);
-    tend=table1.t(end);
-    dt=table1.t(2)-tstart;
-    
-    tstart2=table2.t(1);
-    tend2=table2.t(end);
-    dt2=table2.t(2)-tstart2;
-    %check our frequencies
-    if dt~=dt2
-        error('mergeTable:differentFrequency',['Field: ',fieldName,' was collected at different frequencies in the cds and the new data and cannot be merged. Either re-load both data sets using the same filterspec, or refilter the data in one of the cds structures using decimation to get to the frequencies to match'])
-    end
-    %check if we have duplicate columns:
-    for j=1:length(table1.Properties.VariableNames)
-        if ~strcmp(table1.Properties.VariableNames{j},'t') && ~isempty(find(cell2mat({strcmp(table2.Properties.VariableNames,table1.Properties.VariableNames{j})}),1,'first'))
-            error('mergeTable:duplicateColumns',['the column label: ',table1.Properties.VariableNames{j},' exists in the ',fieldName,' field of both cds and new data. All columns in the cds and new data except time must have different labels in order to merge'])
-        end
-    end
-    mask=cell2mat({~strcmp(table1.Properties.VariableNames,'t')});
-    merged=[table1(find(table1.t>=max(tstart,tstart2),1,'first'):find(table1.t>=min(tend,tend2),1,'first'),:),...
-       table1(find(table2.t>=max(tstart,tstart2),1,'first'):find(table2.t>=min(tend,tend2),1,'first'),(mask))];
 end

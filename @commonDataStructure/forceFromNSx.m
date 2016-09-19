@@ -72,7 +72,7 @@ function forceFromNSx(cds,opts)
     if isempty(cds.force)
         set(cds,'force',forces);
     elseif ~isempty(force)
-        cds.mergeTable('force',forces)
+        set(cds,'force',mergeTable(cds.force,forces));
     end
     evntData=loggingListenerEventData('forceFromNSx',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)
