@@ -361,7 +361,7 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     SNR=range./mean(unitsStdev,2);
     %build mask to remove undesireable units:
     mask=(~isnan(unitsCount) & ... stuff leftover from units 0 and 255
-            unitsChans<128 & ... sorted units on the analog front panel of the cerebus
+            unitsChans'<128 & ... sorted units on the analog front panel of the cerebus
             SNR>=SNRThresh);% lowSNR units
 
     unitsMean=unitsMean(mask,:);
@@ -376,7 +376,7 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     numData=numel(data);
     dataMean=nan(numData,size(data(1).spikes.wave,2));
     dataStdev=dataMean;
-    dataCount=nan(numUnits,1);
+    dataCount=nan(numData,1);
     dataChans=[data.chan];
     dataArray={data.array};
     dataInUnits=zeros(size(dataChans));
@@ -392,7 +392,7 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     SNR=range./mean(dataStdev,2);
     %build mask to remove undesireable units:
     mask=(~isnan(dataCount) & ... stuff leftover from units 0 and 255
-            dataChans<128 & ... sorted units on the analog front panel of the cerebus
+            dataChans'<128 & ... sorted units on the analog front panel of the cerebus
             SNR>=SNRThresh);% lowSNR units
 
     dataMean=dataMean(mask,:);
@@ -447,8 +447,8 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     alphaMat=abs(alphaMat-1);
     diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), alphaMat(mask)];
     %diffs=[sqrt(sum(reshape(diffs,numel(diffs)/numPoints,numPoints).^2,2)), alphas];
-    %now compute joint standard deviation (S1*N1+S2*N2)/(N1+N2):
-    stdevMat=stdevMat.*spikesMat;
+    %now compute joint standard deviation (S1*N1+S2*N2*alpha)/(N1+N2):
+    stdevMat=stdevMat.*spikesMat.*repmat(alphaMat,[1,1,numPoints]);
     stdevMat=stdevMat+permute(stdevMat,[2,1,3]);
     stdevMat= stdevMat./ (spikesMat+permute(spikesMat,[2,1,3]));
     %convert the 3D standard deviation matrix into a 2D matrix to match the
