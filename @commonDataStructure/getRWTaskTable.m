@@ -159,5 +159,6 @@ function getRWTaskTable(cds,times)
     trials.Properties.Description='Trial table for the RW task';
     %cds.setField('trials',trials)
     set(cds,'trials',trials)
-    cds.addOperation(mfilename('fullpath'))
+    evntData=loggingListenerEventData('getRWTaskTable',[]);
+    notify(cds,'ranOperation',evntData)
 end

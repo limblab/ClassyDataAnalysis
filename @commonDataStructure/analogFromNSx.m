@@ -76,9 +76,8 @@ function analogFromNSx(cds)
                     analogData=[analogData,cds.analog{i}];
                 end
             end
-        else
-            set(cds,'analog',analogData)
         end
+        set(cds,'analog',analogData)
         
         evntData=loggingListenerEventData('analogFromNSx',[]);
         notify(cds,'ranOperation',evntData)

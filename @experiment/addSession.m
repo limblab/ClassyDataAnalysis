@@ -108,10 +108,10 @@ function addSession(ex,cds)
         %load analog from cdsOrPath into ex
         if isempty(ex.analog)
             for i=1:length(cds.analog)
-                ex.analog{i}=timeSeriesData();
-                addlistener(ex.analog{i},'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                addlistener(ex.analog{i},'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
-                cds.analog{i};
+                ex.analog(i)=timeSeriesData();
+                addlistener(ex.analog(i),'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+                addlistener(ex.analog(i),'appended',@(src,evnt)ex.dataLoggingCallback(src,evnt));
+                ex.analog(i).appendTable(cds.analog{i});
             end
         elseif length(ex.analog)==length(cds.analog)
             for i=1:length(cds.analog)
@@ -123,7 +123,7 @@ function addSession(ex,cds)
                 for j=1:length(ex.analog)
                     exFreq=mode(diff(ex.analog{j}.data));
                     if cdsFreq==exFreq
-                        ex.analog{j}.appendData(cds.analog{i});
+                        ex.analog(j).appendData(cds.analog(i));
                         break
                     end
                 end

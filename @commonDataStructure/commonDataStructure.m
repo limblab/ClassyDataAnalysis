@@ -395,6 +395,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         %data loading functions:
         file2cds(cds,filePath,varargin)
         database2cds(cds,conn,filepath,varargin)
+        loadOpenSimData(cds,folderPath)
         
     end
     methods (Static = true)

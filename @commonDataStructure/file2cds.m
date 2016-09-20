@@ -154,7 +154,7 @@ function file2cds(cds,filePath,varargin)
         end
         %check whether the file has an extension and warn the user if it
         %doesn't:
-        [~,~,ext]=fileparts(filePath);
+        [folderPath,~,ext]=fileparts(filePath);
         if isempty(ext)
             warning('file2cds:noFileExtension','the file name was given with no extension.')
             testExt='.nev';
@@ -221,6 +221,8 @@ function file2cds(cds,filePath,varargin)
         cds.nev2NEVNSx(filePath);
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
+        %try to get open sim data:
+        cds.loadOpenSimData(folderPath);
         if writeSummary
 %        cds.writeSessionSummary()
         end

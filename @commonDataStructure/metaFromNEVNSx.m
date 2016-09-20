@@ -13,7 +13,7 @@ function metaFromNEVNSx(cds,opts)
     % source info
     meta.cdsVersion=cds.meta.cdsVersion;
     meta.processedTime=date;
-    if ischar(meta.rawFileName) && strcmp(meta.rawFileName,'Unknown')
+    if ischar(cds.meta.rawFileName) && strcmp(cds.meta.rawFileName,'Unknown')
         meta.rawFileName=cds.NEV.MetaTags.Filename;
     else
         if iscell(meta.rawFileName)

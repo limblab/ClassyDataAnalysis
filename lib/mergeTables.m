@@ -22,7 +22,7 @@ function merged=mergeTables(table1,table2)
             error('mergeTable:duplicateColumns',['the column label: ',table1.Properties.VariableNames{j},' exists in the ',fieldName,' field of both cds and new data. All columns in the cds and new data except time must have different labels in order to merge'])
         end
     end
-    mask=cell2mat({~strcmp(table1.Properties.VariableNames,'t')});
+    mask=cell2mat({~strcmp(table2.Properties.VariableNames,'t')});
     merged=[table1(find(table1.t>=max(tstart,tstart2),1,'first'):find(table1.t>=min(tend,tend2),1,'first'),:),...
-       table1(find(table2.t>=max(tstart,tstart2),1,'first'):find(table2.t>=min(tend,tend2),1,'first'),(mask))];
+            table2(find(table2.t>=max(tstart,tstart2),1,'first'):find(table2.t>=min(tend,tend2),1,'first'),(mask))];
 end
