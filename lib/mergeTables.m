@@ -7,11 +7,11 @@ function merged=mergeTables(table1,table2)
     %use the same units for time.
     tstart=table1.t(1);
     tend=table1.t(end);
-    dt=table1.t(2)-tstart;
+    dt=mode(diff(table1.t));
     
     tstart2=table2.t(1);
     tend2=table2.t(end);
-    dt2=table2.t(2)-tstart2;
+    dt2=mode(diff(table2.t));
     %check our frequencies
     if dt~=dt2
         error('mergeTable:differentFrequency',['Field: ',fieldName,' was collected at different frequencies in the cds and the new data and cannot be merged. Either re-load both data sets using the same filterspec, or refilter the data in one of the cds structures using decimation to get to the frequencies to match'])

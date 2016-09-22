@@ -106,7 +106,7 @@ function addSession(ex,cds)
             error('addSession:NoAnalog','cds has no analog data')
         end
         %load analog from cdsOrPath into ex
-        if isempty(ex.analog)
+        if isempty(ex.analog.data)
             for i=1:length(cds.analog)
                 ex.analog(i)=timeSeriesData();
                 addlistener(ex.analog(i),'refiltered',@(src,evnt)ex.dataLoggingCallback(src,evnt));
@@ -118,21 +118,18 @@ function addSession(ex,cds)
                 %find the sampling frequency of the i'th table of analog in
                 %the cds:
                 cdsFreq=mode(diff(cds.analog{i}.t));
-                %now find the matchting field in ex.analog and append the
+                %now find the matching field in ex.analog and append the
                 %analog table:
                 for j=1:length(ex.analog)
                     exFreq=mode(diff(ex.analog{j}.data));
                     if cdsFreq==exFreq
-                        ex.analog(j).appendData(cds.analog(i));
+                        ex.analog(j).appendTable(cds.analog(i));
                         break
                     end
                 end
             end
         else
             error('addSession:analogMismatch','The cds does not have the same number of analog fields as the data currently in the experiment')
-        end
-        for i=1:length(cds.analog)
-            ex.analog{i}=timeSeriesData(cds.analog{i});
         end
     end
     %% triggers

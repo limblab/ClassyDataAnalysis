@@ -145,7 +145,7 @@ function getRWTaskTable(cds,times)
         end
 
         trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,tgtCtrs,...
-                    'VariableNames',{'goCue','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','tgtCtr'});
+                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','tgtCtr'});
         trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','cm'};
         trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','target center position'};
 

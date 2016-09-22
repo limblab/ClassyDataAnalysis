@@ -260,9 +260,9 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
             else
                 ex.firingRateConfig=frc;
             end
-            if frc.sampleRate>ex.binConfig.filterConfig.sampleRate
+            if ~isempty(ex.binConfig) frc.sampleRate>ex.binConfig.filterConfig.sampleRate
                 warning('firingRateConfig:FRBinSizeMismatch','The firing rate bin size selected is smaller than the configured binsize for binnedData. This will cause errors if using the firing rate to generate binnedData')
-            elseif frc.sampleRate~=ex.binConfig.filterConfig.sampleRate
+            elseif ~isempty(ex.binConfig) && frc.sampleRate~=ex.binConfig.filterConfig.sampleRate
                 warning('firingRateConfig:FRBinSizeMismatch','The firing rate bin size selected is smaller than the configured binsize for binnedData. The FR data will be decimated to generate binnedData')
             end
         end

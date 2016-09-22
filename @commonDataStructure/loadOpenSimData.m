@@ -12,6 +12,14 @@ function loadOpenSimData(cds,folderPath)
         folderPath=[folderPath,filesep];
     end
     
+    %interpolate onto times aligned with the existing kinematic data. If no
+    %existing kinematic data, just use a 100hz signal aligned to zero.
+    if ~isempty(cds.kin)
+        dt=mode(diff(cds.kin.t));
+    else
+        dt=.01;
+    end
+    
     prefix=cds.meta.rawFileName;
     if ~iscell(prefix)
         prefix={prefix};
@@ -62,7 +70,18 @@ function loadOpenSimData(cds,folderPath)
                     header{idx}='t';
                 end
                 a=reshape(fscanf(fid,repmat('%f',[1,nCol])),[nCol,nRow])';
-                kin=array2table(a,'VariableNames',header);
+                %sanity check time:
+                SR=mode(diff(a(:,1)));
+                if size(a,1)~=round((1+ (max(a(:,1))-min(a(:,1)))/SR))
+                    warning('loadOpenSimData:badTimeSeries',['the timeseries in the detected opensim data is missing time points. expected ',num2str((1+ (max(a(:,1))-min(a(:,1)))/SR)),' points, found ',num2str(size(a,1)),' points'])
+                    disp('data will be interpolated to reconstruct missing points')
+                    cds.addProblem('kinect data has missing timepoints, data in the cds has been interpolated to reconstruct them')
+                end
+                %interpolate to desired time vector:
+                desiredTime=roundTime(a(1,1):dt:a(end,1));%uniformly samples a with spacing dt, then shifts time bins to be zero aligned
+                desiredTime=desiredTime(desiredTime>min(a(:,1)) & desiredTime<max(a(:,1)))';%clear out any points that fall outside the original time window due to the shift
+                
+                kin=array2table([desiredTime,interp1(a(:,1),a(:,2:end),desiredTime)],'VariableNames',header);
                 unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;
                 %find sampling rate and look for matching rate in analog data:
@@ -87,6 +106,9 @@ function loadOpenSimData(cds,folderPath)
         end
            
     end
+    
+    
+    cds.sanitizeTimeWindows
     logStruct=struct('folder',folderPath,'fileNames',foundFiles);
     evntData=loggingListenerEventData('loadOpenSimData',logStruct);
     notify(cds,'ranOperation',evntData)

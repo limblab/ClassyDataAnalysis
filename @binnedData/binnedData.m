@@ -126,24 +126,25 @@ classdef binnedData < matlab.mixin.SetGet
             end
         end
         function set.dimReductionConfig(binned,drc)
-            if ~isstruct(drc)
-                error('dimReductionConfig:notAStruct','dimReductionConfig must be a struct')
-            elseif ~isfield(drc,'units')
-                error('dimReductionConfig:noUnits','the dimReductionConfig must have a units property containing a list of units to use in the dimensionalty reduction')
-            elseif ~isfield(drc,'windows')
-                error('dimReductionConfig:noWindows','the dimReductionConfig must have a windows field giving the time windows for the trials of interest')
-            elseif ~isfield(drc,'dimension')
-                error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionalit of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
-            elseif ~isfield(drc,'segLength')
-                error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLenght field')
-            elseif ~isfield(drc,'trials')
-                error('dimReductionConfig:noTrials','the dimReductionConfig must have a trials field')
-            else
-                binned.glmConfig=drc;
+            if ~isempty(drc)
+                if ~isstruct(drc)
+                    error('dimReductionConfig:notAStruct','dimReductionConfig must be a struct')
+                elseif ~isfield(drc,'units')
+                    error('dimReductionConfig:noUnits','the dimReductionConfig must have a units property containing a list of units to use in the dimensionalty reduction')
+                elseif ~isfield(drc,'windows')
+                    error('dimReductionConfig:noWindows','the dimReductionConfig must have a windows field giving the time windows for the trials of interest')
+                elseif ~isfield(drc,'dimension')
+                    error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionalit of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
+                elseif ~isfield(drc,'segLength')
+                    error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLenght field')
+                elseif ~isfield(drc,'trials')
+                    error('dimReductionConfig:noTrials','the dimReductionConfig must have a trials field')
+                end
             end
+            binned.dimReductionConfig=drc;
         end
         function set.glmConfig(binned,glmc)
-            if ~isstruct(glmc)
+            if ~isempty(glmc) && ~isstruct(glmc)
                 error('glmConfig:notAStruct','glmConfig must be a struct')
             else
                 binned.glmConfig=glmc;
@@ -157,11 +158,12 @@ classdef binnedData < matlab.mixin.SetGet
 %             end
 %         end
         function set.kalmanConfig(binned,kfc)
-            if ~isstruct(kfc)
-                error('kalmanConfig:notAStruct','kalmanConfig must be a struct')
-            else
-                binned.kalmanConfig=kfc;
+            if ~isempty(kfc)
+                if ~isstruct(kfc)
+                    error('kalmanConfig:notAStruct','kalmanConfig must be a struct')
+                end
             end
+            binned.kalmanConfig=kfc;
         end
 %         function set.faConfig(binned,fac)
 %             if ~isstruct(fac)
@@ -185,27 +187,28 @@ classdef binnedData < matlab.mixin.SetGet
 %             end
 %         end
         function set.pdConfig(binned,pdc)
-            if ~isstruct(pdc)
-                error('pdConfig:notAStruct','the pdConfig field must be a struct describing the way that PDs will be computed')
-            elseif ~isfield(pdc,'method') || ~ischar(pdc.method)
-                error('pdConfig:badMethod','the method field of pdConfig must be a string describing the method to compute PDs')
-            elseif ~isfield(pdc,'units') || (~isempty(pdc.units)&& ~isnumeric(pdc.units))
-                error('pdConfig:badUnitsConfiguration','the pdConfig must have a units field that is either empty or contains a set of unit labels')
-            elseif ~isfield(pdc,'pos') || ~islogical(pdc.pos)
-                error('pdConfig:badPosConfiguration','pdConfig must have a pos field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
-            elseif ~isfield(pdc,'vel') || ~islogical(pdc.vel)
-                error('pdConfig:badVelConfiguration','pdConfig must have a vel field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
-            elseif ~isfield(pdc,'force') || ~islogical(pdc.force)
-                error('pdConfig:badForceConfiguration','pdConfig must have a force field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
-            elseif ~isfield(pdc,'speed') || ~islogical(pdc.speed)
-                error('pdConfig:badspeedConfiguration','pdConfig must have a speed field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
-            elseif ~isfield(pdc,'useParallel') || ~islogical(pdc.useParallel)
-                error('pdConfic:badUseParallelConfig','pdConfig must have a field useParalle that contains a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
-            elseif ~isfield(pdc,'windows') || (~isempty(pdc.windows) && (~isnumeric(pdc.windows) || size(pdc.windows,2)~=2))
-                error('pdConfig:badWindowConfiguration','pdConfig must have a windows field that contains the time windows for PD computation')
-            else
-                binned.pdConfig=pdc;
+            if ~isempty(pdc)
+                if ~isstruct(pdc)
+                    error('pdConfig:notAStruct','the pdConfig field must be a struct describing the way that PDs will be computed')
+                elseif ~isfield(pdc,'method') || ~ischar(pdc.method)
+                    error('pdConfig:badMethod','the method field of pdConfig must be a string describing the method to compute PDs')
+                elseif ~isfield(pdc,'units') || (~isempty(pdc.units)&& ~isnumeric(pdc.units))
+                    error('pdConfig:badUnitsConfiguration','the pdConfig must have a units field that is either empty or contains a set of unit labels')
+                elseif ~isfield(pdc,'pos') || ~islogical(pdc.pos)
+                    error('pdConfig:badPosConfiguration','pdConfig must have a pos field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
+                elseif ~isfield(pdc,'vel') || ~islogical(pdc.vel)
+                    error('pdConfig:badVelConfiguration','pdConfig must have a vel field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
+                elseif ~isfield(pdc,'force') || ~islogical(pdc.force)
+                    error('pdConfig:badForceConfiguration','pdConfig must have a force field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
+                elseif ~isfield(pdc,'speed') || ~islogical(pdc.speed)
+                    error('pdConfig:badspeedConfiguration','pdConfig must have a speed field that must have a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
+                elseif ~isfield(pdc,'useParallel') || ~islogical(pdc.useParallel)
+                    error('pdConfic:badUseParallelConfig','pdConfig must have a field useParalle that contains a logical value. Note that 0 or 1 do not count as logicals, you must use the true/false keywords')
+                elseif ~isfield(pdc,'windows') || (~isempty(pdc.windows) && (~isnumeric(pdc.windows) || size(pdc.windows,2)~=2))
+                    error('pdConfig:badWindowConfiguration','pdConfig must have a windows field that contains the time windows for PD computation')
+                end
             end
+            binned.pdConfig=pdc;
         end
         function set.weinerData(binned,wData)
             if isempty(wData)
