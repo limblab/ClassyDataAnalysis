@@ -136,7 +136,8 @@ function appendData(units,data,varargin)
         %compute population level stats:
         if ~isempty(strfind(method,'shape') )
             %compute the population shape distribution:
-            [ldaProj,coeff]=getShapeComps(units,data,units.appendConfig.SNRThreshold);
+            %[ldaProj,coeff]=getShapeComps(units,data,units.appendConfig.SNRThreshold,units.appendConfig.thresholdPoint);
+            [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,units.appendConfig.SNRThreshold,units.appendConfig.thresholdPoint);
         end
 
         if ~isempty(strfind(units.appendConfig.method,'ISI') )
@@ -171,18 +172,18 @@ function appendData(units,data,varargin)
                         %if this unit in units was already handled, skip it
                         continue
                     else
-                    unitMean=mean(units.data(unitsList(j)).spikes.wave);
-                    unitStdev=std(units.data(unitsList(j)).spikes.wave);
-                    %skip this unit if the SNR is too low
-                    %compute SNR as range of mean wave normalized by mean
-                    %stdev of each point.
-                    SNR=(max(unitMean)-min(unitMean))/mean(unitStdev);
-                    if SNR<units.appendConfig.SNRThreshold;
-                        continue
-                    end
-                    
-                    %test all units in data for match, and append
-                    %them if match is found
+                        unitMean=mean(units.data(unitsList(j)).spikes.wave);
+                        unitStdev=std(units.data(unitsList(j)).spikes.wave);
+                        %skip this unit if the SNR is too low
+                        %compute SNR as range of mean wave normalized by mean
+                        %stdev of each point.
+                        SNR=(max(unitMean)-min(unitMean))/mean(unitStdev);
+                        if SNR<units.appendConfig.SNRThreshold;
+                            continue
+                        end
+
+                        %test all units in data for match, and append
+                        %them if match is found
 
                         for k=1:numel(dataList)
                             if ~dataFlags(k) || ~strcmp(units.data(unitsList(j)).array,data(dataList(k)).array)
@@ -209,7 +210,7 @@ function appendData(units,data,varargin)
 
                                     dPrime=[abs(unitMean-dataMean)./sqrt(dataStdev+unitStdev) , alpha/alphaStdev];
                                     %now project dPrime onto the LDA axis:
-                                    proj = dPrime*coeff(1,2).linear;
+                                    proj = dPrime*coeff';
                                     %now see where we are on the distribution of
                                     %known different cells to estimate p-value:
                                     pShape=sum(ldaProj>=proj)/numel(ldaProj);
@@ -260,9 +261,6 @@ function appendData(units,data,varargin)
                                     tmpUnitData(end).spikes=[tmpUnitData(end).spikes;tmpData];
                                     unitFlags(j)=false;
                                     dataFlags(k)=false;
-                                    %since we found a match, break from the
-                                    %loop across the units in data
-                                    break
                                 end
                             end
                         end
@@ -272,8 +270,7 @@ function appendData(units,data,varargin)
                     for k=1:numel(tmpData)
                         tmpData(k).spikes.ts=tmpData(k).spikes.ts+offset;
                     end
-                    unmatched=[ units.data(unitsList(unitFlags)) ; 
-                               tmpData'];
+                    unmatched=[ units.data(unitsList(unitFlags)),tmpData];
 
                     for k=1:numel(unmatched)
                         switch units.appendConfig.default
@@ -318,6 +315,16 @@ function appendData(units,data,varargin)
 end
 %local functions that don't share namespace with the main function:
 function [flags,tmpUnitData]=addUnit(ID,UD,tmpUnitData,flags,uList,offset)
+    %takes units labeled ID from the unitData.data(uList) structure and appends
+    %them to tmpUnitData. Updates the flags vector for the merged units to
+    %indicate false for those units. Accepts an offset which will be
+    %applied to the timestamps for all data from UD before appending.
+    %when appending addUnit checks to see if a unit with the same ID
+    %already exists in tmpUnitData. If such a unit exists, spikes from UD
+    %will be appended to the end of the spikes field of tmpUnitData,
+    %otherwise, a new struct will be appended to the end of the tmpUnitData
+    %array
+    %
     chanIdx=find([UD(uList).ID]==ID);
     if ~isempty(chanIdx)
         tmpData=UD(uList(chanIdx));
@@ -338,16 +345,28 @@ function [flags,tmpUnitData]=addUnit(ID,UD,tmpUnitData,flags,uList,offset)
         flags(chanIdx)=false;
     end
 end
-function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
-    %loop through all units and get mean and stdev of wave
+function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, threshPoint)
+    %[coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, threshPoint)
+    %takes the data for this monkey and builds a statistical model of the
+    %differences in shape across all units.
+    %returns a vector that is the axis that maximally separates comparisons
+    %between different units, and comparisons between the same unit in
+    %different files. Also returns matlab distribution objects for the set
+    %of known different comparisons, the modeled self comparisons, and the
+    %empirical data containing both different and self comparisons. use the
+    %functions pdf(dist,x), and cdf(dist,x) to get probabilities for values
+    %in the distributions.
+    
     disp('compiling sorted units already in unitData')
     numUnits=numel(units.data);
     unitsMean=nan(numUnits,size(units.data(1).spikes.wave,2));
     unitsStdev=unitsMean;
+    unitsShift=nan(numUnits,1);
     unitsCount=nan(numUnits,1);
     unitsChans=[units.data.chan];
     unitsArray={units.data.array};
     unitsInUnits=ones(size(unitsChans));
+    unitsThreshold=[units.data.lowThreshold];
     for i=1:numUnits
         if(units.data(i).ID==0 || units.data(i).ID==255)
             %don't bother with invalid or unsorted
@@ -356,6 +375,7 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
         unitsMean(i,:)=mean(units.data(i).spikes.wave);
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
+        unitsShift(i)=find(unitsMean(i,:)<unitsThreshold(i),1,'first');
     end
     range=max(unitsMean,[],2)-min(unitsMean,[],2);
     SNR=range./mean(unitsStdev,2);
@@ -366,20 +386,23 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
 
     unitsMean=unitsMean(mask,:);
     unitsStdev=unitsStdev(mask,:);
+    unitsShift=unitsShift(mask);
     unitsCount=unitsCount(mask);
     unitsChans=unitsChans(mask);
     unitsArray=unitsArray(mask);
     unitsInUnits=unitsInUnits(mask);
-
+    unitsThreshold=unitsThreshold(mask);
     %now work on the data
     disp('compiling sorted units already in new data')
     numData=numel(data);
     dataMean=nan(numData,size(data(1).spikes.wave,2));
     dataStdev=dataMean;
+    dataShift=nan(numData,1);
     dataCount=nan(numData,1);
     dataChans=[data.chan];
     dataArray={data.array};
     dataInUnits=zeros(size(dataChans));
+    dataThreshold=[data.lowThreshold];
     for i=1:numData
         if(data(i).ID==0 || data(i).ID==255)
             continue
@@ -387,6 +410,7 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
         dataMean(i,:)=mean(data(i).spikes.wave);
         dataStdev(i,:)=std(data(i).spikes.wave);
         dataCount(i)=size(data(i).spikes,1);
+        dataShift(i)=find(dataMean(i,:)<dataThreshold(i),1,'first');
     end
     range=max(dataMean,[],2)-min(dataMean,[],2);
     SNR=range./mean(dataStdev,2);
@@ -397,26 +421,39 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
 
     dataMean=dataMean(mask,:);
     dataStdev=dataStdev(mask,:);
+    dataShift=dataShift(mask);
     dataCount=dataCount(mask);
     dataChans=dataChans(mask);
     dataArray=dataArray(mask);
     dataInUnits=dataInUnits(mask);
-
+    dataThreshold=dataThreshold(mask);
     %concatenate data& units together:
     disp('merging units')    
     allMean=[unitsMean;dataMean];
     allStdev=[unitsStdev;dataStdev];
+    allShift=[unitsShift;dataShift]-threshPoint;
     allCount=[unitsCount;dataCount];
     allChans=[unitsChans';dataChans'];
     allArray=[unitsArray';dataArray'];
     allInUnits=[unitsInUnits';dataInUnits'];
+    allThreshold=[unitsThreshold';dataThreshold'];
+    
+    %now align the means and stdevs to threshold crossing to take care of
+    %cases where the user aligned waves to peak in offline sorter. the
+    %following line is ugly, but it simply extracts the relevant portion of
+    %the wave, truncating the part shifted outside the range of the wave,
+    %and then pads the empty points by extending the tail of the wave.
+    %e.g.: [1,2,3,4], shifted by 1, results in [2,3,4,4]. Positive shift
+    %amounts shift the wave left.
+    allMean=cell2mat(arrayfun(@(a,b) [repmat(allMean(b,1),[1,max(0,-a)]),allMean(b,1+max(0,a):end-max(0,-a)),repmat(allMean(b,end),[1,max(0,a)])],allShift,[1:numel(allShift)]','UniformOutput',false));
+    allStdev=cell2mat(arrayfun(@(a,b) [repmat(allStdev(b,1),[1,max(0,-a)]),allStdev(b,1+max(0,a):end-max(0,-a)),repmat(allStdev(b,end),[1,max(0,a)])],allShift,[1:numel(allShift)]','UniformOutput',false));
     
     %now loop through the units and get scaling factors:
     numWaves=size(allMean,1);
     numPoints=size(allMean,2);
     waveMat=repmat(reshape(allMean,[1,numWaves,numPoints]),[numWaves,1,1]);
     stdevMat=repmat(reshape(allStdev,[1,numWaves,numPoints]),[numWaves,1,1]);
-    spikesMat=repmat(allCount,[1,numWaves,numPoints]);
+    spikesMat=repmat(allCount,[1,numWaves,numPoints]);%number of spikes
     disp('computing scaling factors for best shape-matching')
     alphaMat=nan(numWaves,numWaves);
     alphaCIMat=nan(numWaves,numWaves,2);
@@ -438,27 +475,42 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     %create an upper triangular mask excluding the self comparisons and 
     %duplicates in the bottom half
     mask=triu(true(numWaves),1);
+    %further mask any comparisons with a negative scaling factor- if the
+    %units are inverted we know they aren't the same thing
+    mask=mask & alphaMat>0;
+    %finally mask any comparisons where the smaller wave does not pass
+    %threshold on the larger wave by more than its standard deviation. This
+    %in theory compensates for the fact that a channel with a large unit
+    %will be less likely to have small units, and thus the distribution of
+    %units in cross channel comparisons will have more large differences
+    %than comparisons of different units on the same channel.
+    threshMat=repmat(allThreshold,[1,numWaves]);
+    threshMat=min(threshMat,threshMat');%minimum of the 2 thresholds involved in the comparison
+    minMat=repmat(min(allMean,[],2),[1,numWaves]);
+    minMat=max(minMat,minMat');%smaller excursion of the two waves
+    mask=mask& (minMat-double(threshMat))<0;
+    
     %use the mask to get a list of differences in wavespace
     diffs=abs(waveMat(repmat(mask,[1,1,numPoints])));
     %reshape the differences into a column matrix where each row is a
     %difference observation include the alpha values here as the last 
     %difference:
     %convert alpha into 1 sided distribution:
-    alphaMat=abs(alphaMat-1);
-    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), alphaMat(mask)];
+    rectAlpha=abs(alphaMat-1);
+    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), rectAlpha(mask)];
     %diffs=[sqrt(sum(reshape(diffs,numel(diffs)/numPoints,numPoints).^2,2)), alphas];
     %now compute joint standard deviation (S1*N1+S2*N2*alpha)/(N1+N2):
-    stdevMat=stdevMat.*spikesMat.*repmat(alphaMat,[1,1,numPoints]);
-    stdevMat=stdevMat+permute(stdevMat,[2,1,3]);
+    stdevMat=stdevMat.*spikesMat;
+    stdevMat=stdevMat+permute(stdevMat.*repmat(alphaMat,[1,1,numPoints]),[2,1,3]);
     stdevMat= stdevMat./ (spikesMat+permute(spikesMat,[2,1,3]));
     %convert the 3D standard deviation matrix into a 2D matrix to match the
     %diffs matrix. Again, we add on the value for the alpha
     stdevs=stdevMat(repmat(mask,[1,1,numPoints]));
-    alphaStdMat=diff(alphaCIMat,1,3);
+    alphaCIMat(repmat(alphaMat<1,[1,1,2]))=1./alphaCIMat(repmat(alphaMat<1,[1,1,2]));
     %convert CI into stdev for the scaling factor. Remember to convert CI
     %values for alphas<1 so the CI range matches the range for the
     %converted alpha:
-    alphaStdMat=abs(alphaStdMat)/(2*1.96);
+    alphaStdMat=abs(diff(alphaCIMat,1,3))/(2*1.96);
     stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask)];
     %stdevs=[mean(reshape(stdevs,numel(stdevs)/numPoints,numPoints),2),alphaStdMat(mask)];
     %calculte dPrime from the differences and standard deviations. Log
@@ -478,7 +530,30 @@ function [ldaProj,coeff]=getShapeComps(units,data,SNRThresh)
     %data. This is the same as the LDA axis, but we get to skip all the
     %logic associated with classifying individual points:
     coeff=mean(dPrime(knownDiff,:))-mean(dPrime(~knownDiff,:));
-    ldaProj=sort(dPrime(knownDiff,:)*coeff');
+    %now use projections onto the LDA axis to form distributions for the
+    %known difference comparisons and the mixed different and self
+    %comparisons.
+    knownDiffProj=dPrime(knownDiff,:)*coeff';
+    putativeMatchProj=dPrime(~knownDiff,:)*coeff';
+    rangeProj=[min(dPrime*coeff'),max(dPrime*coeff')];
+    x=rangeProj(1):diff(rangeProj)/1000:rangeProj(2);
+    diffDist=fitdist(knownDiffProj,'kernel','width',4);
+    empDist=fitdist(putativeMatchProj,'kernel','width',4);
+    %diffDist=fitdist(knownDiffProj,'kernel');
+    %empDist=fitdist(putativeMatchProj,'kernel');
+
+    diffPDF=pdf(diffDist,x);
+    empPDF=pdf(empDist,x);
+    [mx,idx]=max(diffPDF);
+    %PDFScale=empPDF(idx)/mx;
+    PDFScale=regress(empPDF(idx:end)',diffPDF(idx:end)');
+    matchPDF=empPDF-PDFScale*diffPDF;
+
+    matchPDF(matchPDF<0)=0;
+    %convert the PDF into theoretical counts:
+    matchCounts=round(matchPDF/min(matchPDF(matchPDF>0)));
+    matchDist=fitdist(x','kernel','frequency',matchCounts','width',4);
+    %matchDist=fitdist(x','kernel','frequency',matchCounts');
 end
 function [tsISI]=getISIcomps(units,data)
     numUnits=numel(units.data);

@@ -13,7 +13,7 @@ classdef unitData < matlab.mixin.SetGet
         %constructor
         function units=unitData()
             units.data=struct('chan',[],'ID',[],'array',{},'spikes',cell2table(cell(0,2),'VariableNames',{'ts','wave'}));
-            units.appendConfig=struct('method','shape','threshold',.05,'SNRThreshold',2,'default','unsorted');
+            units.appendConfig=struct('method','shape','threshold',.05,'SNRThreshold',2,'thresholdPoint',10,'default','unsorted');
         end
     end
     methods
