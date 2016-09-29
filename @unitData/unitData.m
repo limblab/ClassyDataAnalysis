@@ -50,6 +50,8 @@ classdef unitData < matlab.mixin.SetGet
         function set.appendConfig(units,adata)
             if ~isfield(adata,'method') || ~ischar(adata.method) || ~( strcmp(adata.method,'shape') || strcmp(adata.method,'ISI') || strcmp(adata.method,'shapeISI') || strcmp(adata.method,'number'))
                 error('unitData:badAppendMethod','unitData.appendConfig must have a method field, which must contain a string with one of the following values: shape, ISI, shapeISI, or number')
+            elseif strcmp(adata.method,'ISI') || strcmp(adata.method,'shapeISI') 
+                error('unitData:ISIStatsNotImplemented','computation of ISI statistics for merging units is not yet implemented. Please either use shape, or implement ISI stats.')
             elseif ~isfield(adata,'threshold') || ~isnumeric(adata.threshold)
                 error('unitData:badAppendThreshold','unitData.appendConfig must have a threshold field containing the p-value deliniating different vs same')
             elseif ~isfield(adata,'SNRThreshold') || ~isnumeric(adata.SNRThreshold)
