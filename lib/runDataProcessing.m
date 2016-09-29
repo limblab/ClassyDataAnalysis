@@ -81,7 +81,11 @@ function data_struct = runDataProcessing(main_function_name,target_directory,var
     %% save all the custom functions in the analysis to the code folder.
     %Specifically ignore all functions that are part of the Matlab built-in
     %functions or toolboxes
-    command_list=[getUserDependencies(main_function_name);{strcat(mfilename('fullpath'),'.m')};{which(main_function_name)}];
+    
+    %command_list=[getUserDependencies(main_function_name);{strcat(mfilename('fullpath'),'.m')};{which(main_function_name)}];
+    command_list=[matlab.codetools.requiredFilesAndProducts(main_function_name),...
+                    {strcat(mfilename('fullpath'),'.m')},...
+                    {which(main_function_name)}];
     for i=1:length(command_list)
         [SUCCESS,MESSAGE,MESSAGEID] = copyfile(command_list{i},strcat(target_directory,'Code'));
         if SUCCESS
