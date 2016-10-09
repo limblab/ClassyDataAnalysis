@@ -145,7 +145,7 @@ function getRWTaskTable(cds,times)
         end
 
         trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,tgtCtrs,...
-                    'VariableNames',{'goCue','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','tgtCtr'});
+                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','tgtCtr'});
         trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','cm'};
         trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','target center position'};
 
@@ -159,5 +159,6 @@ function getRWTaskTable(cds,times)
     trials.Properties.Description='Trial table for the RW task';
     %cds.setField('trials',trials)
     set(cds,'trials',trials)
-    cds.addOperation(mfilename('fullpath'))
+    evntData=loggingListenerEventData('getRWTaskTable',[]);
+    notify(cds,'ranOperation',evntData)
 end

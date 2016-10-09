@@ -78,6 +78,7 @@ function analogFromNSx(cds)
                 end
             end
         end
+        set(cds,'analog',analogData)
         
         set(cds,'analog',analogData)
         
@@ -85,6 +86,7 @@ function analogFromNSx(cds)
         notify(cds,'ranOperation',evntData)
     end
 end
+
 function merged=mergeAnalogTables(table1,table2)
     %this local function is a copy of the mergeTables method of the cds.
     %Its copied here since the mergeTables method works on fields of the
