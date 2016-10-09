@@ -55,6 +55,7 @@ function file2cds(cds,filePath,varargin)
     %               arguemtn to match the string 'mapFile' and then takes
     %               the remainder of the string as the full file path of
     %               the map file.
+    %
     %example: cds.file2cds('C:/datafolder/data.nev', 'rothandle', 3,'taskCO',
     %'arrayM1','monkeyChips','ranByTucker','mapFileC:/datafolder/map.cmp')
     %imports the data from data.nev and data.nsx into the fields of cds, 

@@ -1,6 +1,8 @@
-function lfpFromNSx(cds)
+function lfpFromNSx(cds,opts)
     %takes a handle to a cds object and an NEVNSx structure, and populates
     %the LFP field of the cds
+    %
+    % opts.array specifies the array name
     
     %get list of channels that have LFP data:
     lfpList=find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'elec')));
@@ -16,7 +18,7 @@ function lfpFromNSx(cds)
         lfp = [];%will preallocate below once we know how long the data is
         switch freq
             case 500
-            nsLabel='NS1';
+                nsLabel='NS1';
             case 1000
                 nsLabel='NS2';
             case 2000
@@ -45,8 +47,13 @@ function lfpFromNSx(cds)
         labels=[{'t'},reshape(cds.NSxInfo.NSx_labels(lfpList(subset)),1,numel(cds.NSxInfo.NSx_labels(lfpList(subset))))];
         
         if ~isempty(lfp)
+            % add array name to LFP label
+            for idx_lfp = 2:length(labels)
+                labels{idx_lfp} = [opts.array labels{idx_lfp}];
+            end
+            
             %convert lfp array to table:
-            lfp=table(lfp{:},'VariableNames',labels);
+            lfp=table(lfp{:},'VariableNames',labels);            
             lfp.Properties.VariableUnits=[{'s'},repmat({'mV'},1,numel(lfpList))];
             lfp.Properties.VariableDescriptions=[{'time'},repmat({'LFP in mV'},1,numel(lfpList))];
             lfp.Properties.Description='Filtered LFP in raw collection voltage. Voltage scale is presumed to be mV';
