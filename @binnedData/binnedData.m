@@ -243,7 +243,10 @@ classdef binnedData < matlab.mixin.SetGet
         end
         function set.glmData(binned,glmData)
             warning('glmData:SetNotImplemented','set method for the glmData field of the binnedData class is not implemented')
-            binned.glmData=[];
+            if ~isempty(glmData) && ~istable(glmData)
+                error('glmData:notTable','glmData must be a table')
+            end
+            binned.glmData=glmData;
         end
         function set.gpfaData(binned,gpfaData)
             binned.gpfaData=gpfaData;
