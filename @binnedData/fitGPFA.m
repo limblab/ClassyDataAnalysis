@@ -1,4 +1,4 @@
-function fitGpfa(binned)
+function fitGPFA(binned)
 %function fitGPFA
 %       inputs:
 %            binned data structure with gpfaConfig filled with needed
@@ -24,15 +24,15 @@ function fitGpfa(binned)
 %           as a larger low pass filter on trajectories
     method = 'gpfa';
     dat = dimRedHelper(binned, method);
-    kernSD = 10;
+    kernSD = 10;%GPFA optimizes smoothing kernel so ignore the parameter in binned.dimReductionConfig.kernSD, and pass a dummy variable
     runIdx =102;
-    xDim = binned.gpfaConfig.dimension;
-    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.gpfaConfig.segLength);
+    xDim = binned.dimReductionConfig.dimension;
+    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
     [result.estParamsPP, result.seqTrainPP] = postprocess(result, 'kernSD', kernSD);
     result.method = 'gpfa';
     gpfaData = result;
     set(binned,'gpfaData', gpfaData);
-    opData = binned.gpfaConfig;
+    opData = binned.dimReductionConfig;
     evntData=loggingListenerEventData('fitGpfa',opData);
     notify(binned,'ranGPFAFit',evntData)
 end

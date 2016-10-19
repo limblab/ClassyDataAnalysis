@@ -267,15 +267,16 @@ classdef binnedData < matlab.mixin.SetGet
         %general methods
         fitGlm(binned)
         fitWeiner(binned)
-        fitGpfa(binned)
+        fitGPFA(binned)
         fitPCA(binned)
         fitPPCA(binned)
         fitFA(binned)
         fitKalman(binned)
         fitPds(binned)
-        tuningCircle(binned,label)%plots an empirical tuning circle for a single neuron against the variable 'label'
+        tuningCircle(binned,label)%plots an empirical tuning circle for a single neuron with the name 'label'
         polarPDs(binned,units)%makes a polar plot of the PDs associated with the units defined in 'units'
         dat = dimRedHelper(binned, method)
+        [unitNames,varargout]=getUnitNames(binned)%returns a cell array with the names of all the units in binned.data
     end
     methods (Static = true)
         [H,v,mcc]=filMIMO4(X,Y,numlags,numsides,fs)

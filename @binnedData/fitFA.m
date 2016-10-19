@@ -24,13 +24,13 @@ function fitFA(binned)
 %           as a larger low pass filter on trajectories
     method = 'fa';
     dat = dimRedHelper(binned, method);
-    kernSD = binned.faConfig.kernSD;
+    kernSD = binned.dimReductionConfig.kernSD;
     runIdx =31;
-    xDim = binned.faConfig.dimension;
-    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.faConfig.segLength);
+    xDim = binned.dimReductionConfig.dimension;
+    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
     faData = result;
     set(binned,'faData', faData);
-    opData = binned.pcaConfig;
+    opData = binned.dimReductionConfig;
     evntData=loggingListenerEventData('fitFA',opData);
     notify(binned,'ranFAFit',evntData)
 end

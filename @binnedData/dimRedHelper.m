@@ -1,4 +1,15 @@
 function [ dat ] = dimRedHelper( binned, method )
+    %sanity check sampling rate
+    if roundTime(mode(diff(binned.data.t)))~=.001
+        error('dimRedHelper:badSampleRate','the core dimensionality reduction code uses 1ms bins with binary flags for the existance of spikes. This binnedData structure was built using data at a different sample rate. Please re-compute the binnedData with a 1ms bin size')
+    end
+    
+    if isempty(binned.dimReductionConfig.units)
+        %get a list of all the units:
+       unitList=binned.getUnitNames();
+    else
+       unitList=binned.dimReductionConfig.units;
+    end
     switch method
         case 'gpfa'
             windows = binned.gpfaConfig.windows;
