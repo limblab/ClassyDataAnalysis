@@ -107,5 +107,5 @@ function getCOTaskTable(cds,times)
     
     %cds.setField('trials',trialsTable)
     set(cds,'trials',trialsTable)
-    cds.addOperation(mfilename('fullpath'))
+    cds.addOperation('getCOTaskTable',mfilename('fullpath'))
 end

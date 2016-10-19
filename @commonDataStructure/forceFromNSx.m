@@ -48,7 +48,8 @@ function forceFromNSx(cds,opts)
                 %truncate to handle the fact that encoder data doesn't start
                 %recording until 1 second into the file and convert load cell 
                 %voltage data into forces
-                handleforce=cds.handleForceFromRaw(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),opts);
+                
+                handleforce=cds.handleForceFromRaw(loadCellData,t,opts);
             end
         else
             handleforce=[];

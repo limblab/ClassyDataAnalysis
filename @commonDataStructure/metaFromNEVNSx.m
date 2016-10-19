@@ -16,10 +16,10 @@ function metaFromNEVNSx(cds,opts)
     if ischar(cds.meta.rawFileName) && strcmp(cds.meta.rawFileName,'Unknown')
         meta.rawFileName=cds.NEV.MetaTags.Filename;
     else
-        if iscell(meta.rawFileName)
-            meta.rawFileName=[meta.rawFileName,{cds.NEV.MetaTags.Filename}];
+        if iscell(cds.meta.rawFileName)
+            meta.rawFileName=[cds.meta.rawFileName,{cds.NEV.MetaTags.Filename}];
         else
-            meta.rawFileName={meta.rawFileName,cds.NEV.MetaTags.Filename};
+            meta.rawFileName={cds.meta.rawFileName,cds.NEV.MetaTags.Filename};
         end
     end
     meta.dataSource='NEVNSx';
