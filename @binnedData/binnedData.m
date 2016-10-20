@@ -2,7 +2,7 @@ classdef binnedData < matlab.mixin.SetGet
     properties(Access = public)
         weinerConfig
         dimReductionConfig
-        glmConfig
+        covariateConfig
         %gpfaConfig
         %faConfig
         %pcaConfig
@@ -14,7 +14,7 @@ classdef binnedData < matlab.mixin.SetGet
         data
         meta
         weinerData
-        glmData
+        covariateData
         pdData
         gpfaData
         faData
@@ -23,7 +23,7 @@ classdef binnedData < matlab.mixin.SetGet
         kalmanData
     end
     events
-        ranGLMFit
+        ranCovariateFit
         ranWeinerFit
         ranGPFAFit
         ranPCAFit
@@ -48,7 +48,7 @@ classdef binnedData < matlab.mixin.SetGet
             wc.windows=[];
             set(binned,'weinerConfig',wc)
             
-             set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
+             set(binned,'covariateConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
 %             gpfac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
 %             set(binned,'gpfaConfig',gpfac); 
 %             pcac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
@@ -77,7 +77,7 @@ classdef binnedData < matlab.mixin.SetGet
             set(binned,'weinerData',[]);
             PDs=[];
             set(binned,'pdData',PDs);
-            set(binned,'glmData',[]);
+            set(binned,'covariateData',[]);
             set(binned,'gpfaData',[]);
             set(binned,'faData',[]);
             set(binned,'pcaData',[]);
@@ -143,11 +143,11 @@ classdef binnedData < matlab.mixin.SetGet
             end
             binned.dimReductionConfig=drc;
         end
-        function set.glmConfig(binned,glmc)
-            if ~isempty(glmc) && ~isstruct(glmc)
-                error('glmConfig:notAStruct','glmConfig must be a struct')
+        function set.covariateConfig(binned,covarc)
+            if ~isempty(covarc) && ~isstruct(covarc)
+                error('covariateConfig:notAStruct','covariateConfig must be a struct')
             else
-                binned.glmConfig=glmc;
+                binned.covariateConfig=covarc;
             end
         end
 %         function set.gpfaConfig(binned,gpfac)
@@ -241,12 +241,12 @@ classdef binnedData < matlab.mixin.SetGet
             end
             binned.pdData=pdData;
         end
-        function set.glmData(binned,glmData)
-            warning('glmData:SetNotImplemented','set method for the glmData field of the binnedData class is not implemented')
-            if ~isempty(glmData) && ~istable(glmData)
-                error('glmData:notTable','glmData must be a table')
+        function set.covariateData(binned,covariateData)
+            warning('covariateData:SetNotImplemented','set method for the covariateData field of the binnedData class is not implemented')
+            if ~isempty(covariateData) && ~istable(covariateData)
+                error('covariateData:notTable','covariateData must be a table')
             end
-            binned.glmData=glmData;
+            binned.covariateData=covariateData;
         end
         function set.gpfaData(binned,gpfaData)
             binned.gpfaData=gpfaData;
@@ -268,7 +268,7 @@ classdef binnedData < matlab.mixin.SetGet
     methods (Static = false)
         updateBins(binned,bins)
         %general methods
-        fitGlm(binned)
+        fitCovariates(binned)
         fitWeiner(binned)
         fitGpfa(binned)
         fitPCA(binned)
