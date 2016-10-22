@@ -83,7 +83,7 @@ function nev2NEVNSx(cds,fname)
                 
                 %load the NSx into a temporary variable:
                 %NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
-                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double');
+                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double','uv');
                 if iscell(NSx.Data)
                     NSx.Data=NSx.Data{end};
                 end
@@ -103,13 +103,17 @@ function nev2NEVNSx(cds,fname)
                 %update the metadata associated with the padding:
                 NSx.MetaTags.DataPoints = NSx.MetaTags.DataPoints + num_zeros;
                 NSx.MetaTags.DataDurationSec = NSx.MetaTags.DataPoints/frequencies(i);
-                %insert into the cds
-                set(cds,upper(fieldName),NSx)
             else %no digital data was collected
                 % no padding, just load the NSx directly into the
                 % appropriate field
-                set(cds,upper(fieldName),openNSx('read', [folderPath filesep NSxList{i}.name],'precision','short'))
+                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double','uv');
+                if iscell(NSx.Data)
+                    NSx.Data=NSx.Data{end};
+                end
             end
+            
+            %insert into the cds
+            set(cds,upper(fieldName),NSx)
         else
             %set the NSx field empty in case we are currently loading a
             % second NEV. This prevents re-loading data that was in one 
