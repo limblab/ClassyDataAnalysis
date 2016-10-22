@@ -22,12 +22,12 @@ function fitFA(binned)
 %
 %           kernSD: smoothing kernel standard deviation. Larger value acts
 %           as a larger low pass filter on trajectories
-    method = 'fa';
-    dat = dimRedHelper(binned, method);
+
+    dat = binned.dimRedHelper();
     kernSD = binned.dimReductionConfig.kernSD;
     runIdx =31;
     xDim = binned.dimReductionConfig.dimension;
-    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
+    result = neuralTraj(runIdx,dat, 'method', 'fa', 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
     faData = result;
     set(binned,'faData', faData);
     opData = binned.dimReductionConfig;

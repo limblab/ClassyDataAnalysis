@@ -278,7 +278,7 @@ classdef binnedData < matlab.mixin.SetGet
         fitPds(binned)
         tuningCircle(binned,label)%plots an empirical tuning circle for a single neuron with the name 'label'
         polarPDs(binned,units)%makes a polar plot of the PDs associated with the units defined in 'units'
-        dat = dimRedHelper(binned, method)
+        dat = dimRedHelper(binned)
         [unitNames,varargout]=getUnitNames(binned)%returns a cell array with the names of all the units in binned.data
     end
     methods (Static = true)

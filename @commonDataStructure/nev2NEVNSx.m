@@ -108,7 +108,7 @@ function nev2NEVNSx(cds,fname)
             else %no digital data was collected
                 % no padding, just load the NSx directly into the
                 % appropriate field
-                set(cds,upper(fieldName),openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short'))
+                set(cds,upper(fieldName),openNSx('read', [folderPath filesep NSxList{i}.name],'precision','short'))
             end
         else
             %set the NSx field empty in case we are currently loading a
