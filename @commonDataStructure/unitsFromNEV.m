@@ -57,12 +57,26 @@ function unitsFromNEV(cds,opts)
                 %if we got to this point we are on an actual data line:
                 tmp=textscan(tline,'%s');
                 tmp=tmp{1};
-                
-                rowNum=str2num(tmp{rowNumCol})+1;
-                colNum=str2num(tmp{colNumCol})+1;
-                pin=str2num(tmp{pinCol});
-                bank=char(tmp{bankCol});
-                label=char(tmp{labelCol});
+                if numel(tmp)~=5
+                    error('unitsFromNEV:unexpectedMapFormat',['Was expecting to find exactly 5 columns in the mapfile, instead found: ',num2str(numel(tmp))])
+                end
+                if exist('colLabels','var')
+                    %we have a newer map file with actual column labels
+                    %use the labels to assign values
+                    rowNum=str2num(tmp{rowNumCol})+1;
+                    colNum=str2num(tmp{colNumCol})+1;
+                    pin=str2num(tmp{pinCol});
+                    bank=char(tmp{bankCol});
+                    label=char(tmp{labelCol});
+                else
+                    %we have an older file with no labels
+                    warning('unitsFromNEV:oldMapfile','This mapfile does not have column labels. This is typical of older mapfiles. The mapfile data has been processed assuming the older Blackrock format, but this may cause issues for custom mapfiles or other oddities')
+                    rowNum=str2num(tmp{1})+1;
+                    colNum=str2num(tmp{2})+1;
+                    pin=str2num(tmp{4});
+                    bank=char(tmp{3});
+                    label=char(tmp{5});
+                end
                 switch bank
                     case 'A'
                         chan=pin;
