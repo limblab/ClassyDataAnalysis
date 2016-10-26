@@ -92,7 +92,7 @@ function binData(ex,varargin)
     unitIdx=find([strcmp({ex.binConfig.include.field},'units')],1);
     if ~isempty(unitIdx)
         if recalcFR
-            if ex.binConfig.filterConfig.sampleRate>ex.firingRateConfig.sampleRate;
+            if ex.binConfig.filterConfig.sampleRate>ex.firingRateConfig.sampleRate
                 error('binData:frequencyMismatch','The sample rate of the firing rates must be equal to or greater than the sample rate of the binned data. Recompute the firing rates with a higher sample rate, or set a lower binning frequency')
             end
             ex.calcFiringRate;
