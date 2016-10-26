@@ -35,6 +35,7 @@ function loadOpenSimData(cds,folderPath)
         %prefix:
         fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
             [folderPath,prefix{i},'_MuscleAnalysis_Length.sto']};
+        headerPrefixList = {'joint','muscle'};
         for j=1:numel(fileNameList)
             foundList=dir(fileNameList{j});
             if ~isempty(foundList)
@@ -51,21 +52,34 @@ function loadOpenSimData(cds,folderPath)
                         if ~isempty(strfind(tmpLine,'yes'))
                             unitLabel='deg';
                         else
-                            unitLabel='rad';
+                            unitLabel='m'; %assume we're looking at muscles
                         end
                     end
                     tmpLine=fgetl(fid);
                 end
                 header=strsplit(fgetl(fid));
                 %convert 'time' to 't' to match cds format:
-                idx=find(strcmp(header,'time'),1);
+                idx=find(strcmp(header,'time'),1); %idx should be 1
                 if isempty(idx)
                     %look for a 't' column
                     idx=find(strcmp(header,'t'),1);
                     if isempty(idx)
                         error('loadOpenSimData:noTime',['could not find a time column in the file: ', kinFileName])
+                    else
+                        %check if idx is 1; otherwise something weird is
+                        %happening
+                        if(idx~=1)
+                            warning('loadOpenSimData:strangeLabels','Time label for OpenSim data is in unexpected column. Other labels may be incorrect')
+                        end
+                        %convert 'time into 't'
+                        header{idx}='t';
                     end
                 else
+                    %check if idx is 1; otherwise something weird is
+                    %happening
+                    if(idx~=1)
+                        warning('loadOpenSimData:strangeLabels','Time label for OpenSim data is in unexpected column. Other labels may be incorrect')
+                    end
                     %convert 'time into 't'
                     header{idx}='t';
                 end
@@ -81,8 +95,15 @@ function loadOpenSimData(cds,folderPath)
                 desiredTime=roundTime(a(1,1):dt:a(end,1));%uniformly samples a with spacing dt, then shifts time bins to be zero aligned
                 desiredTime=desiredTime(desiredTime>min(a(:,1)) & desiredTime<max(a(:,1)))';%clear out any points that fall outside the original time window due to the shift
                 
-                kin=array2table([desiredTime,interp1(a(:,1),a(:,2:end),desiredTime)],'VariableNames',header);
-                unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
+                kinArr=interp1(a(:,1),a(:,2:end),desiredTime);
+                kinVelArr = kinArr;
+                for kinCtr = 1:size(kinArr,2)
+                    kinVelArr(:,kinCtr) = gradient(kinArr(:,kinCtr),desiredTime);
+                end
+                %compose kin table
+                kin = array2table([desiredTime kinArr kinVelArr],'VariableNames',[header(1) strcat(headerPrefixList{j},'_',header(2:end)) strcat(headerPrefixList{j},'Vel_',header(2:end))]);
+                %get velocity of kinematic parameters
+                unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1]),repmat({strcat(unitLabel,'/s')},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;
                 %find sampling rate and look for matching rate in analog data:
                 SR=round(1/mode(diff(kin.t)));
