@@ -27,7 +27,7 @@ function getUCKTaskTable(cds,times)
     goCueTime       = cds.words.ts(cds.words.word==hex2dec('31'));
     otHoldTime      = cds.words.ts(cds.words.word==hex2dec('A1'));
     
-    timetrial = @(word_time,trialnum) time_word(find(word_time<times.endTime(trialnum) & word_time>times.startTime(trialnum),1,'first'));
+    timetrial = @(word_time,trialnum) word_time(find(word_time<times.endTime(trialnum) & word_time>times.startTime(trialnum),1,'first'));
     
     %preallocate vectors:
     numTrials=numel(times.number);    
