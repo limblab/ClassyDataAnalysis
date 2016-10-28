@@ -80,6 +80,10 @@ function getTrialTable(cds,opts)
                 
             case 'SABES' % Brian Dekleva's center out sabes task
                 cds.getSABESTaskTable(times);
+            
+            case 'UCK' % Brian Dekleva's 2-target Cisek task
+                cds.getUCKTaskTable(times);
+                
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
         end
