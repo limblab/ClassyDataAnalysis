@@ -60,7 +60,7 @@ function getUCKTaskTable(cds,times)
         if isempty(CHT)
             CH_t(trial)=NaN;
         else
-            CH_t(trial)=COT;
+            CH_t(trial)=CHT;
         end
         % get the timestamp for the outer target On
         OTT = timetrial(otOnTime,trial);
