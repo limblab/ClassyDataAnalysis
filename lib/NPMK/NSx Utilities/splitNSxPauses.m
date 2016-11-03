@@ -1,22 +1,22 @@
-function splitNSx(splitCount)
+function splitNSxPauses(fileName)
 
-% splitNSx
+% splitNSxPauses
 % 
 % Opens and splits an NSx file in smaller pieces, timewise.
 %
-% Use splitNSx(splitCount)
+% Use splitNSx(fileName)
 % 
 % All input arguments are optional. Input arguments can be in any order.
 %
-%   splitCount:   Defines the number of splits.
-%                 DEFAULT: Splits the file in 2 pieces.
+%   fileName:   File name of the file that needs to be split.
+%               DEFAULT: The user will be prompted to select a file.
 %
 %   Example 1: 
-%   splitNSx(4);
+%   splitNSx('C:\Datafolder\mydata.ns5');
 %
-%   In the example above, the user will be prompted to select a file. The
-%   loaded file will be split in 4 samller files. For example, if the file
-%   is 1 hour long then it will be split into four 15-minute files.
+%   In the example above, the file C:\Datafolder\mydata.ns5 will be opened.
+%   The loaded file will be split in samller files representing its paused 
+%   sub-segments.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Kian Torab
@@ -26,35 +26,39 @@ function splitNSx(splitCount)
 
 % Version History
 %
-% 1.0.0.0:
+% 1.0.0.0: August 31, 2016
 %   - Initial release.
-%
-% 1.1.0.0:
-%   - Fixed a bug related to a case where initial timestamp of the first
-%     data segment was not 0. 
+%   - Successor to separateNSxPaused running much more memory efficient.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 
-% Validating input parameter
-if ~exist('splitCount', 'var')
-    splitCount = 2;
+%% Getting the file name
+if ~exist('fileName', 'var')
+    fileName = '';
 end
 
-% Getting the file name
-if ~ismac
-    [fname, path] = getFile('*.ns*', 'Choose an NSx file...');
-else
-    [fname, path] = getFile('*.*', 'Choose an NSx file...');
-end
-if fname == 0
-    disp('No file was selected.');
-    if nargout
-        clear variables;
+if ~(exist(fileName, 'file') == 2)
+    if ~ismac
+        [fname, path] = getFile('*.ns*', 'Choose an NSx file...');
+    else
+        [fname, path] = getFile('*.*', 'Choose an NSx file...');
     end
-    return;
+    if fname == 0
+        disp('No file was selected.');
+        if nargout
+            clear variables;
+        end
+        return;
+    end
+    fext = fname(end-3:end);
+else
+    [path, fname, fext] = fileparts(fileName);
+    if ismac path = [path '/']; else path = [path '\']; end
+    fname = [fname fext];
 end
-fext = fname(end-3:end);
+
+%% Getting header information
+NSx = openNSx('noread', [path fname ]);
     
 % Loading the file
 %% Reading Basic Header from file into NSx structure.
@@ -63,7 +67,6 @@ NSx.MetaTags.Filename     = fname;
 NSx.MetaTags.FilePath     = path(1:end-1);
 NSx.MetaTags.FileExt      = fext;
 NSx.MetaTags.FileTypeID   = fread(FID, [1,8]   , '*char');
-disp(['Splitting the NSx file in ' num2str(splitCount) ' pieces...']);
 if strcmpi(NSx.MetaTags.FileTypeID, 'NEURALSG')
     disp('File type 2.1 is not yet implemented.');
     %NOT IMPLEMENTED YET
@@ -88,19 +91,23 @@ elseif strcmpi(NSx.MetaTags.FileTypeID, 'NEURALCD')
     % Reading the number of packets
     fseek(FID, 28, 'bof');
     numOfPackets = (dataLength)/(2*channelCount);
+    % Calculating the number of splits
+    splitCount = length(NSx.MetaTags.Timestamp);
     % Calculating the number of bytes in each segment
-    segmentBytes = floor(numOfPackets/splitCount)*(2*channelCount);
+    segmentBytes = NSx.MetaTags.DataPoints * 2 * double(channelCount);
     % Reading the headers and the data header
     fseek(FID, 0, 'bof');
     fileHeader = fread(FID, positionEOE, 'char');
     dataHeader = fread(FID, 9, 'char');
-	fseek(FID, positionEOE+9, 'bof');
+	fseek(FID, positionEOE, 'bof');
+    disp(['Splitting the NSx file in ' num2str(splitCount) ' pieces...']);
     for idx = 1:splitCount
         % Opening a file for saving
         FIDw = fopen([path fname(1:end-4) '-s' sprintf('%03d', idx) fname(end-3:end)], 'w+', 'ieee-le');
         fprintf('\nReading segment %d... ', idx);
         % Reading the segment
-        dataSegment = fread(FID, segmentBytes, 'char');
+        fseek(FID, 9, 'cof'); % Skipping the data header
+        dataSegment = fread(FID, segmentBytes(idx), 'char');
         fprintf('Writing segment %d... ', idx);
         % Writing the segmented data into file
         fwrite(FIDw, fileHeader, 'char');

@@ -151,7 +151,9 @@ function unitsFromNEV(cds,opts)
         units(i).array=array;
         units(i).bank=cds.NEV.ElectrodesInfo(NEVidx).ConnectorBank;
         units(i).pin=cds.NEV.ElectrodesInfo(NEVidx).ConnectorPin;
-        units(i).label=cds.NEV.ElectrodesInfo(NEVidx).ElectrodeLabel;
+        tmpLabel=cds.NEV.ElectrodesInfo(NEVidx).ElectrodeLabel;
+        tmpLabel=strtrim(tmpLabel(int8(tmpLabel)>0));%get rid of null characters that pad the end of labels
+        units(i).label=reshape(tmpLabel,[1,numel(tmpLabel)]);%deal with the fact that blackrock imports the labels as COLUMN arrays of characters for some obtuse reason...
         units(i).lowThreshold=cds.NEV.ElectrodesInfo(NEVidx).LowThreshold;
         units(i).highThreshold=cds.NEV.ElectrodesInfo(NEVidx).HighThreshold;
         units(i).lowPassCorner=cds.NEV.ElectrodesInfo(NEVidx).LowFreqCorner;

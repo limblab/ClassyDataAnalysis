@@ -74,6 +74,28 @@ function nev2NEVNSx(cds,fname)
     for i=1:length(NSxList)
         fieldName=['NS',num2str(i)];
         if ~isempty(NSxList{i})
+            %load the NSx into a temporary variable:
+                %NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
+            NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double','uv');
+            %handle any dropped packets (cause data to show up as multiple
+            %cells). sync with 2nd cerebus will also cause multiple cells
+            %as output as the pre-sync and post-sync data go in different
+            %cells
+            if length(NSx.MetaTags.Timestamp)>1
+                numResync=0;
+                for idx = 1:length(NSx.MetaTags.Timestamp)-1
+                    if NSx.MetaTags.Timestamp(idx)+DataPoints(idx)*NSx.MetaTags.SamplingFreq>NSx.MetaTags.Timestamp(idx+1)
+                        numResync = numResync+1;
+                    end
+                end
+                if numResync>1
+                    disp('Multiple resync events found. This could indicate a problem with the data file, please inspect manually.')
+                end
+                if numResync<numel(NSx.MetaTags.Timestamp)
+                    disp('This file may have packet loss. This file has less resync events than output cells.')
+                end
+
+            end
             if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStampSec)
                 %we know the analog data lags the digital data, so we need
                 %to, load the analog data, compute the correct number of
@@ -81,12 +103,7 @@ function nev2NEVNSx(cds,fname)
                 %zeros to each channel, and then push to the appropriate
                 %field of the cds
                 
-                %load the NSx into a temporary variable:
-                %NSx=openNSxLimblab('read', [folderPath filesep NSxList{i}.name],'precision','short');
-                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double','uv');
-                if iscell(NSx.Data)
-                    NSx.Data=NSx.Data{end};
-                end
+                
                 %get the last timepoint in the digital data:
                 digitalLength = cds.NEV.Data.SerialDigitalIO.TimeStampSec(end);
                 %compute the pad by comparing the actual number of points
@@ -103,15 +120,9 @@ function nev2NEVNSx(cds,fname)
                 %update the metadata associated with the padding:
                 NSx.MetaTags.DataPoints = NSx.MetaTags.DataPoints + num_zeros;
                 NSx.MetaTags.DataDurationSec = NSx.MetaTags.DataPoints/frequencies(i);
-            else %no digital data was collected
-                % no padding, just load the NSx directly into the
-                % appropriate field
-                NSx=openNSx('read', [folderPath filesep NSxList{i}.name],'precision','double','uv');
-                if iscell(NSx.Data)
-                    NSx.Data=NSx.Data{end};
-                end
+                
             end
-            
+                        
             %insert into the cds
             set(cds,upper(fieldName),NSx)
         else
