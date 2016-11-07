@@ -26,13 +26,17 @@ function fitPds(binned)
         rowMask=windows2mask(binned.data.t,binned.pdConfig.windows);
     end
     
+    verbose = ( ~isfield(binned.pdConfig,'verbose') || binned.pdConfig.verbose );
+    
     % check the method and compute PDs
     switch binned.pdConfig.method
         case 'glm'
             %% set up parallel processing
 %             opt=setUpParallelProcessing(binned.pdConfig.useParallel);
             %% Set up parameters for bootstrap and GLM
-            disp('starting GLM based PD computation')
+            if(verbose)
+                disp('starting GLM based PD computation')
+            end
             % set boot function by checking stats toolbox version number
             if(verLessThan('stats','10'))
                 error('COMPUTE_TUNING requires Statistics Toolbox version 10.0(R2015a) or higher');
@@ -68,9 +72,13 @@ function fitPds(binned)
                 end
             end
             %loop through each unit and compute tuning:
-            tic
+            if(verbose)
+                tic
+            end
             for i=1:numel(uList)
-                fprintf([uList{i},':','getting data subset(ET=',num2str(toc),'s).'])
+                if(verbose)
+                    fprintf([uList{i},':','getting data subset(ET=',num2str(toc),'s).'])
+                end
                 %% set up a mask for the columns we will use for this unit
 %                 colMask=false(1,numel(binned.data.Properties.VariableNames));
 %                 for j=1:numel(inputList)
@@ -86,20 +94,32 @@ function fitPds(binned)
                     dataTable=binned.data(rowMask,colMask);
                 end
                 %% run GLM
-                fprintf(['  Bootstrapping GLM PD computation(ET=',num2str(toc),'s).'])
+                if(verbose)
+                    fprintf(['  GLM PD computation(ET=',num2str(toc),'s).'])
+                end
                 %bootstrap for firing rates to get output parameters
                 modelSpec=[uList{i},'~',inputSpec];
-                bootfunc = @(data) fitglme(data,modelSpec,'Distribution',noiseModel);
+                bootfunc = @(data) fitglm(data,modelSpec,'Distribution',noiseModel);
                 try
-                    bootTuning = bootstrp(binned.pdConfig.bootstrapReps,@(data) {bootfunc(data)}, dataTable);
-                    bootCoef = cell2mat(cellfun(@(x) x.Coefficients.Estimate',bootTuning,'uniformoutput',false));
-                    bootPValues=cell2mat(cellfun(@(x) x.Coefficients.pValue',bootTuning,'uniformoutput',false));
                     %compute the full GLM so we can drop terms later and
                     %compute term significance
-                    fullModel=fitglme(dataTable,modelSpec,'Distribution',noiseModel);
+                    fullModel=fitglm(dataTable,modelSpec,'Distribution',noiseModel);
+                    
+                    if(~isfield(binned.pdConfig,'bootstrap') || binned.pdConfig.bootstrap)
+                        bootTuning = bootstrp(binned.pdConfig.bootstrapReps,@(data) {bootfunc(data)}, dataTable);
+                        bootCoef = cell2mat(cellfun(@(x) x.Coefficients.Estimate',bootTuning,'uniformoutput',false));
+                        bootPValues=cell2mat(cellfun(@(x) x.Coefficients.pValue',bootTuning,'uniformoutput',false));
+                    else
+                        bootTuning = {fullModel};
+                        bootCoef = fullModel.Coefficients.Estimate';
+                        bootPValues = fullModel.Coefficients.pValue';
+                    end
+                    
 
                     %% convert GLM data into PDs
-                    fprintf(['  Converting GLM weights to PDs(ET=',num2str(toc),'s).\n'])
+                    if(verbose)
+                        fprintf(['  Converting GLM weights to PDs(ET=',num2str(toc),'s).\n'])
+                    end
                     for j=1:numel(pdType)
                         if(binned.pdConfig.(pdType{j}))
                             %get the columns of intereste for this PD in the
@@ -170,7 +190,9 @@ function fitPds(binned)
                 end
             end
             %now compose table for the full set of tuning data:
-            fprintf(['  Inserting PD data into binned.pdTable(',num2str(toc),').'])
+            if(verbose)
+                fprintf(['  Inserting PD data into binned.pdTable(',num2str(toc),').'])
+            end
             %get our columns describing the units in the output table:
             for i=1:numel(uList)
                 %get position of 'CH' in the name string:
@@ -191,7 +213,9 @@ function fitPds(binned)
             set(binned,'pdData',pdTable)
             evntData=loggingListenerEventData('fitPds',binned.pdConfig);
             notify(binned,'ranPDFit',evntData)
-            disp('done computing PDs')
+            if(verbose)
+                disp('done computing PDs')
+            end
             
         otherwise
             error('fitPds:badMethod',[binned.pdConfig.method, ' is not a valid method. currently only the glm method is implemented'])

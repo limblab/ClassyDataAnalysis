@@ -242,7 +242,7 @@ classdef binnedData < matlab.mixin.SetGet
             binned.pdData=pdData;
         end
         function set.covariateData(binned,covariateData)
-            warning('covariateData:SetNotImplemented','set method for the covariateData field of the binnedData class is not implemented')
+%             warning('covariateData:SetNotImplemented','set method for the covariateData field of the binnedData class is not implemented')
             if ~isempty(covariateData) && ~istable(covariateData)
                 error('covariateData:notTable','covariateData must be a table')
             end
