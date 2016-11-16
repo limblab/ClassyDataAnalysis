@@ -35,7 +35,7 @@ function [adata,t]=getFilteredFromNSx(cds,fc,achan_index)
         %recalculate time. allows force to be collected at
         %different frequencies on different channels at the
         %expense of execution speed
-        t = (0:length(a)-1)' / cds.NSxInfo.NSx_sampling(achan_index(c)) +timestamp/timeRes;
+        t = roundTime((0:length(a)-1)' / cds.NSxInfo.NSx_sampling(achan_index(c)) +timestamp/timeRes);
 
         %decimate and filter the raw force signals so they are all at the
         %same frequency, no matter what the collection frequency was

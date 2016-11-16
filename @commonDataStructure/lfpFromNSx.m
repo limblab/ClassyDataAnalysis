@@ -44,7 +44,7 @@ function lfpFromNSx(cds,opts)
             lfp{c+1}= double(cds.(nsLabel).Data(cds.NSxInfo.NSx_idx(achanIndex(c)),:))';
         end    
         %now stick time on the front of lfp
-        lfp{1}=(0:size(lfp{2},1)-1)' / cds.NSxInfo.NSx_sampling(achanIndex(c)) + timestamp/timeRes;
+        lfp{1}=roundTime((0:size(lfp{2},1)-1)' / cds.NSxInfo.NSx_sampling(achanIndex(c)) + timestamp/timeRes);
         labels=[{'t'},reshape(cds.NSxInfo.NSx_labels(lfpList(subset)),1,numel(cds.NSxInfo.NSx_labels(lfpList(subset))))];
         
         if ~isempty(lfp)

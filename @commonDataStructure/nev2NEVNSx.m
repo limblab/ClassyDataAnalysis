@@ -107,13 +107,19 @@ function nev2NEVNSx(cds,fname)
                 end
                 
                 %add a note to the problems:
-                if ~exist('pData','var') || numel(NSx.MetaTags.Timestamp)-1~=pData.numResets
-                    error('nev2NEVNSx:resetMismatch','the nev and the NSx have different numbers of time resets')
-                end                
                 pData.resetTimes=NSx.MetaTags.DataDurationSec(1);
-
                 cds.addProblem(['detected reset events in the ',NSxList{i}.name,' where the cerebus clock reset to zero. Data is concatenated and there may be discontinuities'],pData)
-
+                if isempty(pData.numResets) || numel(NSx.MetaTags.Timestamp)-1~=pData.numResets
+                    warning('nev2NEVNSx:resetMismatch','the nev and the NSx have different numbers of time resets')
+                    disp('this is PROBABLY due to sorting the nev and removing all the pre-sync data')
+                    disp('cds loading will continue by eliminating pre-sync NSx data')
+                    cds.addProblem(['reset mismatch between nev and ',NSxList{i}.name],NSx.MetaTags)
+                    NSx.MetaTags.DataDurationSec=NSx.MetaTags.DataDurationSec(2);
+                    NSx.MetaTags.DataPoints=NSx.MetaTags.DataPoints(2);
+                    NSx.MetaTags.DataPointsSec=NSx.MetaTags.DataPointsSec(2);
+                    NSx.MetaTags.Timestamp=NSx.MetaTags.Timestamp(2);
+                    NSx.Data=NSx.Data{2};
+                end  
             end
             if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStampSec)
                 %we know the analog data lags the digital data, so we need

@@ -37,7 +37,7 @@ function emgFromNSx(cds)
             end
         end        
 
-        data(:,1) = double(0:1/emgFreq:(size(data,1)-1)/emgFreq)+timestamp/timeRes;
+        data(:,1) = roundTime(double(0:1/emgFreq:(size(data,1)-1)/emgFreq)+timestamp/timeRes);
 
         emgNames=[{'t'},emgNames];
         %build table of emgs:
