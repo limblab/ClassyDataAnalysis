@@ -70,6 +70,17 @@ function nev2NEVNSx(cds,fname)
     else
         set(cds,'NEV',oldNEV.(oldNEVName{1}));
     end
+    %identify resets in neural data:
+    if ~isempty(cds.NEV)
+        pData.numResets=find(diff(double(cds.NEV.Data.Spikes.TimeStamp))<0);
+        if numel(pData.numResets)>1
+            error('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
+        elseif ~isempty(pData.numResets)
+            pData.resetTime=double(cds.NEV.Data.Spikes.TimeStamp(pData.numResets));
+            %note the unit loading routines look for this 
+            cds.addProblem('detected reset events in the NEV where the cerebus clock reset to zero. ',pData)
+        end
+    end
     %% populate the cds.NSx fields
     for i=1:length(NSxList)
         fieldName=['NS',num2str(i)];
@@ -84,16 +95,24 @@ function nev2NEVNSx(cds,fname)
             if length(NSx.MetaTags.Timestamp)>1
                 numResync=0;
                 for idx = 1:length(NSx.MetaTags.Timestamp)-1
-                    if NSx.MetaTags.Timestamp(idx)+DataPoints(idx)*NSx.MetaTags.SamplingFreq>NSx.MetaTags.Timestamp(idx+1)
+                    if NSx.MetaTags.Timestamp(idx)+NSx.MetaTags.DataPoints(idx)*NSx.MetaTags.SamplingFreq>NSx.MetaTags.Timestamp(idx+1)
                         numResync = numResync+1;
                     end
                 end
                 if numResync>1
-                    disp('Multiple resync events found. This could indicate a problem with the data file, please inspect manually.')
+                    error('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
                 end
-                if numResync<numel(NSx.MetaTags.Timestamp)
+                if numResync<numel(NSx.MetaTags.Timestamp)-1
                     disp('This file may have packet loss. This file has less resync events than output cells.')
                 end
+                
+                %add a note to the problems:
+                if ~exist('pData','var') || numel(NSx.MetaTags.Timestamp)-1~=pData.numResets
+                    error('nev2NEVNSx:resetMismatch','the nev and the NSx have different numbers of time resets')
+                end                
+                pData.resetTimes=NSx.MetaTags.DataDurationSec(1);
+
+                cds.addProblem(['detected reset events in the ',NSxList{i}.name,' where the cerebus clock reset to zero. Data is concatenated and there may be discontinuities'],pData)
 
             end
             if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStampSec)
@@ -112,16 +131,12 @@ function nev2NEVNSx(cds,fname)
                 num_zeros = fix(digitalLength*frequencies(i)-size(NSx.Data,2));
                 %pad data in our temporary object
                 NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data];
-                        % 6.5584993 is the ratio when comparing the output of 
-                        % get_cerebus_data to the one from this script. It must come
-                        % from the data type conversion that happens when pulling 
-                        % analog data.
                 
                 %update the metadata associated with the padding:
                 NSx.MetaTags.DataPoints = NSx.MetaTags.DataPoints + num_zeros;
                 NSx.MetaTags.DataDurationSec = NSx.MetaTags.DataPoints/frequencies(i);
-                
             end
+            
                         
             %insert into the cds
             set(cds,upper(fieldName),NSx)

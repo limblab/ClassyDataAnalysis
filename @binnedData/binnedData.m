@@ -109,18 +109,22 @@ classdef binnedData < matlab.mixin.SetGet
             binned.meta=meta;
         end
         function set.weinerConfig(binned,wc)
-            if ~isstruct(wc)
-                error('weinerConfig:notAStruct','weinerConfig must be a struct')
-            elseif ~isfield(wc,'numFolds')
-                error('weinerConfig:noNumFolds','the weinerConfig property must have a numFolds field enumerating the number of folds to usne for multifold crossvalidation')
-            elseif ~isfield(wc,'inputList')
-                error('weinerConfig:noOutput','the weinerconfig property must have a outputList field enumerating the signals to use as outputs of the weiner filter')
-            elseif ~isfield(wc,'outputList')
-                error('weinerConfig:noInput','the weinerconfi property must have a inputList field enumerating the signals to use as inputs to the weiner filter')
-            elseif ~isfield(wc,'polynomialOrder')
-                error('weinerConfig:noPolynomialOrder','the weinerConfig property must have a polynomialOrder field indicating the order of the static nonlinearity applied to the filter output')
-            elseif ~isfield(wc,'windows')
-                error('weinerConfig:noWindows','the weinerConfig property must have a windows field with the time windows to use when fiting the filter')
+            if ~isempty(wc)
+                 if ~isstruct(wc)
+                    error('weinerConfig:notAStruct','weinerConfig must be a struct')
+                elseif ~isfield(wc,'numFolds')
+                    error('weinerConfig:noNumFolds','the weinerConfig property must have a numFolds field enumerating the number of folds to usne for multifold crossvalidation')
+                elseif ~isfield(wc,'inputList')
+                    error('weinerConfig:noOutput','the weinerconfig property must have a outputList field enumerating the signals to use as outputs of the weiner filter')
+                elseif ~isfield(wc,'outputList')
+                    error('weinerConfig:noInput','the weinerconfi property must have a inputList field enumerating the signals to use as inputs to the weiner filter')
+                elseif ~isfield(wc,'polynomialOrder')
+                    error('weinerConfig:noPolynomialOrder','the weinerConfig property must have a polynomialOrder field indicating the order of the static nonlinearity applied to the filter output')
+                elseif ~isfield(wc,'windows')
+                    error('weinerConfig:noWindows','the weinerConfig property must have a windows field with the time windows to use when fiting the filter')
+                 else
+                    binned.weinerConfig=wc;
+                end
             else
                 binned.weinerConfig=wc;
             end

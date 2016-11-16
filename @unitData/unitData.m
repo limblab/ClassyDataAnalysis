@@ -69,5 +69,6 @@ classdef unitData < matlab.mixin.SetGet
         removeSorting(units,varargin)
         deleteUnsorted(units)
         unitName=getUnitName(units,unitNum)
+        varargout=PESTH(units,eventTimes,preEventWindow,postEventWindow,unitNum,varargin)
     end
 end
