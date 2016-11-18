@@ -1,4 +1,4 @@
-function varargout=PESTH(units,eventTImes,preEventWindow,postEventWindow,unitNum,varargin)
+function varargout=PESTH(units,eventTimes,preEventWindow,postEventWindow,unitNum,varargin)
     %This is a method of the unitData class and should be saved in the
     %@unitData folder with the other class methods.
     %
@@ -27,7 +27,8 @@ function varargout=PESTH(units,eventTImes,preEventWindow,postEventWindow,unitNum
     %   accepts key value pairs to specify details of operation:
     %   -'useAxis': axis handle to place histogram on. allows placement of
     %       histogram into subplot. If empty the 
-    %   -'numBins':number of bins to use, default is 100
+    %   -'numBins':number of bins to use, default is 100. Can also feed an
+    %    array of bin edges
     %   -'markZero':true/false, flags PESTH to draw a line at zero. Default
     %    is true
     %   -'zeroMarkColor': string specifying the color of the line at 0,
@@ -83,30 +84,35 @@ function varargout=PESTH(units,eventTImes,preEventWindow,postEventWindow,unitNum
     end
     %collect the spikes:
     spikes=[];
-    for i=1:size(windows,1)
-        spikeMask=units.data(unitNum).spikes.ts>eventTImes(i)-preEventWindow & units.data(unitNum).spikes.ts<eventTImes(i)+postEventWindow;
-        spikes=[spikes; units.data(unitNum).spikes.ts(spikeMask)-eventTImes(i)];
+    for i=1:numel(eventTimes)
+        spikeMask=units.data(unitNum).spikes.ts>eventTimes(i)-preEventWindow & units.data(unitNum).spikes.ts<eventTimes(i)+postEventWindow;
+        spikes=[spikes; units.data(unitNum).spikes.ts(spikeMask)-eventTimes(i)];
     end
     %make the histogram plot:
+    [histData.counts,histData.edges]=histcounts(spikes,numBins);
     if useRate
-        normScheme='countdensity';
-    else
-        normScheme='count';
+        histData.counts=histData.counts/numel(spikes)/mode(diff(histData.edges));
     end
-    histData=histogram(axisID,spikes,numBins,'Normalization',normScheme);
+    axes(axisID)%force the appropriate axis:
+    bar(histData.edges(1:end-1)+mode(diff(histData.edges)/2),histData.counts)
     
     %use the bins in histData, and find the actual variability in the spike
     %data: 
-    spikeCounts=nan(size(windows,1),numel(histData.Values));
-    for i=1:size(windows,1)
-        for j=1:numel(histData.Values)
-            spikeCounts(i,j)=numel(find(units.data(unitNum).spikes.ts>eventTImes(i)+histData.BinEdges(j) & units.data(unitNum).spikes.ts<eventTImes(i)+histData.BinEdges(j+1)));
+    spikeCounts=nan(numel(eventTimes),numel(histData.counts));
+    for i=1:numel(eventTimes)
+        for j=1:numel(histData.counts)
+            spikeCounts(i,j)=numel(find(units.data(unitNum).spikes.ts>eventTimes(i)+histData.edges(j) & units.data(unitNum).spikes.ts<eventTimes(i)+histData.edges(j+1)));
         end
     end
     
-    histErr=std(spikeCounts);
+    histErr=std(spikeCounts)/size(spikeCounts,1);%std error
+    if useRate
+        histErr=histErr/mode(diff(histData.edges));
+    end
     if plotErr
-        errorbar(axisID,h.BinEdges(1:end-1)+mode(diff(h.BinEdges))/2,histErr,'+k')
+        hold on
+        binCtrs=histData.edges(1:end-1)+mode(diff(histData.edges))/2;
+        errorbar(axisID,binCtrs,histData.counts,histErr,'+k')
     end
     
     %if needed, plot our vertical line

@@ -26,7 +26,7 @@ function [H,axisID]=polarTuningPlot(dirs,activity,varargin)
     
     
     if ~isempty(varargin)
-        if mod(numel(varargin,2))
+        if mod(numel(varargin),2)
             error('polarTuning:oddNumberOptionalArguments','optional arguments must be in key-value pairs')
         end
         for i=1:2:numel(varargin)
@@ -76,11 +76,12 @@ function [H,axisID]=polarTuningPlot(dirs,activity,varargin)
         if size(CI,2)>2
             CI=CI';
         end
-        [xCart,yCart]=pol2cart([CI(:,1);CI(end:-1:1,2)]);
+        [xCart,yCart]=pol2cart((pi/180)*[dirs,dirs(1),dirs(end:-1:1),dirs(end)]',[CI(:,1);CI(1,1);CI(end:-1:1,2);CI(end,2)]);
         axes(axisID);%force axes to be current for patch command, should be unneccessary
         patch(xCart,yCart,colorID,'FaceAlpha',.3,'EdgeColor','none')
+        hold on
     end
-    polar(axisID,[dirs,dirs(1)],[activity,activity(1)],colorID)
+    polar(axisID,(pi/180)*[dirs,dirs(1)],[activity,activity(1)],colorID)
     if exist('PD','var')
         %add a PD line to the plot:
         rMax=max(activity);
