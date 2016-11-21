@@ -141,14 +141,7 @@ function getCObumpTaskTable(cds,times)
                 bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,63:66));
                 bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,67:70));
                 bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,71:74));
-                tmpAngle=bytes2float(cds.databursts.db(idxDB,75:78))-tgtAngle(trial);
-                if tmpAngle>=360
-                    tmpAngle=tmpAngle-360;
-                end
-                if tmpAngle<0
-                    tmpAngle=tmpAngle+360;
-                end
-                bumpAngle(trial)=tmpAngle;
+                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,75:78));
                 
                 stimTrial(trial)=cds.databursts.db(idxDB,79);
 
@@ -275,8 +268,15 @@ function getCObumpTaskTable(cds,times)
                 bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,63:66));
                 bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,67:70));
                 bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,71:74));
-                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,75:78));
-
+                %bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,75:78));
+                tmpAngle=bytes2float(cds.databursts.db(idxDB,75:78))-tgtAngle(trial);
+                if tmpAngle>=360
+                    tmpAngle=tmpAngle-360;
+                end
+                if tmpAngle<0
+                    tmpAngle=tmpAngle+360;
+                end
+                bumpAngle(trial)=tmpAngle;
                 stimTrial(trial)=cds.databursts.db(idxDB,79);
 
 
