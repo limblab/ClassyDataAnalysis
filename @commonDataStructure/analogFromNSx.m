@@ -49,7 +49,7 @@ function analogFromNSx(cds)
                 a{c+1}=double(cds.(nsLabel).Data(cds.NSxInfo.NSx_idx(analogIdx(c)),:))';
             end
             %get a time vector t for this sampling frequency
-            a{1} = ([0:length(a{2})-1]' / frequencies(i));
+            a{1} = roundTime(([0:length(a{2})-1]' / frequencies(i))+double(cds.(nsLabel).MetaTags.Timestamp)/double(cds.(nsLabel).MetaTags.TimeRes));
             %convert the matrix of data into a table:
             match=find(cdsFrequencies==frequencies(i),1);
             if ~isempty(match)

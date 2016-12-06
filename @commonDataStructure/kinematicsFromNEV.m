@@ -5,7 +5,7 @@ function kinematicsFromNEV(cds,opts)
     end
     %get events:
     event_data = double(cds.NEV.Data.SerialDigitalIO.UnparsedData);
-    event_ts = cds.NEV.Data.SerialDigitalIO.TimeStampSec';       
+    event_ts = roundTime(cds.NEV.Data.SerialDigitalIO.TimeStampSec',.00001);%use round time here to sanitize the clock and avoid weird machine precision errors later       
 
     idx=cds.skipResets(cds.NEV.Data.SerialDigitalIO.TimeStampSec');
     if ~isempty(idx)

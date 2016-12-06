@@ -19,6 +19,20 @@ function file2cds(cds,filePath,varargin)
     %               bad kinematic times so that artifacts associated with
     %               the kinematic discontinuity can be avoided in further
     %               processing
+    %'recoverPreSync'   flags the nev loading routine to  attempt to
+    %               recover data in the nev and NSx before re-sync events.
+    %               The loading routine will assume a 100ms latency between
+    %               pre and post sync data. The loading routine will
+    %               concatenate data for all sync events. If left empty,
+    %               the loading routine will discard all data before the
+    %               last sync event.
+    %'useBlockBLOCKNAME'    flags the nev loading routing what data block
+    %               to use in the case of re-sync events in the data. if
+    %               BLOCKNAME is 'first' then the nev/nsx loading routine
+    %               will return only the data before the first sync event.
+    %               If BLOCKNAME is 'last' then the nev/nsx loading routine
+    %               will return only the data from after the last resync
+    %               event
     %lab number:    an integer number designating the lab from the set 
     %               1,2,3,6
     %'taskTASKNAME' specifies the task performed during data collection.
@@ -83,6 +97,10 @@ function file2cds(cds,filePath,varargin)
                     writeSummary=false;
                 elseif strcmp(optStr,'noDB')
                     doDB=false;
+                elseif strcmp(optStr,'recoverPreSync')
+                    opts.recoverPreSync=true;
+                elseif ischar(optStr) && length(optStr)>8 && strcmp(optStr(1:8),'useBlock')
+                    opts.block=optStr(9:end);
                 elseif strcmp(optStr, 'ignoreFilecat')
                     opts.ignore_filecat=true;
                 elseif ischar(optStr) && length(optStr)>4 && strcmp(optStr(1:4),'task')
@@ -119,6 +137,12 @@ function file2cds(cds,filePath,varargin)
         %check if monkey was provided. If not, insert 'unknown' as monkey name
         if ~isfield(opts,'monkey')
             opts.monkey = 'unknown';
+        end
+        if ~isfield(opts,'recoverPreSync')
+            opts.recoverPreSync=false;
+        end
+        if ~isfield(opts,'block')
+            opts.block='last';
         end
         %check the options and throw warnings if some things aren't set:
         flag=0;
@@ -220,7 +244,7 @@ function file2cds(cds,filePath,varargin)
 %     end
 %     if ~dataFromDB
 %         varargin=[varargin,{'dbEmpty'}];
-        cds.nev2NEVNSx(filePath);
+        cds.nev2NEVNSx(filePath,opts.recoverPreSync,opts.block);
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
         %try to get open sim data:

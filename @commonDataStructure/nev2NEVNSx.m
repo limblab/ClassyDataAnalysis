@@ -1,4 +1,4 @@
-function nev2NEVNSx(cds,fname)
+function nev2NEVNSx(cds,fname,varargin)
     %this is a method function for the commonDataStructure class and should
     %be saved in the @commonDataStructure folder
     %
@@ -11,6 +11,31 @@ function nev2NEVNSx(cds,fname)
     %
     %this method is inteneded to be used internally during cds object
     %initiation, not called to generate NEVNSx objects in general.
+    
+    recoverPreSync=false;
+    block='last';
+    if ~isempty(varargin)
+        for i=1:numel(varargin)
+            if islogical(varargin{i})
+                recoverPreSync=varargin{1};
+            elseif ischar(varargin{i}) 
+                switch varargin{i}
+                    case 'first'
+                        block='first';
+                    case 'last'
+                        block='last';
+                    otherwise 
+                        error('nev2NEVNSx:badBlockName','the block to use must be either first or last')
+                end
+            end
+        end
+        
+        if recoverPreSync
+            warning('nev2NEVNSx:dataRecoveryProbablyBad','the recover pre-sync data option is intended for files where the continuity of the data is not important (e.g. PESTH around an event). The data will be recovered by assuming a 100ms latency between data points. Analog data will be shifted and interpolated to fill missing points')
+        end
+    else
+        recoverPreSync=false;
+    end
     
     [folderPath,fileName,~]=fileparts(fname);
     
@@ -72,14 +97,64 @@ function nev2NEVNSx(cds,fname)
     end
     %identify resets in neural data:
     if ~isempty(cds.NEV)
-        pData.numResets=find(diff(double(cds.NEV.Data.Spikes.TimeStamp))<0);
-        if numel(pData.numResets)>1
-            error('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
-        elseif ~isempty(pData.numResets)
+        pData.numResets=numel(find(diff(double(cds.NEV.Data.Spikes.TimeStamp))<0));
+        if pData.numResets>1
+            warning('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
+            disp('processing will continue assuming only the data after the last resync is valid')
             pData.resetTime=double(cds.NEV.Data.Spikes.TimeStamp(pData.numResets));
-            %note the unit loading routines look for this 
+        elseif pData.numResets==1
+            pData.resetTime=double(cds.NEV.Data.Spikes.TimeStamp(pData.numResets));
+        end
+        if pData.numResets>0
+            syncIdxSpikes=find(diff(double(cds.NEV.Data.Spikes.TimeStamp))<0);
+            syncIdxDigital=find(diff(double(cds.NEV.Data.SerialDigitalIO.TimeStamp))<0);
+            if recoverPreSync
+                for i=1:numel(syncIdxSpikes)
+                    pData.stampShift(i)=double(cds.NEV.Data.Spikes.TimeStamp(syncIdxSpikes(i)))+round(.1/double(cds.NEV.MetaTags.SampleRes));
+                    cds.NEV.Data.Spikes.TimeStamp(syncIdxSpikes(i)+1:end)=cds.NEV.Data.Spikes.TimeStamp(syncIdxSpikes(i)+1:end)+pData.stampShift(i);
+                    %
+                    if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStamp) && ~isempty(syncIdxDigital)%sometimes the sync will happen early enough
+                        pData.timeShift(i)=double(cds.NEV.Data.SerialDigitalIO.TimeStampSec(syncIdxDigital(i)))+.1;
+                        cds.NEV.Data.SerialDigitalIO.TimeStampSec(syncIdxDigital(i)+1:end)=cds.NEV.Data.SerialDigitalIO.TimeStampSec(syncIdxDigital(i)+1:end)+pData.timeShift(i);
+                        cds.NEV.Data.Spikes.TimeStamp(syncIdxSpikes(i)+1:end)=cds.NEV.Data.Spikes.TimeStamp(syncIdxSpikes(i)+1:end)+pData.stampShift(i);
+                    end
+                end
+            else
+                %remove all timestamps before the sync events:
+                spikeMask=false(numel(cds.NEV.Data.Spikes.TimeStamp),1);
+                digitalMask=false(numel(cds.NEV.Data.SerialDigitalIO.TimeStampSec),1);
+                
+                for i=1:numel(syncIdxSpikes)
+                    if strcmp(block,'last')%isolate data after last sync event
+                        %spike timestamps:
+                        spikeMask(1:syncIdxSpikes(i))=true;
+                        %digital timestamps:
+                        if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStamp) && ~isempty(syncIdxDigital)
+                            digitalMask(1:syncIdxDigital(i))=true;
+                        end
+                    elseif strcmp(block,'first')%isolate data before first sync event
+                        %spike timestamps:
+                        spikeMask(syncIdxSpikes(i):end)=true;
+                        %digital timestamps:
+                        if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStamp) && ~isempty(syncIdxDigital)
+                            digitalMask(syncIdxDigital(i):end)=true;
+                        end
+                    end
+                end
+                
+                cds.NEV.Data.Spikes.TimeStamp(spikeMask)=[];
+                cds.NEV.Data.Spikes.Unit(spikeMask)=[];
+                cds.NEV.Data.Spikes.Electrode(spikeMask)=[];
+                cds.NEV.Data.Spikes.Waveform(:,spikeMask)=[];
+                cds.NEV.Data.SerialDigitalIO.TimeStamp(digitalMask)=[];
+                cds.NEV.Data.SerialDigitalIO.TimeStampSec(digitalMask)=[];
+                cds.NEV.Data.SerialDigitalIO.InsertionReason(digitalMask)=[];
+                cds.NEV.Data.SerialDigitalIO.UnparsedData(digitalMask)=[];
+                
+            end
             cds.addProblem('detected reset events in the NEV where the cerebus clock reset to zero. ',pData)
         end
+        
     end
     %% populate the cds.NSx fields
     for i=1:length(NSxList)
@@ -93,14 +168,16 @@ function nev2NEVNSx(cds,fname)
             %as output as the pre-sync and post-sync data go in different
             %cells
             if length(NSx.MetaTags.Timestamp)>1
-                numResync=0;
-                for idx = 1:length(NSx.MetaTags.Timestamp)-1
-                    if NSx.MetaTags.Timestamp(idx)+NSx.MetaTags.DataPoints(idx)*NSx.MetaTags.SamplingFreq>NSx.MetaTags.Timestamp(idx+1)
-                        numResync = numResync+1;
-                    end
-                end
+                numResync=length(NSx.MetaTags.Timestamp)-1;
+                %can't recall why I did the following, it seems extraneous but would skip very short data series:
+%                 for idx = 1:length(NSx.MetaTags.Timestamp)-1
+%                     if NSx.MetaTags.Timestamp(idx)+NSx.MetaTags.DataPoints(idx)*NSx.MetaTags.SamplingFreq>NSx.MetaTags.Timestamp(idx+1)
+%                         numResync = numResync+1;
+%                     end
+%                 end
                 if numResync>1
-                    error('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
+                    warning('nev2NEVNSx:multipleResets','Multiple resync events found. This indicates a problem with the data file, please inspect manually.')
+                    disp(['continuing assuming only the data in the last cell of the NS',num2str(i),' is valid'])
                 end
                 if numResync<numel(NSx.MetaTags.Timestamp)-1
                     disp('This file may have packet loss. This file has less resync events than output cells.')
@@ -114,36 +191,48 @@ function nev2NEVNSx(cds,fname)
                     disp('this is PROBABLY due to sorting the nev and removing all the pre-sync data')
                     disp('cds loading will continue by eliminating pre-sync NSx data')
                     cds.addProblem(['reset mismatch between nev and ',NSxList{i}.name],NSx.MetaTags)
-                    NSx.MetaTags.DataDurationSec=NSx.MetaTags.DataDurationSec(2);
-                    NSx.MetaTags.DataPoints=NSx.MetaTags.DataPoints(2);
-                    NSx.MetaTags.DataPointsSec=NSx.MetaTags.DataPointsSec(2);
-                    NSx.MetaTags.Timestamp=NSx.MetaTags.Timestamp(2);
-                    NSx.Data=NSx.Data{2};
-                end  
+                end
+                if recoverPreSync
+                    DataDurationSec=NSx.MetaTags.DataDurationSec(1);
+                    DataPointsSec=NSx.MetaTags.DataPointsSec(1);
+                    DataPoints=NSx.MetaTags.DataPointsSec(1);
+                    Data=NSx.Data{1};
+                    for j=2:numResync+1
+                        DataDurationSec=DataDurationSec+NSx.MetaTags.DataDurationSec(j)+.1;
+                        DataPointsSec=DataPointsSec+NSx.MetaTags.DataPointsSec(j)+.1;
+                        %get data for jth resync:
+                        tmp=NSx.Data{j};
+                        %construct timeseries for this resync:
+                        offsetAdjust=NSx.MetaTags.Timestamp(j)-NSx.MetaTags.Timestamp(1);
+                        tmpTime=offsetAdjust/30000+.1+[1:size(tmp,2)]/frequencies(i);
+                        tgtTime=[1:1/frequencies(i):tmpTime(end)];
+                        %interpolate data onto timeframe of first
+                        %dataseries:
+                        tmpData=interp1([0,tmpTime]',[Data(:,1),tmp]',tgtTime');
+                        Data=[Data,tmpData'];
+                    end
+                    NSx.MetaTags.DataDurationSec=DataDurationSec;
+                    NSx.MetaTags.DataPointsSec=DataPointsSec;
+                    NSx.MetaTags.Timestamp=NSx.MetaTags.Timestamp(1);
+                    NSx.Data=Data;
+                    NSx.MetaTags.DataPoints=size(Data,2);
+                else
+                    if strcmp(block,'first')
+                        NSx.MetaTags.DataDurationSec=NSx.MetaTags.DataDurationSec(1);
+                        NSx.MetaTags.DataPoints=NSx.MetaTags.DataPoints(1);
+                        NSx.MetaTags.DataPointsSec=NSx.MetaTags.DataPointsSec(1);
+                        NSx.MetaTags.Timestamp=NSx.MetaTags.Timestamp(1);
+                        NSx.Data=NSx.Data{1};
+                    elseif strcmp(block,'last')
+                        NSx.MetaTags.DataDurationSec=NSx.MetaTags.DataDurationSec(end);
+                        NSx.MetaTags.DataPoints=NSx.MetaTags.DataPoints(end);
+                        NSx.MetaTags.DataPointsSec=NSx.MetaTags.DataPointsSec(end);
+                        NSx.MetaTags.Timestamp=NSx.MetaTags.Timestamp(end);
+                        NSx.Data=NSx.Data{end};
+                    end
+                end
             end
-            if ~isempty(cds.NEV.Data.SerialDigitalIO.TimeStampSec)
-                %we know the analog data lags the digital data, so we need
-                %to, load the analog data, compute the correct number of
-                %points to align the data, add that many points worth of
-                %zeros to each channel, and then push to the appropriate
-                %field of the cds
-                
-                
-                %get the last timepoint in the digital data:
-                digitalLength = cds.NEV.Data.SerialDigitalIO.TimeStampSec(end);
-                %compute the pad by comparing the actual number of points
-                %to the expected number if the file is the same length as
-                %the digital data
-                num_zeros = fix(digitalLength*frequencies(i)-size(NSx.Data,2));
-                %pad data in our temporary object
-                NSx.Data = [zeros(size(NSx.Data,1),num_zeros) NSx.Data];
-                
-                %update the metadata associated with the padding:
-                NSx.MetaTags.DataPoints = NSx.MetaTags.DataPoints + num_zeros;
-                NSx.MetaTags.DataDurationSec = NSx.MetaTags.DataPoints/frequencies(i);
-            end
-            
-                        
+                                    
             %insert into the cds
             set(cds,upper(fieldName),NSx)
         else

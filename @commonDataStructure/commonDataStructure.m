@@ -410,7 +410,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
     methods (Static = false, Access = protected, Hidden=true)
         %the following methods are all hidden from the user and may only be
         %called by methods of the cds class.
-        nev2NEVNSx(cds,fname)
+        nev2NEVNSx(cds,fname,varargin)
         NEVNSx2cds(cds,opts)
             eventsFromNEV(cds,opts)
             kinematicsFromNEV(cds,opts)
