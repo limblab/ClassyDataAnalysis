@@ -16,7 +16,7 @@ function [still,stats]=isStill(cds,x,varargin)
     %'window':# of points before and after still periods to include in the
     %   output vector. Default is 0.
     %'range':# of points that must be below the tolerance before the data
-    %   will be flagged as still. default is 1000 (1s for 1khz kinematic 
+    %   will be flagged as still. default is 100 (0.1s for 1khz kinematic 
     %   data).
     
     if ~isvector(x)
@@ -29,7 +29,7 @@ function [still,stats]=isStill(cds,x,varargin)
        
     tol=[];
     window=0; %will not pad the still range. Can be reset by supplemental inputs
-    pts=1000; %will only accept still periods of 10 pts or more. can be reset by supplemental inputs
+    pts=100; %will only accept still periods of 100 pts or more. can be reset by supplemental inputs
     if mod(length(varargin),2)>0
         error('is_still:BadArgList','Supplementary arguments must be in key-value pairs. the number of arguments MUST be even')
     else
