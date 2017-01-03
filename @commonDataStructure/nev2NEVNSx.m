@@ -56,6 +56,7 @@ function nev2NEVNSx(cds,fname,varargin)
             %check to see if we have a sorted file with no digital:
             NEVpath=dir([folderPath filesep fileName '_nodigital*.nev']);
             digitalPath=dir([folderPath filesep fileName '_nospikes.mat']);
+            sortedPath=dir([folderPath filesep fileName '-s.nev']);
             if ~isempty(NEVpath) && ~isempty(digitalPath)
                     if numel(NEVpath)>1
                         warning('nev2NEVNSx:multipleNodigitalFiles','found multiple files matching the *_nodigital.nev format. Attempting to identify the correct file')
@@ -79,13 +80,20 @@ function nev2NEVNSx(cds,fname,varargin)
                     oldNEV=load([folderPath filesep digitalPath.name]);
                     oldNEVName=fieldnames(oldNEV);
                     oldNEV.(oldNEVName{1}).Data.Spikes=spikeNEV.Data.Spikes;
+                    set(cds,'NEV',oldNEV.(oldNEVName{1}));
+            elseif ~isempty(sortedPath)
+                if numel(sortedPath)>1
+                    error('nev2NEVNSx:multipleSorted',['found multiple sorted files in the target directory. Please remove the extraneous sorts, or rename them so that only 1 file has the format: FILENAME-s.nev'])
+                end
+                disp(['located a sorted file. Continuing using: ' folderPath filesep fileName '-s.nev'])
+                NEVpath=sortedPath;
             else
                 warning('nev2NEVNSx:multipleNEVFiles',['Found multiple files that start with the name given, but could not find files matching the pattern: ',fname,'_nodigital*.nev + ',fname,'_nospikes.mat'])
                 disp(['continuing by loading the NEV that is an exact match for: ',fname,'.nev'])
                 NEVpath = dir([folderPath filesep fileName '.nev']);
             end
-        else
-            set(cds,'NEV',openNEV('read', [folderPath filesep NEVpath.name],'nosave'));
+%         else
+%             set(cds,'NEV',openNEV('read', [folderPath filesep NEVpath.name],'nosave'));
         end
     end
     if ~exist('spikeNEV','var')
@@ -93,7 +101,7 @@ function nev2NEVNSx(cds,fname,varargin)
         %the nev directly into the cds:
         set(cds,'NEV',openNEV('read', [folderPath filesep NEVpath.name],'nosave'));
     else
-        set(cds,'NEV',oldNEV.(oldNEVName{1}));
+        
     end
     %identify resets in neural data:
     if ~isempty(cds.NEV)

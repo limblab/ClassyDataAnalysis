@@ -29,7 +29,8 @@ function forceFromNSx(cds,opts)
             end
         end
         %truncate to deal with the fact that encoder data doesn't start
-        %recordign till 1 second into the file and store in a table
+        %recording till 1 second into the file and store in a table
+        t=roundTime(t,.00001);
         force=array2table(loadCellData,'VariableNames',labels);
     end
     %forces for robot:
@@ -48,7 +49,7 @@ function forceFromNSx(cds,opts)
                 %truncate to handle the fact that encoder data doesn't start
                 %recording until 1 second into the file and convert load cell 
                 %voltage data into forces
-                
+                t=roundTime(t,.00001);
                 handleforce=cds.handleForceFromRaw(loadCellData,t,opts);
             end
         else

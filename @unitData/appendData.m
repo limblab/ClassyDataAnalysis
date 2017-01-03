@@ -139,8 +139,8 @@ function appendData(units,data,varargin)
         %compute population level stats:
         if ~isempty(strfind(method,'shape') )
             %compute the population shape distribution:
-            %[ldaProj,coeff]=getShapeComps(units,data,units.appendConfig.SNRThreshold,units.appendConfig.thresholdPoint);
-            [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,units.appendConfig.SNRThreshold,units.appendConfig.thresholdPoint);
+            %[ldaProj,coeff]=getShapeComps(units,data,units.appendConfig.SNRThreshold);
+            [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,units.appendConfig.SNRThreshold);
         end
 
         if ~isempty(strfind(units.appendConfig.method,'ISI') )
@@ -355,8 +355,8 @@ function [flags,tmpUnitData]=addUnit(ID,UD,tmpUnitData,flags,uList,offset)
         flags(chanIdx)=false;
     end
 end
-function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, threshPoint)
-    %[coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, threshPoint)
+function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh)
+    %[coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh)
     %takes the data for this monkey and builds a statistical model of the
     %differences in shape across all units.
     %returns a vector that is the axis that maximally separates comparisons
@@ -377,6 +377,10 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     unitsArray={units.data.array};
     unitsInUnits=ones(size(unitsChans));
     unitsThreshold=[units.data.lowThreshold];
+    unitsMinMaxTics=nan(numUnits,1);
+    unitsMinMaxTicsStd=nan(numUnits,1);
+    unitsLogNEO=nan(numData,1);
+    unitsLogNEOStd=nan(numData,1);
     for i=1:numUnits
         if(units.data(i).ID==0 || units.data(i).ID==255)
             %don't bother with invalid or unsorted
@@ -385,7 +389,38 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
         unitsMean(i,:)=mean(units.data(i).spikes.wave);
         unitsStdev(i,:)=std(units.data(i).spikes.wave);
         unitsCount(i)=size(units.data(i).spikes,1);
-        unitsShift(i)=find(unitsMean(i,:)<unitsThreshold(i),1,'first')-units.appendConfig.thresholdPoint;
+        threshCross=find(unitsMean(i,:)<unitsThreshold(i),1,'first');
+        [~,~,~,minima]=extrema(unitsMean(i,:));
+        firstMin=find(sort(minima)>threshCross,1,'first');
+        unitsShift(i)=firstMin-units.appendConfig.alignPoint;
+        [~,mx,~,mn]=arrayfun(@(wNum) extrema(units.data(i).spikes.wave(wNum)),1:size(units.data(i).spikes.wave,1),'UniformOutput',false);
+        %mx and mn are cell arrays of minima/maxima, get them into a
+        %matrix:
+        mxArr=sort(cell2mat(mx'),2);
+        mnArr=sort(cell2mat(mn'),2);
+        %get the first minima after threshold:
+        for j=1:size(mn,1)
+            minIdx(j)=mnArr(j,find(mnArr(j,:)>unitsThreshold(i),1,'first'));
+            if isempty(minIdx)
+                minIdx(j)=mxArr(j,end);
+            end
+        end
+        %get the first maxima after the first minima:
+        for j=1:size(mx,1)
+            maxIdx(j)=mxArr(j,find(mxArr(j,:)>minIdx,1,'first'));
+            if isempty(minIdx)
+                maxIdx(j)=mxArr(j,end);
+            end
+        end
+        
+        unitsMinMaxTics(i)=mean(maxIdx-minIdx);
+        unitsMinMaxTicsStd(i)=std(maxIdx-minIdx);
+        logNEO=log(  sum(   ...
+                        [unitsMean(i,1),unitsMean(i,:),unitsMean(i,end)].*[unitsMean(i,1),unitsMean(i,:),unitsMean(i,end)]...
+                        -[unitsMean(i,1),unitsMean(i,1),unitsMean(i,:)].*[unitsMean(i,:),unitsMean(i,end),unitsMean(i,end)]...
+                        ,2));
+        unitsLogNEO(i)=mean(logNEO);
+        unitsLogNEOStd(i)=std(logNEO);
     end
     range=max(unitsMean,[],2)-min(unitsMean,[],2);
     SNR=range./mean(unitsStdev,2);
@@ -402,6 +437,10 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     unitsArray=unitsArray(mask);
     unitsInUnits=unitsInUnits(mask);
     unitsThreshold=unitsThreshold(mask);
+    unitsMinMaxTics=unitsMinMaxTics(mask);
+    unitsMinMaxTicsStd=UnitsMinMaxTicsVar(mask);
+    unitsLogNEO=unitsLogNEO(mask);
+    unitsLogNEOStd=unitsLogNEOStd(mask);
     %now work on the data
     disp('compiling sorted units already in new data')
     numData=numel(data);
@@ -413,6 +452,10 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     dataArray={data.array};
     dataInUnits=zeros(size(dataChans));
     dataThreshold=[data.lowThreshold];
+    dataMinMaxTics=nan(numData,1);
+    dataMinMaxTicsStd=nan(numData,1);
+    dataLogNEO=nan(numData,1);
+    dataLogNEOStd=nan(numData,1);
     for i=1:numData
         if(data(i).ID==0 || data(i).ID==255)
             continue
@@ -420,7 +463,38 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
         dataMean(i,:)=mean(data(i).spikes.wave);
         dataStdev(i,:)=std(data(i).spikes.wave);
         dataCount(i)=size(data(i).spikes,1);
-        dataShift(i)=find(dataMean(i,:)<dataThreshold(i),1,'first')-units.appendConfig.thresholdPoint;
+        threshCross=find(unitsMean(i,:)<unitsThreshold(i),1,'first');
+        [~,~,~,minima]=extrema(dataMean(i,:));
+        firstMin=find(sort(minima)>threshCross,1,'first');
+        dataShift(i)=firstMin-units.appendConfig.alignPoint;
+        [~,mx,~,mn]=arrayfun(@(wNum) extrema(data(i).spikes.wave(wNum)),1:size(data(i).spikes.wave,1),'UniformOutput',false);
+        %mx and mn are cell arrays of minima/maxima, get them into a
+        %matrix:
+        mxArr=sort(cell2mat(mx'),2);
+        mnArr=sort(cell2mat(mn'),2);
+        %get the first minima after threshold:
+        for j=1:size(mn,1)
+            minIdx(j)=mnArr(j,find(mnArr(j,:)>dataThreshold(i),1,'first'));
+            if isempty(minIdx)
+                minIdx(j)=mxArr(j,end);
+            end
+        end
+        %get the first maxima after the first minima:
+        for j=1:size(mx,1)
+            maxIdx(j)=mxArr(j,find(mxArr(j,:)>minIdx,1,'first'));
+            if isempty(minIdx)
+                maxIdx(j)=mxArr(j,end);
+            end
+        end
+        
+        dataMinMaxTics(i)=mean(maxIdx-minIdx);
+        dataMinMaxTicsStd(i)=std(maxIdx-minIdx);
+        logNEO=log(  sum(   ...
+                        [dataMean(i,1),dataMean(i,:),dataMean(i,end)].*[dataMean(i,1),dataMean(i,:),dataMean(i,end)]...
+                        -[dataMean(i,1),dataMean(i,1),dataMean(i,:)].*[dataMean(i,:),dataMean(i,end),dataMean(i,end)]...
+                        ,2));
+        dataLogNEO(i)=mean(logNEO);
+        dataLogNEOStd(i)=std(logNEO);
     end
     range=max(dataMean,[],2)-min(dataMean,[],2);
     SNR=range./mean(dataStdev,2);
@@ -437,19 +511,26 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     dataArray=dataArray(mask);
     dataInUnits=dataInUnits(mask);
     dataThreshold=dataThreshold(mask);
+    dataMinMaxTics=dataMinMaxTics(mask);
+    dataMinMaxTicsStd=dataMinMaxTicsStd(mask);
+    dataLogNEO=dataLogNEO(mask);
+    dataLogNEOStd=dataLogNEOStd(mask);
     %concatenate data& units together:
     disp('merging units')    
     allMean=[unitsMean;dataMean];
     allStdev=[unitsStdev;dataStdev];
-    allShift=[unitsShift;dataShift]-threshPoint;
+    allShift=[unitsShift;dataShift]-units.appendConfig.thresholdPoint;
     allCount=[unitsCount;dataCount];
     allChans=[unitsChans';dataChans'];
     allArray=[unitsArray';dataArray'];
     allInUnits=[unitsInUnits';dataInUnits'];
     allThreshold=[unitsThreshold';dataThreshold'];
-    
-    %now align the means and stdevs to threshold crossing to take care of
-    %cases where the user aligned waves to peak in offline sorter. the
+    allMinMaxTics=[unitsMinMaxTics;dataMinMaxTics];
+    allMinMaxTicsVar=[unitsMinMaxTicsStd;dataMinMaxTicsStd];
+    allLogNEO=[unitsLogNEO;dataLogNEO];
+    allLogNeoVar=[unitsLogNEOStd;dataLogNEOStd];
+    %now align the means and stdevs to first minima after threshols to take 
+    %care of cases where the user aligned waves to peak in offline sorter. the
     %following line is ugly, but it simply extracts the relevant portion of
     %the wave, truncating the part shifted outside the range of the wave,
     %and then pads the empty points by extending the tail of the wave.
@@ -464,6 +545,12 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     waveMat=repmat(reshape(allMean,[1,numWaves,numPoints]),[numWaves,1,1]);
     stdevMat=repmat(reshape(allStdev,[1,numWaves,numPoints]),[numWaves,1,1]);
     spikesMat=repmat(allCount,[1,numWaves,numPoints]);%number of spikes
+    
+    ticsMat=repmat(allMinMaxTics',[numWaves,1,1]);
+    ticsStdMat=repmat(allMinMaxTicsVar',[numWaves,1,1]);
+    NEOMat=repmat(allLogNEO',[numWaves,1,1]);
+    NEOStdMat=repmat(allLogNEOVar',[numWaves,1,1]);
+    
     disp('computing scaling factors for best shape-matching')
     alphaMat=nan(numWaves,numWaves);
     alphaCIMat=nan(numWaves,numWaves,2);
@@ -502,13 +589,19 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     
     %use the mask to get a list of differences in wavespace
     diffs=abs(waveMat(repmat(mask,[1,1,numPoints])));
+    %convert alpha into 1 sided distribution:
+    alphaMat(mask)=nan;%set all the stuff we aren't going to use to nan, so that we don't try to call log(-1) or something
+    logAlpha=log(alphaMat);
+    %get the difference in minmaxTics
+    ticsMat=ticsMat-ticsMat';
+    %get the difference in NEO
+    NEOMat=NEOMat-NEOMat';
     %reshape the differences into a column matrix where each row is a
     %difference observation include the alpha values here as the last 
     %difference:
-    %convert alpha into 1 sided distribution:
-    rectAlpha=abs(alphaMat-1);
-    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), rectAlpha(mask)];
+    diffs=[reshape(diffs,numel(diffs)/numPoints,numPoints), logAlpha(mask),ticsMat(mask),NEOMat(mask)];
     %diffs=[sqrt(sum(reshape(diffs,numel(diffs)/numPoints,numPoints).^2,2)), alphas];
+    
     %now compute joint standard deviation (S1*N1+S2*N2*alpha)/(N1+N2):
     stdevMat=stdevMat.*spikesMat;
     stdevMat=stdevMat+permute(stdevMat.*repmat(alphaMat,[1,1,numPoints]),[2,1,3]);
@@ -521,7 +614,12 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh, 
     %values for alphas<1 so the CI range matches the range for the
     %converted alpha:
     alphaStdMat=abs(diff(alphaCIMat,1,3))/(2*1.96);
-    stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask)];
+    %get the stdev for the minMaxTics
+    ticsStdMat=ticsStdMat-ticsStdMat';
+    %get the stdev for the NEO
+    NEOStdMat=NEOStdMat-NEOStdMat';
+    
+    stdevs=[reshape(stdevs,numel(stdevs)/numPoints,numPoints),alphaStdMat(mask),ticsStdMat(mask),NEOStdMat(mask)];
     %stdevs=[mean(reshape(stdevs,numel(stdevs)/numPoints,numPoints),2),alphaStdMat(mask)];
     %calculte dPrime from the differences and standard deviations. Log
     %transform to get from a positive only, skewed distribution to 

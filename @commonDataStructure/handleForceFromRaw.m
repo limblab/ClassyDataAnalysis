@@ -13,7 +13,7 @@ function handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
     %There is no particular reason this needs to be a function, but it 
     %cleans up the main code to move it to this sub-function, and local
     %variables will be automatically cleared, saving memory
-    t=roundTime(t,.00001);
+    
     min_t = roundTime(max([min(t), min(cds.enc.t)]),.00001);
     max_t = roundTime(min([max(t), max(cds.enc.t)]),.00001);
     
@@ -22,7 +22,7 @@ function handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
     
     %calculate offsets for the load cell and remove them from the force:
     if sum(cds.kin.still) > 100  % Only use still data if there are more than 100 movement free samples                
-        force_offsets = mean(raw_force(cds.kin.still,:));
+        force_offsets = mean(raw_force(cds.kin.still(t_idx),:));
     else
         %issue warning
         warning('NEVNSx2cds:noStillTime','Could not find 100 points of still time to compute load cell offsets. Defaulting to mean of force data')
