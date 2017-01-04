@@ -34,7 +34,7 @@ function getUNTTaskTable(cds,times)
             tgtDirList(trial) = 180*bytes2float(cds.databursts.db(idxDB,10:13))/pi;
             tgtKappaList(trial) = bytes2float(cds.databursts.db(idxDB,14:17));
             cueKappaList(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
-            if cueKappaList > 100000 
+            if cueKappaList(trial) > 100000 
                 cueKappaList(trial) = NaN;
             end
         else
@@ -57,7 +57,7 @@ function getUNTTaskTable(cds,times)
             OTTime(trial)=OTT;
         end
         %get the timestamp for center target appearance:
-        cOT = find(centerOnTime<times.endTime(trial) & centerOnTime>times.startTime(trial),1,'first');
+        cOT = centerOnTime(find(centerOnTime<times.endTime(trial) & centerOnTime>times.startTime(trial),1,'first'));
         if isempty(cOT)
             ctrOnTime(trial)=NaN;
         else
@@ -66,7 +66,7 @@ function getUNTTaskTable(cds,times)
     end
 
     % Deal with weird prior databursts
-    checkPrior = @(burst) burst < 10e-5 | burst > 1e5+1 | isnan(burst);
+    checkPrior = @(burst) burst < 10e-5 | burst > (1e5+1) | isnan(burst);
     badBursts = find(checkPrior(tgtKappaList));
     goodBursts = find(~checkPrior(tgtKappaList));
     for i = 1:length(badBursts)
