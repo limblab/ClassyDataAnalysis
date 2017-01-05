@@ -33,11 +33,11 @@ function getUNTTaskTable(cds,times)
         idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
         %get target and prior info from databurst
         if ~isempty(idxDB) 
-            tgtDirList(trial) = 180*bytes2float(cds.databursts.db(idxDB,10:13))/pi;
+            tgtDirList(trial) = mod(180*bytes2float(cds.databursts.db(idxDB,10:13))/pi,360);
             tgtKappaList(trial) = bytes2float(cds.databursts.db(idxDB,14:17));
             cueKappaList(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
             cueSliceNum(trial) = bytes2float(cds.databursts.db(idxDB,22:25));
-            cueSliceLocs{trial} = 180*bytes2float(cds.databursts.db(idxDB,26:65))/pi;
+            cueSliceLocs{trial} = mod(tgtDirList(trial)+180*bytes2float(cds.databursts.db(idxDB,26:65))'/pi,360);
             if cueKappaList(trial) > 100000 
                 cueKappaList(trial) = NaN;
             end
@@ -69,14 +69,14 @@ function getUNTTaskTable(cds,times)
         end
     end
 
-    for i = 1:length(cueSliceNum)
+    for trial = 1:length(cueSliceNum)
         if (cueSliceNum(trial)>0 && cueSliceNum(trial)<=20)
-            cueSliceLocs{i} = cueSliceLocs{i}(1:cueSliceNum(trial));
+            cueSliceLocs{trial} = cueSliceLocs{trial}(1:cueSliceNum(trial));
         end
     end
 
     % Deal with weird prior databursts
-    checkPrior = @(burst) burst < 10e-5 | burst > (1e5+1) | isnan(burst);
+    checkPrior = @(burst) burst < (.99*10e-5) | burst > (1e5+1) | isnan(burst);
     badBursts = find(checkPrior(tgtKappaList));
     goodBursts = find(~checkPrior(tgtKappaList));
     for i = 1:length(badBursts)
