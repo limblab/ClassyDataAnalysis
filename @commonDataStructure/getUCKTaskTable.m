@@ -46,7 +46,11 @@ function getUCKTaskTable(cds,times)
             trueang(trial)  = 180*bytes2float(cds.databursts.db(idxDB,26:29))/pi;
             rate1(trial)    = bytes2float(cds.databursts.db(idxDB,30:33));
             rate2(trial)    = bytes2float(cds.databursts.db(idxDB,34:37));
-            numtargs(trial) = bytes2float(cds.databursts.db(idxDB,38:41));
+            if size(cds.databursts.db,2)==37
+                numtargs(trial) = 1+(abs(round(rem(rate1(trial)*10e3,round(rate1(trial)*10e3))))<100);
+            else
+                numtargs(trial) = bytes2float(cds.databursts.db(idxDB,38:41));
+            end
         end
         % get the timestamp for the center On
         COT = timetrial(centerOnTime,trial);
