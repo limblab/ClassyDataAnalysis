@@ -47,7 +47,13 @@ function getUCKTaskTable(cds,times)
             rate1(trial)    = bytes2float(cds.databursts.db(idxDB,30:33));
             rate2(trial)    = bytes2float(cds.databursts.db(idxDB,34:37));
             if size(cds.databursts.db,2)==37
-                numtargs(trial) = 1+(abs(round(rem(rate1(trial)*10e3,round(rate1(trial)*10e3))))<100);
+                r1 = rate1(trial); r2 = rate2(trial);
+                if (abs(r1) > 10 || abs(r2) > 10)&& trial ~= 1
+                    r1 = rate1(trial-1); r2 = rate2(trial-1); 
+                end
+                co1 = abs(round(r1*10e6) - round(r1*10e1)*10e4)>1;
+                co2 = abs(round(r2*10e6) - round(r2*10e1)*10e4)>1;
+                numtargs(trial) = 1+(mean([co1 co2])==0);
             else
                 numtargs(trial) = bytes2float(cds.databursts.db(idxDB,38:41));
             end
