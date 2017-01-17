@@ -16,7 +16,7 @@ function [still,stats]=isStill(cds,x,varargin)
     %'window':# of points before and after still periods to include in the
     %   output vector. Default is 0.
     %'range':# of points that must be below the tolerance before the data
-    %   will be flagged as still. default is 1000 (1s for 1khz kinematic 
+    %   will be flagged as still. default is 100 (0.1s for 1khz kinematic 
     %   data).
     
     if ~isvector(x)
