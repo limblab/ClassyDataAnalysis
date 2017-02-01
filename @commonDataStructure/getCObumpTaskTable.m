@@ -112,7 +112,7 @@ function getCObumpTaskTable(cds,times)
                 %  * bytes 63-66:	float		=> bump hold at peak
                 %  * bytes 67-70:	float		=> bump rise time
                 %  * bytes 71-74:	float		=> bump magnitude
-                %  * bytes 75-78:	float		=> bump direction
+                %  * bytes 75-78:	float		=> bump direction (relative to target angle)
 
                 %  * byte 79:		uchar		=> stim trial
                 %  * bytes 80-83:	float		=> stim trial rate
@@ -184,6 +184,9 @@ function getCObumpTaskTable(cds,times)
                 end
             end
 
+            % Reorient bump angle to be relative to world coordinates instead of target
+            bumpAngle(trial) = bumpAngle + tgtAngle;
+            
             %build table:
             trialsTable=table(ctrHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
                                 tgtSize,tgtAngle,round(tgtCtr,4),...
