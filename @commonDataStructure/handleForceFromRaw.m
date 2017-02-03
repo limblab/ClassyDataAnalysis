@@ -14,11 +14,13 @@ function handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
     %cleans up the main code to move it to this sub-function, and local
     %variables will be automatically cleared, saving memory
     
-    min_t = roundTime(max([min(t), min(cds.enc.t)]),.00001);
-    max_t = roundTime(min([max(t), max(cds.enc.t)]),.00001);
+    timePrecision = 1/cds.kinFilterConfig.sampleRate;
     
-    raw_force = loadCellData(t>=min_t & t<=max_t,:);
-    t_idx = roundTime(cds.enc.t,.00001)>=min_t & roundTime(cds.enc.t,.00001)<=max_t;
+    min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
+    max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
+    
+    raw_force = loadCellData(roundTime(t,timePrecision)>=min_t & roundTime(t,timePrecision)<=max_t,:);
+    t_idx = roundTime(cds.enc.t,timePrecision)>=min_t & roundTime(cds.enc.t,timePrecision)<=max_t;
     
     %calculate offsets for the load cell and remove them from the force:
     if sum(cds.kin.still) > 100  % Only use still data if there are more than 100 movement free samples                
