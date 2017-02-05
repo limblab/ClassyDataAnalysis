@@ -185,7 +185,7 @@ function getCObumpTaskTable(cds,times)
             end
 
             % Reorient bump angle to be relative to world coordinates instead of target
-            bumpAngle = bumpAngle + tgtAngle;
+            bumpAngle = mod(bumpAngle + tgtAngle,360);
             
             %build table:
             trialsTable=table(ctrHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...

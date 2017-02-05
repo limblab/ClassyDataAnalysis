@@ -63,8 +63,9 @@ function forceFromNSx(cds,opts)
     %sorry about the rounding time on the line below. there are some edge
     %cases where machine precision becomes an issue and rounding the time
     %takes care of that.
-    min_t = roundTime(max([min(t), min(cds.enc.t)]),.00001);
-    max_t = roundTime(min([max(t), max(cds.enc.t)]),.00001);
+    timePrecision = 1/cds.kinFilterConfig.sampleRate;
+    min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
+    max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
     timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
     forces=[timeTable,handleforce,force];
     if ~isempty(forces)
