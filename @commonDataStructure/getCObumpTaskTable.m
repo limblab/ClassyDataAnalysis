@@ -452,7 +452,7 @@ function getCObumpTaskTable(cds,times)
             end
             
             % convert bump direction into degrees
-            bumpAngle = bumpAngle*180/pi;
+            bumpAngle = round(bumpAngle*180/pi);
             
             %build table:
             trialsTable=table(ctrHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
