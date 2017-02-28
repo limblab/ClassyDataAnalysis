@@ -99,6 +99,9 @@ function getTrialTable(cds,opts)
             case 'UCK' % Brian Dekleva's 2-target Cisek task
                 cds.getUCKTaskTable(times);
                 
+            case 'OOR' % Raeed's Out-out reach task
+                cds.getOORTaskTable(times);
+                
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
                 set(cds,'trials',times)

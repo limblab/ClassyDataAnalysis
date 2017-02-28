@@ -7,7 +7,7 @@ function getOORTaskTable(cds,times)
     %     startTargHold     - start target hold time
     %     goCueTime         - go cue time
     %     endTargHoldTime   - outer target hold time
-    %     moveDir           - intended angle of movement
+    %     tgtDir           - intended angle of movement
     %     forceDir          - intended angle of force
 
     startTargOnTime = cds.words.ts(cds.words.word==hex2dec('30')); %WORD_CT_ON
@@ -55,7 +55,7 @@ function getOORTaskTable(cds,times)
             GC_t(trial)=GCT;
         end
         % get the timestamp for the end target Hold
-        OHT = timetrial(otHoldTime,trial);
+        OHT = timetrial(endTargHoldTime,trial);
         if isempty(OHT)
             OH_t(trial)=NaN;
         else
@@ -65,20 +65,20 @@ function getOORTaskTable(cds,times)
     end
 
     % calculate intended movement direction
-    moveDir = atan2d(endy-starty,endx-startx);
+    tgtDir = mod(atan2d(endy-starty,endx-startx),360);
 
     trialsTable=table(roundTime(CO_t,.001),roundTime(CH_t,.001),...
                       roundTime(GC_t,.001),roundTime(OH_t,.001),...
-                      moveDir,forceDir,...
+                      round(tgtDir),round(forceDir),...
                       'VariableNames',{'startTargOnTime','startTargHold',...
                                        'goCueTime','endTargHoldTime',...
-                                       'moveDir','forceDir'});
+                                       'tgtDir','forceDir'});
     trialsTable.Properties.VariableUnits={'s','s','s','s','Deg','Deg'};
     trialsTable.Properties.VariableDescriptions={'start target onset time',...
                                                  'start target hold time',...
                                                  'go cue time',...
                                                  'end target hold time',...
-                                                 'intended movement direction',...
+                                                 'end target direction',...
                                                  'intended force direction'};
                                            
     
