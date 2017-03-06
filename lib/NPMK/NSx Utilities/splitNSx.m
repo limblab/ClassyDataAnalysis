@@ -20,22 +20,21 @@ function splitNSx(splitCount)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Kian Torab
-%   kian@blackrockmicro.com
+%   support@blackrockmicro.com
 %   Blackrock Microsystems
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
+
 % Version History
 %
 % 1.0.0.0:
 %   - Initial release.
 %
-% 1.1.0.0: February 25, 2106
-%   - Added support for paused files {} into separate non-paused NSx files.
+% 1.1.0.0:
+%   - Fixed a bug related to a case where initial timestamp of the first
+%     data segment was not 0. 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Defining constants
-moreSegments = 1;
+%
 
 % Validating input parameter
 if ~exist('splitCount', 'var')
@@ -64,8 +63,9 @@ NSx.MetaTags.Filename     = fname;
 NSx.MetaTags.FilePath     = path(1:end-1);
 NSx.MetaTags.FileExt      = fext;
 NSx.MetaTags.FileTypeID   = fread(FID, [1,8]   , '*char');
+disp(['Splitting the NSx file in ' num2str(splitCount) ' pieces...']);
 if strcmpi(NSx.MetaTags.FileTypeID, 'NEURALSG')
-    disp('File type 2.1 is not implemented yet.');
+    disp('File type 2.1 is not yet implemented.');
     %NOT IMPLEMENTED YET
 %     fseek(FID, 0, 'bof');
 %     header = fread(FID, 314,'*uint8');
@@ -79,8 +79,8 @@ elseif strcmpi(NSx.MetaTags.FileTypeID, 'NEURALCD')
     % Calculating different points in the file
     fseek(FID, 0, 'bof');
     basicHeader = fread(FID, 314, '*uint8');
-    fseek(FID, 0, 'eof');
     positionEOE = typecast(basicHeader(11:14), 'uint32');
+    fseek(FID, 0, 'eof');
     positionEOD = ftell(FID);
     % Calculating channelCount, data Length
     channelCount = typecast(basicHeader(311:314), 'uint32');
@@ -93,65 +93,29 @@ elseif strcmpi(NSx.MetaTags.FileTypeID, 'NEURALCD')
     % Reading the headers and the data header
     fseek(FID, 0, 'bof');
     fileHeader = fread(FID, positionEOE, 'char');
-    dataHeader = fread(FID, 9, '*uint8');
+    dataHeader = fread(FID, 9, 'char');
 	fseek(FID, positionEOE+9, 'bof');
-    
-    % Determine is the data has a pause in it.
-    pausedDataSegment = double(typecast(dataHeader(6:9), 'uint32'));
-    if pausedDataSegment == numOfPackets
-        pausedData = 0;
-    else
-        pausedData = 1;
-        disp('The file contains pauses. Splitting into pause-less segments.');
-    end
-
-    if not(pausedData)
-        disp(['Splitting the NSx file in ' num2str(splitCount) ' pieces...']);
-        for idx = 1:splitCount
-            % Opening a file for saving
-            FIDw = fopen([path fname(1:end-4) '-s' sprintf('%03d', idx) fname(end-3:end)], 'w+', 'ieee-le');
-            fprintf('\nReading segment %d... ', idx);
-            % Reading the segment
-            dataSegment = fread(FID, segmentBytes, 'char');
-            fprintf('Writing segment %d... ', idx);
-            % Writing the segmented data into file
-            fwrite(FIDw, fileHeader, 'char');
-            fwrite(FIDw, dataHeader, 'char');
-            fwrite(FIDw, dataSegment, 'char');
-            % Clearing variables and closing file
-            clear dataSegment;
-            fclose(FIDw);
+    for idx = 1:splitCount
+        % Opening a file for saving
+        FIDw = fopen([path fname(1:end-4) '-s' sprintf('%03d', idx) fname(end-3:end)], 'w+', 'ieee-le');
+        fprintf('\nReading segment %d... ', idx);
+        % Reading the segment
+        dataSegment = fread(FID, segmentBytes, 'char');
+        fprintf('Writing segment %d... ', idx);
+        % Writing the segmented data into file
+        fwrite(FIDw, fileHeader, 'char');
+        % Set the timestamp of the segments 2+ to 0 so there's no
+        % introduced shift by openNSx.
+        if idx > 1
+            dataHeader(2:5) = 0;
         end
-    else
-        idx = 0;
-    	fseek(FID, positionEOE, 'bof');
-        while moreSegments == 1
-            idx = idx + 1;
-            % Opening a file for saving
-            FIDw = fopen([path fname(1:end-4) '-s' sprintf('%03d', idx) fname(end-3:end)], 'w+', 'ieee-le');
-            fprintf('\nReading segment %d... ', idx);
-            % Determining the segment length
-            
-            dataHeader = fread(FID, 9, '*uint8');
-            segmentBytes = double(typecast(dataHeader(6:9), 'uint32'));
-            
-            % Reading the segment
-            dataSegment = fread(FID, segmentBytes * channelCount * 2, 'char');
-            fileHeader(17:20) = typecast(uint32(segmentBytes), 'uint8');
-            fprintf('Writing segment %d... ', idx);
-            % Writing the segmented data into file
-            fwrite(FIDw, fileHeader, 'char');
-            fwrite(FIDw, dataHeader, 'char');
-            fwrite(FIDw, dataSegment, 'char');
-            % Clearing variables and closing file
-            clear dataSegment;
-            fclose(FIDw);
-            if ftell(FID) >= positionEOD
-                moreSegments = 0;
-            end
-        end
+        fwrite(FIDw, dataHeader, 'char');
+        fwrite(FIDw, dataSegment, 'char');
+        % Clearing variables and closing file
+        clear dataSegment;
+        fclose(FIDw);
     end
-        fprintf('\n');
+    fprintf('\n');
 else
     % Display error if non-compatible file is trying to open.
     disp('This version of splitNSx can only split File Specs 2.2 and 2.3');

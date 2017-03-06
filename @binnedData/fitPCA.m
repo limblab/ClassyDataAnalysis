@@ -22,15 +22,15 @@ function fitPCA(binned)
 %
 %           kernSD: smoothing kernel standard deviation. Larger value acts
 %           as a larger low pass filter on trajectories
-    method = 'pca';
-    dat = dimRedHelper(binned, method);
-    kernSD = binned.pcaConfig.kernSD;
+
+    dat = binned.dimRedHelper();
+    kernSD = binned.dimReductionConfig.kernSD;
     runIdx =20;
-    xDim = binned.pcaConfig.dimension;
-    result = neuralTraj(runIdx,dat, 'method', method, 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.gpfaConfig.segLength);
+    xDim = binned.dimReductionConfig.dimension;
+    result = neuralTraj(runIdx,dat, 'method', 'pca', 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
     pcaData = result;
     set(binned,'pcaData', pcaData);
-    opData = binned.pcaConfig;
+    opData = binned.dimReductionConfig;
     evntData=loggingListenerEventData('fitPCA',opData);
     notify(binned,'ranPCAFit',evntData)
 end

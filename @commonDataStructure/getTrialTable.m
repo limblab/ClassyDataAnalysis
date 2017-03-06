@@ -18,7 +18,12 @@ function getTrialTable(cds,opts)
     %start, that trial start will be ignored. Also ignores the first 1s of
     %data to avoid problems associated with the missing 1s of kinematic
     %data
-
+    
+    if isempty(cds.words) || isempty(cds.databursts)
+        %this file has no trial info
+        return
+    end
+    
     wordStart = hex2dec('10');
     
     startTime =  cds.words.ts( bitand(hex2dec('f0'),cds.words.word) == wordStart &  cds.words.ts>1.000);
@@ -49,7 +54,17 @@ function getTrialTable(cds,opts)
         end
     end
     mask=~isnan(stopTime);
-    times=table([1:sum(mask)]',roundTime(startTime(mask),.001),roundTime(stopTime(mask),.001),char(trialResult(mask)),'VariableNames',{'number','startTime','endTime','result'});
+    if sum(mask)==0
+        %didn't find any trials
+        return
+    elseif sum(mask)==1
+        %matlab has an error if you try to generate a single row table when
+        %one of the variables is a character. Handle this by making a cell
+        %array and calling cell2table:
+        times=cell2table({[1:sum(mask)]',roundTime(startTime(mask),.001),roundTime(stopTime(mask),.001),char(trialResult(mask))},'VariableNames',{'number','startTime','endTime','result'});
+    else
+        times=table([1:sum(mask)]',roundTime(startTime(mask),.001),roundTime(stopTime(mask),.001),char(trialResult(mask)),'VariableNames',{'number','startTime','endTime','result'});
+    end
     
     
     %specific task table code will add operations, so add the operation
@@ -80,8 +95,16 @@ function getTrialTable(cds,opts)
                 
             case 'SABES' % Brian Dekleva's center out sabes task
                 cds.getSABESTaskTable(times);
+            
+            case 'UCK' % Brian Dekleva's 2-target Cisek task
+                cds.getUCKTaskTable(times);
+                
+            case 'OOR' % Raeed's Out-out reach task
+                cds.getOORTaskTable(times);
+                
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
+                set(cds,'trials',times)
         end
     else
         %cds.setField('trials',times)

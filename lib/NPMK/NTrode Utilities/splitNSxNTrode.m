@@ -23,24 +23,10 @@ function splitNSxNTrode
 %   number of the ntrode groups.
 %
 %   Kian Torab
-%   support@blackrockmicro.com
+%   ktorab@blackrockmicro.com
 %   Blackrock Microsystems
-%   Version 1.0.2.0
+%   Version 1.0.1.0
 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Kian Torab
-%   support@blackrockmicro.com
-%   Blackrock Microsystems
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Version History
-%
-% 1.0.0.0: December, 2014
-%   - Initial release.
-%
-% 1.0.2.0: October, 2015
-%   - Bug fixes.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Validating input parameter
 ccf = openCCF;

@@ -14,7 +14,7 @@ function getUNTTaskTable(cds,times)
     %tgtPrior       -kappa for the prior of the actual targets
     
 
-    centerOnTime       = cds.words.ts(cds.words.word==hex2dec('30'));
+    centerOnTime    = cds.words.ts(cds.words.word==hex2dec('30'));
     otOnTime        = cds.words.ts(cds.words.word==hex2dec('40'));
     goCueTime       = cds.words.ts(cds.words.word==hex2dec('31'));
     %preallocate vectors:
@@ -22,6 +22,8 @@ function getUNTTaskTable(cds,times)
     tgtDirList=nan(numTrials,1);
     tgtKappaList=nan(numTrials,1);
     cueKappaList=nan(numTrials,1);
+    cueSliceNum=nan(numTrials,1);
+    cueSliceLocs=cell(numTrials,1);
     goTime=nan(numTrials,1);
     OTTime=nan(numTrials,1);
     ctrOnTime=nan(numTrials,1);
@@ -31,10 +33,12 @@ function getUNTTaskTable(cds,times)
         idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
         %get target and prior info from databurst
         if ~isempty(idxDB) 
-            tgtDirList(trial) = 180*bytes2float(cds.databursts.db(idxDB,10:13))/pi;
+            tgtDirList(trial) = mod(180*bytes2float(cds.databursts.db(idxDB,10:13))/pi,360);
             tgtKappaList(trial) = bytes2float(cds.databursts.db(idxDB,14:17));
             cueKappaList(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
-            if cueKappaList > 100000 
+            cueSliceNum(trial) = bytes2float(cds.databursts.db(idxDB,22:25));
+            cueSliceLocs{trial} = mod(tgtDirList(trial)+180*bytes2float(cds.databursts.db(idxDB,26:65))'/pi,360);
+            if cueKappaList(trial) > 100000 
                 cueKappaList(trial) = NaN;
             end
         else
@@ -57,7 +61,7 @@ function getUNTTaskTable(cds,times)
             OTTime(trial)=OTT;
         end
         %get the timestamp for center target appearance:
-        cOT = find(centerOnTime<times.endTime(trial) & centerOnTime>times.startTime(trial),1,'first');
+        cOT = centerOnTime(find(centerOnTime<times.endTime(trial) & centerOnTime>times.startTime(trial),1,'first'));
         if isempty(cOT)
             ctrOnTime(trial)=NaN;
         else
@@ -65,8 +69,14 @@ function getUNTTaskTable(cds,times)
         end
     end
 
+    for trial = 1:length(cueSliceNum)
+        if (cueSliceNum(trial)>0 && cueSliceNum(trial)<=20)
+            cueSliceLocs{trial} = cueSliceLocs{trial}(1:cueSliceNum(trial));
+        end
+    end
+
     % Deal with weird prior databursts
-    checkPrior = @(burst) burst < 10e-5 | burst > 1e5+1 | isnan(burst);
+    checkPrior = @(burst) burst < (.99*10e-5) | burst > (1e5+1) | isnan(burst);
     badBursts = find(checkPrior(tgtKappaList));
     goodBursts = find(~checkPrior(tgtKappaList));
     for i = 1:length(badBursts)
@@ -77,12 +87,13 @@ function getUNTTaskTable(cds,times)
         tgtKappaList(bb)= replacer;
     end
 
-    trialsTable=table(roundTime(ctrOnTime,.001),roundTime(goTime,.001),roundTime(OTTime,.001),...
-                        tgtDirList,cueKappaList,tgtKappaList,...
-                        'VariableNames',{'ctrOnTime','goCueTime','tgtOnTime','tgtDir','cueKappa','tgtKappa'});
-    trialsTable.Properties.VariableUnits={'s','s','s','Deg','AU','AU'};
-    trialsTable.Properties.VariableDescriptions={'center target onset time','go cue time','outer target onset time',...
-                                                    'actual target direction','kappa of the von mises function for the visual cue','kappa for the von mises function for the actual target locations'};
+    trialsTable=table(roundTime(ctrOnTime,.001),roundTime(OTTime,.001),roundTime(goTime,.001),...
+                        tgtDirList,cueSliceLocs,cueKappaList,tgtKappaList,...
+                        'VariableNames',{'ctrOnTime','tgtOnTime','goCueTime','tgtDir','cueDir','cueKappa','tgtKappa'});
+    trialsTable.Properties.VariableUnits={'s','s','s','Deg','Deg','AU','AU'};
+    trialsTable.Properties.VariableDescriptions={'center target onset time','outer target onset time','go cue time',...
+                                                    'actual target direction','cue directions','kappa of the von mises function for the visual cue',...
+                                                    'kappa for the von mises function for the actual target locations'};
     
     trialsTable=[times,trialsTable];
     trialsTable.Properties.Description='Trial table for the UNT task';
