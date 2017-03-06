@@ -14,7 +14,8 @@ function forceFromNSx(cds,opts)
         return
     end
     if ~isempty(forceCols)
-        [loadCellData,t]=getFilteredFromNSx(cds.kinFilterConfig,forceCols);
+        %[loadCellData,t]=getFilteredFromNSx(cds.kinFilterConfig,forceCols);
+        [loadCellData,t]=cds.getFilteredFromNSx(cds.kinFilterConfig,forceCols);
         %build our table of force data:
         labels=cell(1,length(forceCols));
         for i=1:length(forceCols)
@@ -30,7 +31,7 @@ function forceFromNSx(cds,opts)
         end
         %truncate to deal with the fact that encoder data doesn't start
         %recordign till 1 second into the file and store in a table
-        force=array2table(loadCellData,'VariableNames',labels);
+        force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
     end
     %forces for robot:
     if opts.robot

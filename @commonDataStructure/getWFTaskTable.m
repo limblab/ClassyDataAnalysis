@@ -30,12 +30,12 @@ function getWFTaskTable(cds,times)
     burst_size = size(cds.databursts.db,2);
     numTrials=numel(times.number);
     
-    targetCorners=nan(numTrials,4);
-    targetCenters=nan(numTrials,2);
     OTTimeList=nan(numTrials,1);
     OTDirList=nan(numTrials,1);
     goTime=nan(numTrials,1);
-    targetID=nan(numTrials,1);
+    targetCorners=nan(numTrials,4);
+    targetCenters=nan(numTrials,2);
+    targetDir=nan(numTrials,1);
     catchFlag=nan(numTrials,1);
     adaptFlag=nan(numTrials,1);
     
@@ -54,9 +54,12 @@ function getWFTaskTable(cds,times)
         dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
         
         % Target location
-        targetLoc = cds.databursts.db(dbidx,2)(burst_size-15:end);
-        targetLoc = bytes2float(targetLoc, 'little')';
-        
+        targetLoc = cds.databursts.db(dbidx, burst_size-15:end);
+        targetLoc = bytes2float(targetLoc, 'little')';  
+        if isempty(targetLoc)
+            warning('databurst(%d) is corrupted, no target info',dbidx);
+            targetLoc = [-1 -1 -1 -1];
+        end
         % catch
         idxCatch = find(catchWords > times.startTime(trial) & catchWords < times.endTime(trial), 1, 'first');
         if isempty(idxCatch)
@@ -86,26 +89,26 @@ function getWFTaskTable(cds,times)
         end       
 
         % Build arrays
-            targetCorners(trial,:)=targetLoc;    % Coordinates of outer target corners
-            targetCenters(trial,:)=[targetLoc(1)+targetLoc(3),targetLoc(2)+targetLoc(4)]/2;%center coordinates of outer target 
             OTTimeList(trial)=OTTime;     % Timestamp of OT On event
             OTDirList(trial)=OTDir;     % Timestamp of OT On event
             goTime(trial)=goCue;      % Timestamp of Go Cue
-            targetID(trial)=target;   % Target ID based on location
+            targetCorners(trial,:)=targetLoc;    % Coordinates of outer target corners
+            targetCenters(trial,:)=[targetLoc(1)+targetLoc(3),targetLoc(2)+targetLoc(4)]/2; %center coordinates of outer target 
+            targetDir(trial)=atan2d(targetCenters(trial,2),targetCenters(trial,1)); %Direction (in degrees) of outer target
             catchFlag(trial)=isCatch;  % whether or not trial is a catch trial
             adaptFlag(trial)=isAdapt;  % whether or not trial is an adaptation trial
     end
 
     %build table:
-    trialsTable=table(OTTimeList,goTime,targetID,targetCorners,targetCenters,OTDirList,catchFlag,adaptFlag,...
-                    'VariableNames',{'tgtOn','goCue','tgtID','tgtCorners','tgtCtr','tgtDir','catch','adapt'});
+    trialsTable=table(OTTimeList,goTime,targetCorners,targetCenters,targetDir,catchFlag,adaptFlag,...
+                    'VariableNames',{'tgtOn','goCue','tgtCorners','tgtCtr','tgtDir','isCatch','adapt'});
     
-    trialsTable.Properties.VariableUnits={'s','s','int','cm','cm','deg','bool','bool'};
-    trialsTable.Properties.VariableDescriptions={'outer target onset time','go cue time','ID number of outer target','x-y pairs for upper left and lower right target corners','flag indicating if the trial was a catch trial','flag indicating if the trial was an adaptation trial'};
+    trialsTable.Properties.VariableUnits={'s','s','int','int','deg','bool','bool'};
+    trialsTable.Properties.VariableDescriptions={'outer target onset time','go cue time','x-y pairs for upper left and lower right target corners','x-y pairs of the target center','Target direction position (in degrees)','flag indicating if the trial was a catch trial','flag indicating if the trial was an adaptation trial'};
     trialsTable=[times,trialsTable];
     trialsTable.Properties.Description='Trial table for the WF task';
     
     %cds.setField('trials',trialsTable)
     set(cds,'trials',trialsTable)
-    cds.addOperation(mfilename('fullpath'))
+    cds.addOperation('getWFTaskTable',mfilename('fullpath'))
 end
