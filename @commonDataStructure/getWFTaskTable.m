@@ -12,10 +12,6 @@ function getWFTaskTable(cds,times)
     %result code will be a character 'R':reward 'A':abort 'F':fail
     %'I':incomplete.
 
-    if ~strcmp(cds.meta.task,'WF')
-        warning('getWFTaskTable:NotWFTask','The task in the cds is not set to WF. The task table code will fail to run if this is not actually a WF data set. ' )
-    end
-
     % Isolate the individual word timestamps
     wordOTOn = hex2dec('40'); 
     OTOnWords = cds.words.ts( bitand(hex2dec('f0'),cds.words.word) == wordOTOn);
@@ -54,18 +50,12 @@ function getWFTaskTable(cds,times)
         dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
         
         % Target location
-<<<<<<< HEAD
         targetLoc = cds.databursts.db(dbidx, burst_size-15:end);
         targetLoc = bytes2float(targetLoc, 'little')';  
         if isempty(targetLoc)
             warning('databurst(%d) is corrupted, no target info',dbidx);
             targetLoc = [-1 -1 -1 -1];
         end
-=======
-        targetLoc = cds.databursts.db(burst_size-15:end);
-        targetLoc = bytes2float(targetLoc, 'little')';
-        
->>>>>>> 965863604eb2db457946335a3773a8b90ea2da7d
         % catch
         idxCatch = find(catchWords > times.startTime(trial) & catchWords < times.endTime(trial), 1, 'first');
         if isempty(idxCatch)
