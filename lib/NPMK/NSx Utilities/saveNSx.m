@@ -24,7 +24,12 @@ else
 end
 
 
-disp('A new file with the proper .NSx extensions will be saved. Delete the original file at your own risk.')
+Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
+if strcmpi(Accept,'y')
+else
+    disp('Ending Script...');
+    return
+end
 
 %%
 % Write the basic header into the file
@@ -33,8 +38,10 @@ Debug = 1;
 
 if exist(FilePath)
         if exist(FilePath)
-        OverwritePrompt = input('File already exists. Overwrite? (Y/N)','s');
+        disp('File already exists!');
+        OverwritePrompt = input('Would you like to overwrite? (Y/N)','s');
         if strcmpi(OverwritePrompt,'y')
+            Overwrite = 1;
             delete(FilePath);
         else
             return
@@ -42,6 +49,7 @@ if exist(FilePath)
         end
 end
 
+clear Overwrite
 clear OverwritePrompt
 clear varargin
 
@@ -289,3 +297,16 @@ elseif Paused == 1
 end
 
 fclose(FileID);
+
+
+
+
+
+
+
+
+
+
+
+
+

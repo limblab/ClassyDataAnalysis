@@ -79,7 +79,7 @@ if nargin > 1
 end
 
 % Validating input arguments
-if ~exist('FilePath',   'var'); FilePath = [fullfile(Path,NEV.MetaTags.Filename) '-out.nev']; end
+if ~exist('FilePath',   'var'); FilePath = [fullfile(NEV.MetaTags.FilePath,NEV.MetaTags.Filename) '-out.nev']; end
 if ~exist('reportFlag', 'var'); reportFlag = 1; end;
 
 % Warning user about the consequences of the modified NEV file
@@ -163,7 +163,24 @@ if isfield(NEV,'ElectrodesInfo')
             Before = ftell(FileID);
             fwrite(FileID,'NEUEVWAV');
             fwrite(FileID,NEV.ElectrodesInfo(IDX).ElectrodeID,'uint16');
-            fwrite(FileID,NEV.ElectrodesInfo(IDX).ConnectorBank);
+            
+
+            %fwrite(FileID,NEV.ElectrodesInfo(IDX).ConnectorBank);
+            switch NEV.ElectrodesInfo(IDX).ConnectorBank
+                case 'A'
+                    fwrite(FileID,1,'uint8');
+                case 'B'
+                    fwrite(FileID,2,'uint8');
+                case 'C'
+                    fwrite(FileID,3,'uint8');
+                case 'D'
+                    fwrite(FileID,4,'uint8');
+                case 'E'
+                    fwrite(FileID,5,'uint8');
+                case 'F'
+                    fwrite(FileID,6,'uint8');
+            end
+        
             fwrite(FileID,NEV.ElectrodesInfo(IDX).ConnectorPin,'uint8');
             fwrite(FileID,NEV.ElectrodesInfo(IDX).DigitalFactor,'uint16');
             fwrite(FileID,NEV.ElectrodesInfo(IDX).EnergyThreshold,'uint16');
@@ -183,7 +200,8 @@ if isfield(NEV,'ElectrodesInfo')
             fwrite(FileID,zeros(8,1),'uint8');
             After = ftell(FileID);
             if After-Before ~= 32
-                disp('Broken')
+                disp('Broken Electrode Info')
+                NEV.ElectrodesInfo(IDX).ConnectorBank
             end
         end
     end
@@ -196,7 +214,7 @@ if isfield(NEV,'ElectrodesInfo')
         fwrite(FileID, zeros(6,1),'uint8');
         After = ftell(FileID);
         if After-Before ~= 32
-            disp('Broken')
+            disp('Broken Electrode Label')
         end
         end
     end
@@ -214,7 +232,7 @@ if isfield(NEV,'ElectrodesInfo')
         fwrite(FileID, zeros(2,1), 'uint8');
         After = ftell(FileID);
         if After-Before ~= 32
-            disp('Broken');
+            disp('Broken High Freq Corner');
         end
         end
     end   
@@ -230,7 +248,7 @@ if isfield(NEV,'IOLabels')
     fwrite(FileID, zeros(7,1),'uint8');
     After = ftell(FileID);
     if After-Before ~= 32
-       disp('Broken');
+       disp('Broken IO Labels');
     end
     end
 end
@@ -247,9 +265,9 @@ if isfield(NEV,'VideoSyncInfo')
     fwrite(FileID, zeros(2,1),'uint8');
     After = ftell(FileID);
     if After-Before ~= 32
-       disp('Broken');
-       PacketNumber = IDX
-       TotalPackets = length(NEV.VideoSyncInfo)
+       disp('Broken Video Sync Info');
+       PacketNumber = IDX;
+       TotalPackets = length(NEV.VideoSyncInfo);
     end
     end
 end
@@ -273,7 +291,7 @@ if isfield(NEV,'ObjTrackInfo')
     fwrite(FileID, zeros(2,1),'uint8');
     After = ftell(FileID);
     if After-Before ~= 32
-       disp('Broken');
+       disp('Broken Obj Track Info');
     end
     end
 end

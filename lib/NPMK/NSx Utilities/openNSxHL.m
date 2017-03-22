@@ -42,12 +42,7 @@ function OUTPUT = openNSxHL(fname)
 % 1.0.0.0:
 %   - Initial release.
 %
-% 1.1.0.0:
-%   - Added support for paused files.
-%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-pausedData = 0;
 
 %% Opening the file
 % Popup the Open File UI. Also, process the file name, path, and extension
@@ -90,10 +85,9 @@ if strcmpi(FileTypeID, 'NEURALSG')
 elseif strcmpi(FileTypeID, 'NEURALCD')
     dataHeaderBytes = 9;
     BasicHeader   = fread(FID, 306, '*uint8');
-    HeaderBytes   = double(typecast(BasicHeader(3:6), 'uint32'));
-    ChannelCount  = double(typecast(BasicHeader(303:306), 'uint32'));
+    HeaderBytes   = double(typecast(BasicHeader(3:6), 'uint32')) + dataHeaderBytes;
 else
-    disp('This version of NSxToHL can only read File Specs 2.1, 2.2 and 2.3');
+    disp('This version of NSxToXXX can only read File Specs 2.1, 2.2 and 2.3');
     disp(['The selected file spec is ' NSx.MetaTags.FileSpec '.']);
     fclose(FID);
     clear variables;
@@ -103,27 +97,7 @@ end
 % Skipping to the point where the data is saved, skipping the header info
 fseek(FID, HeaderBytes, 'bof');
 
-
-dataHeader = fread(FID, 9, '*uint8');
-numberOfDataPoints = double(typecast(dataHeader(6:9), 'uint32'));
-
-currentPos = ftell(FID);
-fseek(FID, 0, 'eof');
-endPos = ftell(FID);
-lengthOfDataPoints = (endPos - currentPos)/(ChannelCount*2);
-fseek(FID, currentPos, 'bof');
-
-if lengthOfDataPoints > numberOfDataPoints
-    pausedData = 1;
-end
-
-if not(pausedData)
-    % Reading the header-less data
-    disp(['Reading the data from file ' path fname '...']);
-    OUTPUT = fread(FID, inf, '*int16');
-    fclose(FID);
-else
-    disp('This version does not support paused files.');
-    disp('Use splitNSx to split the data file into non-paused files first.');
-    OUTPUT = -1;
-end
+% Reading the header-less data
+disp(['Reading the data from file ' path fname '...']);
+OUTPUT = fread(FID, inf, '*int16');
+fclose(FID);

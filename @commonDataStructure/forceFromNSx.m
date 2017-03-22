@@ -29,7 +29,8 @@ function forceFromNSx(cds,opts)
             end
         end
         %truncate to deal with the fact that encoder data doesn't start
-        %recordign till 1 second into the file and store in a table
+        %recording till 1 second into the file and store in a table
+        t=roundTime(t,.00001);
         force=array2table(loadCellData,'VariableNames',labels);
     end
     %forces for robot:
@@ -48,7 +49,8 @@ function forceFromNSx(cds,opts)
                 %truncate to handle the fact that encoder data doesn't start
                 %recording until 1 second into the file and convert load cell 
                 %voltage data into forces
-                handleforce=cds.handleForceFromRaw(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),opts);
+                t=roundTime(t,.00001);
+                handleforce=cds.handleForceFromRaw(loadCellData,t,opts);
             end
         else
             handleforce=[];
@@ -58,7 +60,13 @@ function forceFromNSx(cds,opts)
         end
     end
     %write temp into the cds
-    timeTable=table(roundTime(t(t>=min(cds.enc.t) & t<=max(cds.enc.t))),'VariableNames',{'t'});
+    %sorry about the rounding time on the line below. there are some edge
+    %cases where machine precision becomes an issue and rounding the time
+    %takes care of that.
+    timePrecision = 1/cds.kinFilterConfig.sampleRate;
+    min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
+    max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
+    timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
     forces=[timeTable,handleforce,force];
     if ~isempty(forces)
         forces.Properties.VariableUnits=[{'s'} repmat({'N'},1,size(handleforce,2)+size(force,2))];
@@ -72,7 +80,7 @@ function forceFromNSx(cds,opts)
     if isempty(cds.force)
         set(cds,'force',forces);
     elseif ~isempty(force)
-        cds.mergeTable('force',forces)
+        set(cds,'force',mergeTable(cds.force,forces));
     end
     evntData=loggingListenerEventData('forceFromNSx',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)

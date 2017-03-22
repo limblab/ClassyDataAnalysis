@@ -24,6 +24,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         enc
         words
         databursts
+        listenerList
     end
     properties (Transient = true, Access = public)
         aliasList%allows user to set aliases for incoming data streams in order to process correctly. 
@@ -107,7 +108,9 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             %% empty list of aliases to apply when loading analog data
                 cds.aliasList=cell(0,2);
             %% set up listners
-                addlistener(cds,'ranOperation',@(src,evnt)cds.cdsLoggingEventCallback(src,evnt));
+                LL=[];
+                LL{numel(LL)+1}=addlistener(cds,'ranOperation',@(src,evnt)cds.cdsLoggingEventCallback(src,evnt));
+                cds.listenerList=LL;
         end
     end
     methods
@@ -276,15 +279,15 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         function set.meta(cds,meta)
             if ~isfield(meta,'cdsVersion') || ~isnumeric(meta.cdsVersion)
                 error('meta:BadcdsVersionFormat','the cdsVersion field must contain a numeric value')
-            elseif ~isfield(meta,'dataSource') || ~ischar(meta.dataSource)
+            elseif ~isfield(meta,'dataSource') || ~(ischar(meta.dataSource) || iscellstr(meta.dataSource))
                 error('meta:BaddataSourceFormat','the dataSource field must contain a string describing the source data, e.g. NEVNSx, or bdf')
-            elseif ~isfield(meta,'rawFileName') || ~ischar(meta.rawFileName)
+            elseif ~isfield(meta,'rawFileName') || ~(ischar(meta.rawFileName) || iscellstr(meta.rawFileName))
                 error('meta:BadrawFileNameFormat','The rawFilename field must contain a string with the name of the raw file that the data is sourced from')
             elseif ~isfield(meta,'lab') || ~isnumeric(meta.lab) || isempty(find(meta.lab==[-1 1 2 3 6],1))
                 error('meta:BadlabnumFormat','the labnum field must be a numeric value from the following set: [-1 1 2 3 6]')
             elseif ~isfield(meta,'task') || ~ischar(meta.task)  
                 error('meta:BadtaskFormat','the task field must contain a string')
-            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','Unknown','SABES'}),1))
+            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','Unknown','SABES','UCK','OOR'}),1))
                 %standard loading will catch 'Unknown' 
                 warning('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string'])
             elseif ~isfield(meta,'monkey') || ~ischar(meta.monkey)
@@ -340,6 +343,40 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             end
         end
     end
+    methods 
+        function clear(cds)
+        %overload clear so that the delete method is called instead,
+        %purging the callbacks
+            cds.delete();
+            
+        end
+        function delete( cds )
+            %delete method. This is called when the cds is cleared, and is an
+            %overload of the normal delete method that all handle classes
+            %implemement
+            %
+            %this function exists to make sure all listeners in the cds are
+            %properly deleted prior to attempting to clear the class
+            %object. Matlab does not seem to have any way to find listeners
+            %in Linux, so we have to use the list and hope there aren't
+            %rantom other listeners out there
+             for i=1:numel(cds.listenerList)
+                 delete(cds.listenerList{i})
+             end
+             %check to see whether we still have any listeners and issue a
+             %warning
+             if ispc
+                 eventList=findAllListeners(cds);
+                 if ~isempty(eventList)
+                     warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+                     disp('the following events still have listeners')
+                     disp(eventList)
+                 end
+             else
+                 warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this cds instance may hide in background memory until any listeners not in the listener list are cleared')
+             end
+        end
+    end
     methods (Static = false)
         %The following are methods for the common_data_structure class, but
         %are defined in alternate files. These files MUST be stored in the
@@ -358,6 +395,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         %data loading functions:
         file2cds(cds,filePath,varargin)
         database2cds(cds,conn,filepath,varargin)
+        loadOpenSimData(cds,folderPath)
         
     end
     methods (Static = true)
@@ -372,23 +410,22 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
     methods (Static = false, Access = protected, Hidden=true)
         %the following methods are all hidden from the user and may only be
         %called by methods of the cds class.
-        nev2NEVNSx(cds,fname)
+        nev2NEVNSx(cds,fname,varargin)
         NEVNSx2cds(cds,opts)
             eventsFromNEV(cds,opts)
             kinematicsFromNEV(cds,opts)
             forceFromNSx(cds,opts)
             [filteredData,time]=getFilteredFromNSx(cds,filterConfig,chans)
-            handleForce=handleForceFromRaw(cds,rawForce,opts)
+            handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
             unitsFromNEV(cds,opts)
             testSorting(cds)
             emgFromNSx(cds)
-            lfpFromNSx(cds)
+            lfpFromNSx(cds,opts)
             triggersFromNSx(cds)
             analogFromNSx(cds)
             metaFromNEVNSx(cds,opts)
             pos=enc2handlepos(cds,dateTime,lab)
             pos=enc2WFpos(cds)
-            mergeTable(cds,fieldName,mergeData)
         [task,opts]=getTask(cds,task,opts)
         %trial table functions
         getTrialTable(cds,opts)
@@ -401,6 +438,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getRPTaskTable(cds,times)
         getDCOTaskTable(cds,times)
         getSABESTaskTable(cds,times)
+        getUCKTaskTable(cds,times)
         %general functions
         addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)

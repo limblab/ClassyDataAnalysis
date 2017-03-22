@@ -24,7 +24,7 @@ function [dataD]=decimateData(data,fc)
     %upsample the data so that we can use simple decimation rather than
     %interpolation to downsample
     [p,q]=rat(DF/SF,.0001);
-    dataD=upsample(data(:,2:end),q);%fills with zeros rather than interpolating, which is technically more correct. If q is 1 returns the original vector, if q is 2, inserts 1 zero between eacy pair of points etc.
+    dataD=upsample(data(:,2:end),q);%fills with zeros rather than interpolating, which is technically more correct. If q is 1 returns the original vector, if q is 2, inserts 1 zero between each pair of points etc.
     %lowpass filter using filter_config
     %convert our cutoff into a fraction of the upsampled frequency. SF is
     %in s, filter_config.cutoff is expcted in hz
