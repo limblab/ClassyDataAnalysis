@@ -278,7 +278,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('meta:BadcdsVersionFormat','the cdsVersion field must contain a numeric value')
             elseif ~isfield(meta,'dataSource') || ~ischar(meta.dataSource)
                 error('meta:BaddataSourceFormat','the dataSource field must contain a string describing the source data, e.g. NEVNSx, or bdf')
-            elseif ~isfield(meta,'rawFileName') || (~ischar(meta.rawFileName) && ~iscell(meta.rawFileName))
+            elseif ~isfield(meta,'rawFileName') || ~ischar(meta.rawFileName)
                 error('meta:BadrawFileNameFormat','The rawFilename field must contain a string with the name of the raw file that the data is sourced from')
             elseif ~isfield(meta,'lab') || ~isnumeric(meta.lab) || isempty(find(meta.lab==[-1 1 2 3 6],1))
                 error('meta:BadlabnumFormat','the labnum field must be a numeric value from the following set: [-1 1 2 3 6]')
