@@ -49,14 +49,14 @@ function analogFromNSx(cds)
                 a{c+1}=double(cds.(nsLabel).Data(cds.NSxInfo.NSx_idx(analogIdx(c)),:))';
             end
             %get a time vector t for this sampling frequency
-            a{1} = roundTime(([0:length(a{2})-1]' / frequencies(i))+double(cds.(nsLabel).MetaTags.Timestamp)/double(cds.(nsLabel).MetaTags.TimeRes));
+            a{1} = ([0:length(a{2})-1]' / frequencies(i));
             %convert the matrix of data into a table:
             match=find(cdsFrequencies==frequencies(i),1);
             if ~isempty(match)
                 temp=table(a{:},'VariableNames',[{'t'};cds.NSxInfo.NSx_labels(analogList(subset))]);
                 temp.Properties.VariableDescriptions=[{'time'},repmat({'analog data'},1,numel(subset))];
                 temp.Properties.Description=['table of analog data with collection frequency of: ', num2str(frequencies(i))];
-                analogData{i}=mergeAnalogTables(temp,cds.analog{match});
+                analogData{i}=mergeAnalogTables(a,cds.analog{match});
             else
                 analogData{i}=table(a{:},'VariableNames',[{'t'},reshape(cds.NSxInfo.NSx_labels(analogList(subset)),1,numel(cds.NSxInfo.NSx_labels(analogList(subset))))]);
                 analogData{i}.Properties.VariableDescriptions=[{'time'},repmat({'analog data'},1,numel(subset))];
@@ -66,7 +66,6 @@ function analogFromNSx(cds)
     else
         analogData={};
     end
-    
     %push the cell array of analog data tables into the cds:
     %cds.setField('analog',analogData)
     if ~isempty(analogData)
@@ -74,19 +73,17 @@ function analogFromNSx(cds)
             %find any frequencies that were in the cds but not in the new data and add them:
             for i=1:length(cds.analog)
                 if isempty(find(frequencies==cdsFrequencies(i),1))
-                    analogData={analogData{:},cds.analog{i}};
+                    analogData=[analogData,cds.analog{i}];
                 end
             end
+        else
+            set(cds,'analog',analogData)
         end
-        set(cds,'analog',analogData)
-        
-        set(cds,'analog',analogData)
         
         evntData=loggingListenerEventData('analogFromNSx',[]);
         notify(cds,'ranOperation',evntData)
     end
 end
-
 function merged=mergeAnalogTables(table1,table2)
     %this local function is a copy of the mergeTables method of the cds.
     %Its copied here since the mergeTables method works on fields of the
@@ -101,17 +98,16 @@ function merged=mergeAnalogTables(table1,table2)
     tend2=table2.t(end);
     dt2=table2.t(2)-tstart2;
     %check our frequencies
-    if round(dt,15)~=round(dt2,15)
+    if dt~=dt2
         error('mergeTable:differentFrequency',['Field: ',fieldName,' was collected at different frequencies in the cds and the new data and cannot be merged. Either re-load both data sets using the same filterspec, or refilter the data in one of the cds structures using decimation to get to the frequencies to match'])
     end
     %check if we have duplicate columns:
     for j=1:length(table1.Properties.VariableNames)
         if ~strcmp(table1.Properties.VariableNames{j},'t') && ~isempty(find(cell2mat({strcmp(table2.Properties.VariableNames,table1.Properties.VariableNames{j})}),1,'first'))
             error('mergeTable:duplicateColumns',['the column label: ',table1.Properties.VariableNames{j},' exists in the ',fieldName,' field of both cds and new data. All columns in the cds and new data except time must have different labels in order to merge'])
-        
         end
     end
     mask=cell2mat({~strcmp(table1.Properties.VariableNames,'t')});
     merged=[table1(find(table1.t>=max(tstart,tstart2),1,'first'):find(table1.t>=min(tend,tend2),1,'first'),:),...
-       table2(find(table2.t>=max(tstart,tstart2),1,'first'):find(table2.t>=min(tend,tend2),1,'first'),(mask))];
+       table1(find(table2.t>=max(tstart,tstart2),1,'first'):find(table2.t>=min(tend,tend2),1,'first'),(mask))];
 end

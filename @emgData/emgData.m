@@ -9,11 +9,9 @@ classdef emgData < timeSeriesData
     end
     events
         rectified
-        processedDefault
     end
     methods (Static = false)
         %general methods
         rectify(emg)
-        processDefault(emg)
     end
 end

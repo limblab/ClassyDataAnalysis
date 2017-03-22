@@ -40,7 +40,7 @@ function triggersFromNSx(cds)
         if isempty(cds.triggers)
             set(cds,'triggers',triggers);
         elseif ~isempty(triggers)
-            set(cds,'triggers',mergeTables(cds.triggers,triggers));
+            cds.mergeTable('triggers',triggers)
         end
         evntData=loggingListenerEventData('triggersFromNSx',[]);
         notify(cds,'ranOperation',evntData)

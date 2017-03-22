@@ -284,55 +284,5 @@ NPMK Version 2.8.2.0: 5 May 2014
 % KTUEAMapFile 1.7.0.0: March 19, 2016
 %   - Fixed a bug where a CMP file with extra lines would crash the script.
 %
-% KTUEAImpedanceFile 1.1.0.0: March 19, 2016
+% 1.1.0.0: March 19, 2016
 %   - Fixed a bug with extra spaces after kohm resulted in a crash.
-
-***** NPMK Version 4.2.0.0: June 11, 2016 *****
-
-% combineNSxNEV 1.2.0.0: April 16, 2016
-%   - Fixed a bug with calculating the timestamp length of the combined
-%     data.
-%
-% openNSx 6.2.1.0: April 16, 2016
-%   - Fixed a bug related to converting the unit to uV in case of having
-%     multiple data segments (paused file).
-%
-% openNEV 5.2.0.0: June 11 2016
-%   - Added support for CerePlex Direct strobe mode on digital input.
-%   - Fixed a bug with reading NeuroMotive data that resulted in a crash.
-
-***** NPMK Version 4.3.0.0: June 13, 2016 *****
-
-% openNEV 5.3.0.0: June 13 2016
-%   - Fixed a bug with reading NeuroMotive data that resulted in a crash.
-%   - Improved and more detailed parsing of NeuroMotive events.
-%   - Added parsing of comment start time and comment commit time (time
-%     that a comment is entered.
-
-***** NPMK Version 4.3.1.0: July 2, 2016 *****
-
-% splitNSx 1.1.0.0: July 2, 2016
-%   - Fixed a bug related to a case where initial timestamp of the first
-%     data segment was not 0. 
-
-***** NPMK Version 4.3.2.0: July 6, 2016 *****
-
-% openNSx 6.2.2.0: July 6, 2016
-%   - Fixed another bug related to converting the unit to uV.
-
-***** NPMK Version 4.4.0.0 August 3, 2016 *****
-
-% mergeNSxNEV 1.2.2.0: August 3, 2016
-%   - Fixed a bug that resulted in a crash if one of two NEV files weren't
-%     available.
-
-% openNSx 6.3.0.0: August 3, 2016
-%   - Added support for loading a segment of paused files.
-
-***** NPMK Version 4.4.1.0 August 31, 2016 *****
-
-% splitNSxPauses: 1.0.0.0: August 31, 2016
-%   - Initial release.
-%   - Successor to separateNSxPaused running much more memory efficient.
-
-% separateNSxPaused: This function is obsoleted. Use splitNSxPauses instead.

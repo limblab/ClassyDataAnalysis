@@ -5,10 +5,11 @@ function roundedTime=roundTime(timeData,varargin)
     %the difference between sample points to identify the appropriate
     %resolution to round time to.
     %
-    %roundTime occasionally has machine precision problems following from
-    %the floating point operation at the arbitrary frequency. To compensate 
-    %for these, a secondary rounding operation with decimal precision is
-    %added. This limits the frequency output of roundTime to 100Mhz.
+    %roundTime is mainly a wrapper for the round2 function. round2 can be
+    %called directly, but this wrapper serves to explain what the hell is
+    %going on, whereas
+    %cds.kin.t=round2(cds.kin.t,round(mode(diff(cds.kin.t)),10);
+    %is pretty obtuse
     
     %define the time step to round to:
     if isempty(varargin)
@@ -27,10 +28,7 @@ function roundedTime=roundTime(timeData,varargin)
     else
         dt=varargin{1};
     end
-    %round timeData to the nearest multiple of dt 
-    roundedTime=round(timeData/dt)*dt;
-    %now handle stupid machine precision problems by rounding at some
-    %stupidly high number of sig-figs so that we'd capture 100Mhz frequency,
-    %but will get rid of machine precision errors:
-    roundedTime=round(roundedTime,7);
+    %use round2 to round timeData to the nearest multiple of dt and return
+    roundedTime=round2(timeData,dt);
+    
 end

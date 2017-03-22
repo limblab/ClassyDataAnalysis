@@ -19,20 +19,6 @@ function file2cds(cds,filePath,varargin)
     %               bad kinematic times so that artifacts associated with
     %               the kinematic discontinuity can be avoided in further
     %               processing
-    %'recoverPreSync'   flags the nev loading routine to  attempt to
-    %               recover data in the nev and NSx before re-sync events.
-    %               The loading routine will assume a 100ms latency between
-    %               pre and post sync data. The loading routine will
-    %               concatenate data for all sync events. If left empty,
-    %               the loading routine will discard all data before the
-    %               last sync event.
-    %'useBlockBLOCKNAME'    flags the nev loading routing what data block
-    %               to use in the case of re-sync events in the data. if
-    %               BLOCKNAME is 'first' then the nev/nsx loading routine
-    %               will return only the data before the first sync event.
-    %               If BLOCKNAME is 'last' then the nev/nsx loading routine
-    %               will return only the data from after the last resync
-    %               event
     %lab number:    an integer number designating the lab from the set 
     %               1,2,3,6
     %'taskTASKNAME' specifies the task performed during data collection.
@@ -50,7 +36,6 @@ function file2cds(cds,filePath,varargin)
     %                   UNT: uncertainty
     %                   RP:resist perturbations
     %                   DCO: dynamic center out
-    %                   UCK: 2 target cisek
     %'arrayARRAYNAME'   specifies the array used for data collection.
     %               file2cds looks for the first part of the argument to
     %               match the string 'array' and then takes the remainder of
@@ -70,7 +55,6 @@ function file2cds(cds,filePath,varargin)
     %               arguemtn to match the string 'mapFile' and then takes
     %               the remainder of the string as the full file path of
     %               the map file.
-    %
     %example: cds.file2cds('C:/datafolder/data.nev', 'rothandle', 3,'taskCO',
     %'arrayM1','monkeyChips','ranByTucker','mapFileC:/datafolder/map.cmp')
     %imports the data from data.nev and data.nsx into the fields of cds, 
@@ -97,10 +81,6 @@ function file2cds(cds,filePath,varargin)
                     writeSummary=false;
                 elseif strcmp(optStr,'noDB')
                     doDB=false;
-                elseif strcmp(optStr,'recoverPreSync')
-                    opts.recoverPreSync=true;
-                elseif ischar(optStr) && length(optStr)>8 && strcmp(optStr(1:8),'useBlock')
-                    opts.block=optStr(9:end);
                 elseif strcmp(optStr, 'ignoreFilecat')
                     opts.ignore_filecat=true;
                 elseif ischar(optStr) && length(optStr)>4 && strcmp(optStr(1:4),'task')
@@ -138,12 +118,6 @@ function file2cds(cds,filePath,varargin)
         if ~isfield(opts,'monkey')
             opts.monkey = 'unknown';
         end
-        if ~isfield(opts,'recoverPreSync')
-            opts.recoverPreSync=false;
-        end
-        if ~isfield(opts,'block')
-            opts.block='last';
-        end
         %check the options and throw warnings if some things aren't set:
         flag=0;
         if strcmp(opts.task,'Unknown')
@@ -178,40 +152,21 @@ function file2cds(cds,filePath,varargin)
                 end
             end
         end
-        %check whether the file has an extension and warn the user if it
-        %doesn't:
-        [folderPath,~,ext]=fileparts(filePath);
-        if isempty(ext)
-            warning('file2cds:noFileExtension','the file name was given with no extension.')
-            testExt='.nev';
-            tmp=dir([filePath,testExt]);
-            if ~isempty(tmp)
-                disp('found matching *.nev file. Continuing assuming user wants to load:')
-                disp([filePath,testExt])
-                filePath=[filePath,testExt];
-            else
-                error('file2cds:noMatchingFile',['failed to find a file matching the input path:',filePath,'. Please check the path string'])
-            end
-        end
-        
-        %check to make sure our file isn't too big. Only works under
-        %windows:
-        if ispc
-            mem=memory;
-            fp=dir(filePath);
-            if fp.bytes > mem.MemAvailableAllArrays*.75
-                while 1
-                    s=input(sprintf('This file is %.1fGB, and matlab only has %.1fGB available. Continue anyway? (y/n)\n',round(fp.bytes/2^30),mem.MemAvailableAllArrays),'s');
-                    if strcmpi(s,'n')
-                        error('NEVNSx2cds:UserCancelled','User cancelled execution due to large file size')
-                    elseif strcmpi(s,'y')
-                        break
-                    else
-                        disp([s,' is not a valid response'])
-                    end
+        %check to make sure our file isn't too big
+        fp = dir(filePath); fsize = round(fp.bytes/2^30);
+        if fsize > 1
+            while 1
+                s=input(sprintf('This file is %.1fGB. Continue anyway? (y/n)\n',fsize),'s');
+                if strcmpi(s,'n')
+                    error('NEVNSx2cds:UserCancelled','User cancelled execution due to large file size')
+                elseif strcmpi(s,'y')
+                    break
+                else
+                    disp([s,' is not a valid response'])
                 end
             end
-        end 
+        end
+                
         
         %set the robot flag if we are using one of the robot labs:
         if opts.labNum == 2 || opts.labNum == 3 || opts.labNum ==6
@@ -244,11 +199,9 @@ function file2cds(cds,filePath,varargin)
 %     end
 %     if ~dataFromDB
 %         varargin=[varargin,{'dbEmpty'}];
-        cds.nev2NEVNSx(filePath,opts.recoverPreSync,opts.block);
+        cds.nev2NEVNSx(filePath);
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
-        %try to get open sim data:
-        cds.loadOpenSimData(folderPath);
         if writeSummary
 %        cds.writeSessionSummary()
         end

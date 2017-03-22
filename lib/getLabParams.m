@@ -67,7 +67,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
         fhcal = [0.02653 0.02045 -0.10720 5.94762 0.20011 -6.12048;...
                 0.15156 -7.60870 0.05471 3.55688 -0.09915 3.44508]'./1000;
         if datenum(dateTime) < datenum('07-Mar-2016')
-            rotcal = eye(2);
+            rotcal = eye(3);
             forceOffsets = [];
         else
             % rotation of the load cell to match forearm frame

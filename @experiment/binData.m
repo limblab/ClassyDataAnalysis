@@ -55,35 +55,29 @@ function binData(ex,varargin)
             temp=zeros(numel(ex.(currLabel).data.t),numel(ex.binConfig.include(i).which)+1);
             temp(:,1)=ex.(currLabel).data.t;
             for j=1:length(ex.binConfig.include(i).which)
-                temp(:,j+1)=ex.(currLabel).data.(ex.binConfig.include(i).which{j});
+                temp(:,j+1)=ex.(currLabel).data.(ex.binConfig.include(i).which{i});
             end
             temp=decimateData(temp,ex.binConfig.filterConfig);
         end
         if isempty(bins)
             %if we don't have a time column yet
-            bins=table(temp(:,1),'VariableNames',{'t'});
+            bins=table(roundTime(temp(:,1)),'VariableNames',{'t'});
         end
-        %now append the current data set to the continousBins:
-        bins=mergeTables(bins,array2table(temp,'VariableNames',[{'t'},includeNames]));
+        %now append the non-time columns of the current data set to the
+        %continousBins:
+        bins=[bins,array2table(temp(:,2:end),'VariableNames',includeNames)];
     end
     %now get anything in 'analog' if necessary:
     analogIdx=find([strcmp({ex.binConfig.include.field},'analog')],1);
     if ~isempty(analogIdx)
-        for i=1:numel(ex.analog)
-            if ~isempty(ex.binConfig.include(analogIdx).which)
-                mask=list2tableMask(ex.analog(i).data,ex.binConfig.include(analogIdx).which);
-            else
-                mask=true(1,size(ex.analog(i).data,2));
+        for i=1:numel(ex.analog.data)
+            mask=zeros(1,numel(ex.analog{i}.data.Properties.VariableNames));
+            for j=1:length(ex.binConfig.include(analogIdx).which)
+                mask=mask && [strcmp(ex.analog.data{i}.Properties.VariableNames,ex.binConfig.include(analogIdx).which{j})];
             end
             if ~isempty(find(mask,1))
-                mask(1)=true;
-                temp=decimateData(ex.analog(i).data{:,mask},ex.binConfig.filterConfig);
-                if isempty(bins)
-                    %if we don't have a time column yet
-                    bins=table(temp(:,1),'VariableNames',{'t'});
-                end
-                mask(1)=false;
-                bins=mergeTables(bins,array2table(temp,'VariableNames',[{'t'},ex.analog(i).data.Properties.VariableNames(mask)]));
+                temp=ex.analog{i}.data{:,mask};
+                bins=[bins,array2table(temp,'VariableNames',ex.analog{i}.data.Properties.VariableNames(mask))];
             end
         end
     end
@@ -112,7 +106,7 @@ function binData(ex,varargin)
         %decimate the Fr data if necessary:
         if ex.binConfig.filterConfig.sampleRate<ex.firingRate.meta.sampleRate
             temp=decimateData(ex.firingRate.data{:,unitCols},ex.binConfig.filterConfig);
-            temp=array2table(temp,'VariableNames',ex.firingRate.data.Properties.VariableNames(unitCols));
+            temp=mat2table(temp,'VariableNames',ex.firingRate.data.Properties.VariableNames(unitCols));
             temp.Properties.VariableUnits=ex.firingRate.data.Properties.VariableUnits(unitCols);
             temp.Properties.VariableDescriptions=ex.firingRate.data.Properties.VariableDescriptions(unitCols);
             temp.Properties.Description=ex.firingRate.data.Properties.Description;

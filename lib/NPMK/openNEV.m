@@ -6,7 +6,7 @@ function varargout = openNEV(varargin)
 % structure. Works with File Spec 2.1 & 2.2 & 2.3.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % Use OUTPUT = openNEV(fname, 'noread', 'report', 'noparse', 'nowarning', 
-%                             'nosave', 'nomat', 'uV', 'overwrite', 'direct').
+%                             'nosave', 'nomat', 'uV', 'overwrite').
 % 
 % NOTE: All input arguments are optional. Input arguments may be in any order.
 %
@@ -66,11 +66,6 @@ function varargout = openNEV(varargin)
 %                 opened NEV file ont the old MAT file.
 %                 DEFAULT: will ask the user whether to overwrite the old
 %                 MAT.
-%
-%   'direct':     Use this if you are using a CerePlex Direct system
-%                 without the typical strobe mode. This will treat the 16th
-%                 bit of the digital input as a strobe signal and report
-%                 the remaining 15 bits as the digital input value. 
 %
 %   OUTPUT:       Contains the NEV structure.
 %
@@ -186,16 +181,6 @@ function varargout = openNEV(varargin)
 %   - Fixed a bug with NeuroMotive data reading when both objects and
 %     markers were being recorded.
 %
-% 5.2.0.0: June 11 2016
-%   - Added support for CerePlex Direct strobe mode on digital input.
-%   - Fixed a bug with reading NeuroMotive data that resulted in a crash.
-%
-% 5.3.0.0: June 13 2016
-%   - Fixed a bug with reading NeuroMotive data that resulted in a crash.
-%   - Improved and more detailed parsing of NeuroMotive events.
-%   - Added parsing of comment start time and comment committ time (time
-%     that a comment is entered.
-%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Defining structures
@@ -212,9 +197,9 @@ NEV.Data.Spikes = struct('TimeStamp', [],'Electrode', [],...
 NEV.Data.SerialDigitalIO = struct('InputType', [], 'TimeStamp', [],...
     'TimeStampSec', [], 'Type', [], 'Value', [], 'InsertionReason', [], 'UnparsedData', []);
 NEV.Data.VideoSync = struct('TimeStamp', [], 'FileNumber', [], 'FrameNumber', [], 'ElapsedTime', [], 'SourceID', []);
-NEV.Data.Comments = struct('TimeStampStarted', [], 'TimeStampStartedSec', [], 'TimeStamp', [], 'TimeStampSec', [], 'CharSet', [], 'Text', []);
+NEV.Data.Comments = struct('TimeStamp', [], 'TimeStampSec', [], 'CharSet', [], 'Color', [], 'Text', []);
 NEV.Data.Tracking = [];
-NEV.Data.TrackingEvents = struct('TimeStamp', [], 'TimeStampSec', [], 'ROIName', [], 'ROINum', [], 'Event', [], 'Frame', []);
+NEV.Data.TrackingEvents = struct('TimeStamp', [], 'TimeStampSec', [], 'Text', []);
 NEV.Data.PatientTrigger = struct('TimeStamp', [], 'TriggerType', []);
 NEV.Data.Reconfig = struct('TimeStamp', [], 'ChangeType', [], 'CompName', [], 'ConfigChanged', []);
 Flags = struct;
@@ -239,8 +224,6 @@ for i=1:length(varargin)
             Flags.SaveFile = varargin{i};
         case 'nomat'
             Flags.NoMAT = varargin{i};
-        case 'direct'
-            Flags.Direct = varargin{i};
         case 'nowarning'
             Flags.WarningStat = varargin{i};
         case 'parse'
@@ -333,8 +316,7 @@ if ~isfield(Flags, 'waveformUnits'); Flags.waveformUnits = 'raw'; end;
 if ~isfield(Flags, 'digIOBits');     Flags.digIOBits = '16bits'; end;
 if ~isfield(Flags, 'Overwrite');     Flags.Overwrite = 'nooverwrite'; end;
 if ~isfield(Flags, 'MultiNSP');      Flags.MultiNSP = 'multinsp'; end;
-if ~isfield(Flags, 'selChannels');   Flags.selChannels = 'all'; end;
-if ~isfield(Flags, 'Direct');        Flags.Direct = 'nodirect'; end;
+if ~isfield(Flags, 'selChannels');   Flags.selChannels= 'all'; end;
 
 if strcmpi(Flags.Report, 'report')
     disp(['openNEV ' NEV.MetaTags.openNEVver]);
@@ -657,31 +639,22 @@ if strcmpi(Flags.ReadData, 'read')
             NEV.Data.Comments.TimeStamp = Timestamp(commentIndices);
             NEV.Data.Comments.TimeStampSec = double(NEV.Data.Comments.TimeStamp)/double(NEV.MetaTags.TimeRes);
             NEV.Data.Comments.CharSet = tRawData(7, commentIndices);
-            NEV.Data.Comments.TimeStampStarted = tRawData(9:12, commentIndices);
-            NEV.Data.Comments.TimeStampStarted = typecast(NEV.Data.Comments.TimeStampStarted(:), 'uint32').';
+            NEV.Data.Comments.Color = tRawData(9:12, commentIndices);
+            NEV.Data.Comments.Color = typecast(NEV.Data.Comments.Color(:), 'uint32').';
             NEV.Data.Comments.Text  = char(tRawData(13:Trackers.countPacketBytes, commentIndices).');
-                 
+     
+            %NEV.MetaTags.Comment(find(NEV.MetaTags.Comment==0,1):end) = 0;
+            
             % Transferring NeuroMotive Events to its own structure
             neuroMotiveEvents = find(NEV.Data.Comments.CharSet == 255);
             NEV.Data.TrackingEvents.TimeStamp = NEV.Data.Comments.TimeStamp(neuroMotiveEvents);
             NEV.Data.TrackingEvents.TimeStampSec = double(NEV.Data.TrackingEvents.TimeStamp)/double(NEV.MetaTags.TimeRes);
-
-            % Parsing NeuroMotive Events
-            events = NEV.Data.Comments.Text(neuroMotiveEvents,:);
-            for idx = 1:size(events,1)
-                splitEvent = strsplit(events(idx,:), ':');
-                NEV.Data.TrackingEvents.ROIName{idx} = splitEvent{1};
-                NEV.Data.TrackingEvents.ROINum(idx) = str2double(splitEvent{2});
-                NEV.Data.TrackingEvents.Event{idx} = splitEvent{3};
-                NEV.Data.TrackingEvents.Frame(idx) = str2double(splitEvent{4});
-            end
+            NEV.Data.TrackingEvents.Text = NEV.Data.Comments.Text(neuroMotiveEvents,:);
             NEV.Data.Comments.TimeStamp(neuroMotiveEvents) = [];
             NEV.Data.Comments.TimeStampSec(neuroMotiveEvents) = [];
             NEV.Data.Comments.CharSet(neuroMotiveEvents) = [];
-            
-            NEV.Data.Comments.TimeStampStarted(neuroMotiveEvents) = [];
-            NEV.Data.Comments.TimeStampStartedSec = double(NEV.Data.Comments.TimeStampStarted)/double(NEV.MetaTags.TimeRes);
-            NEV.Data.Comments.Text(neuroMotiveEvents,:) = [];
+            NEV.Data.Comments.Color(neuroMotiveEvents) = [];
+            NEV.Data.Comments.Text(neuroMotiveEvents) = [];
             
             clear commentIndices;
         end
@@ -717,7 +690,6 @@ if strcmpi(Flags.ReadData, 'read')
             if (isfield(NEV, 'ObjTrackInfo'))
                 for IDX = 1:size(NEV.ObjTrackInfo,2)
                     emptyChar = find(NEV.ObjTrackInfo(IDX).TrackableName == 0, 1);
-                    NEV.ObjTrackInfo(IDX).TrackableName(emptyChar:end) = [];
                     if isnan(str2double(NEV.ObjTrackInfo(IDX).TrackableName(emptyChar-1)))
                         if ~strcmpi(NEV.ObjTrackInfo(IDX-1).TrackableName(1:3), NEV.ObjTrackInfo(IDX).TrackableName(1:3))
                             objectIndex = 1;
@@ -725,6 +697,8 @@ if strcmpi(Flags.ReadData, 'read')
                             objectIndex = objectIndex + 1;
                         end
                         NEV.ObjTrackInfo(IDX).TrackableName(emptyChar) = num2str(objectIndex);
+                    else
+                        NEV.ObjTrackInfo(IDX).TrackableName(emptyChar) = [];
                     end
                     indicesOfEvent = find(tmp.NodeID == IDX-1);
                     if ~isempty(indicesOfEvent)
@@ -836,21 +810,9 @@ if ~isempty(DigiValues)
     else
         NEV.Data.SerialDigitalIO.TimeStamp = digserTimestamp;
         NEV.Data.SerialDigitalIO.TimeStampSec = double(digserTimestamp)/30000;
+        clear digserTimestamp;
         NEV.Data.SerialDigitalIO.UnparsedData = DigiValues;
-        if strcmpi(Flags.Direct, 'direct')
-            % Finding the members that have bit 16 as the strobe high
-            DShighs = find(NEV.Data.SerialDigitalIO.UnparsedData >= bin2dec('1000000000000000'));
-            uniqueDShighs = DShighs([1; find(diff(DShighs)>1)+1]);
-            DShighUniqueBin = dec2bin(NEV.Data.SerialDigitalIO.UnparsedData(uniqueDShighs));
-            DShighUniqueDec = bin2dec(DShighUniqueBin(:,2:16));
-            % Removing the non-strobed-high values from SerialDigitalIO
-            extraMembers = setxor(uniqueDShighs, 1:length(NEV.Data.SerialDigitalIO.UnparsedData));  
-            NEV.Data.SerialDigitalIO.TimeStamp(extraMembers) = [];
-            NEV.Data.SerialDigitalIO.TimeStampSec(extraMembers) = [];
-            NEV.Data.SerialDigitalIO.UnparsedData = DShighUniqueDec;
-            clear DShighs DShighUniqueBin DShighUniqueDec extraMembers;
-        end
-        clear digserTimestamp DigiValues
+        clear DigiValues;
     end
 else
     if strcmpi(Flags.ReadData, 'read')

@@ -10,9 +10,8 @@ function fitPds(binned)
     %get our list of units
     if isempty(binned.pdConfig.units)
         %find all our units and make a cell array containing the whole list
-%         unitMask=~cellfun(@(x)isempty(strfind(x,'CH')),binned.data.Properties.VariableNames) & ~cellfun(@(x)isempty(strfind(x,'ID')),binned.data.Properties.VariableNames);
-%         uList=binned.data.Properties.VariableNames(unitMask);
-        uList=binned.getUnitNames();
+        unitMask=~cellfun(@(x)isempty(strfind(x,'CH')),binned.data.Properties.VariableNames) & ~cellfun(@(x)isempty(strfind(x,'ID')),binned.data.Properties.VariableNames);
+        uList=binned.data.Properties.VariableNames(unitMask);
     else
         %use the list the user supplied
         uList=binned.pdConfig.units;

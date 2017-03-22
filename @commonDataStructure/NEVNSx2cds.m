@@ -22,8 +22,8 @@ function NEVNSx2cds(cds,opts)
         opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(1)) ...
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
-        
-        %% Events:
+
+    %% Events: 
         %if events are already in the cds, then we keep them and ignore any
         %new words in the NEVNSx. Otherwise we load the events from the
         %NEVNSx, followed by the task
@@ -58,7 +58,7 @@ function NEVNSx2cds(cds,opts)
         cds.emgFromNSx()
             
     %% LFP. any collection channel that comes in with the name chan* will be treated as LFP
-        cds.lfpFromNSx(opts)
+        cds.lfpFromNSx()
 
     %% Triggers
         %get list of triggers

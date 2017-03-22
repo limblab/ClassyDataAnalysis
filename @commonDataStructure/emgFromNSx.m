@@ -16,28 +16,18 @@ function emgFromNSx(cds)
         for i = length(emgList):-1:1
             if cds.NSxInfo.NSx_sampling(emgList(i))==500
                 data(:,i+1) = double(cds.NS1.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
-                timestamp=double(cds.NS1.MetaTags.Timestamp);
-                timeRes=double(cds.NS1.MetaTags.TimeRes);
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==1000
                 data(:,i+1) = double(cds.NS2.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
-                timestamp=double(cds.NS2.MetaTags.Timestamp);
-                timeRes=double(cds.NS2.MetaTags.TimeRes);
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==2000
                 data(:,i+1) = double(cds.NS3.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
-                timestamp=double(cds.NS3.MetaTags.Timestamp);
-                timeRes=double(cds.NS3.MetaTags.TimeRes);
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==10000
                 data(:,i+1) = double(cds.NS4.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
-                timestamp=double(cds.NS4.MetaTags.Timestamp);
-                timeRes=double(cds.NS4.MetaTags.TimeRes);
             elseif cds.NSxInfo.NSx_sampling(emgList(i))==30000
                 data(:,i+1) = double(cds.NS5.Data(cds.NSxInfo.NSx_idx(emgList(i)),:));
-                timestamp=double(cds.NS5.MetaTags.Timestamp);
-                timeRes=double(cds.NS5.MetaTags.TimeRes);
             end
         end        
 
-        data(:,1) = roundTime(double(0:1/emgFreq:(size(data,1)-1)/emgFreq)+timestamp/timeRes);
+        data(:,1) = double(0:1/emgFreq:(size(data,1)-1)/emgFreq);
 
         emgNames=[{'t'},emgNames];
         %build table of emgs:
@@ -48,7 +38,7 @@ function emgFromNSx(cds)
         if isempty(cds.emg)
             set(cds,'emg',emg);
         elseif ~isempty(emg)
-            set(cds,'emg',mergeTables(cds.emg,emg));
+            cds.mergeTable('emg',emg)
         end
         evntData=loggingListenerEventData('emgFromNSx',[]);
         notify(cds,'ranOperation',evntData)

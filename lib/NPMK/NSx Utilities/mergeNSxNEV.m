@@ -34,21 +34,7 @@
 %   ktorab@blackrockmicro.com
 %   Blackrock Microsystems
 %
-%   Version 1.2.2.0
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Kian Torab
-%   support@blackrockmicro.com
-%   Blackrock Microsystems
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Version History
-%
-% 1.0.0.0: Initial release
-%
-% 1.2.2.0: August 3, 2016
-%   - Fixed a bug that resulted in a crash if one of two NEV files weren't
-%     available.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Version 1.2.1.0
 
 
 function mergeNSxNEV(varargin)
@@ -187,47 +173,42 @@ end
 
 %% Reading NEV1
 FID1 = fopen(NEV1FullName, 'r', 'ieee-le');
+NEV1Data = fread(FID1, '*int8');
+fclose(FID1);
+
+%% Reading NEV2
 FID2 = fopen(NEV2FullName, 'r', 'ieee-le');
-okNEV = (FID1 ~= -1) && (FID2 ~= -1);
-if okNEV
-    NEV1Data = fread(FID1, '*int8');
-    fclose(FID1);
+fseek(FID2, 12, 'bof');
+NEV2HeaderBytes = fread(FID2, 1, '*int32');
+NEV2BytesinDataPackets = fread(FID2, 1, '*int32');
+fseek(FID2, NEV2HeaderBytes, 'bof');
+NEV2Data = fread(FID2, '*int8');
+fclose(FID2);
 
-    %% Reading NEV2
-    fseek(FID2, 12, 'bof');
-    NEV2HeaderBytes = fread(FID2, 1, '*int32');
-    NEV2BytesinDataPackets = fread(FID2, 1, '*int32');
-    fseek(FID2, NEV2HeaderBytes, 'bof');
-    NEV2Data = fread(FID2, '*int8');
-    fclose(FID2);
+%% Adding the timestamp of the first file to the second file
+NEV2Data = typecast(NEV2Data, 'uint32');
+NEV2Data = reshape(NEV2Data, NEV2BytesinDataPackets/4, length(NEV2Data)/(NEV2BytesinDataPackets/4));
+NEV2Data(1,:) = NEV2Data(1,:) + NSx1LengthIn30k;
+NEV2Data = reshape(NEV2Data, size(NEV2Data, 1) * size(NEV2Data, 2), 1);
+NEV2Data = typecast(NEV2Data, 'int8');
 
-    %% Adding the timestamp of the first file to the second file
-    NEV2Data = typecast(NEV2Data, 'uint32');
-    NEV2Data = reshape(NEV2Data, NEV2BytesinDataPackets/4, length(NEV2Data)/(NEV2BytesinDataPackets/4));
-    NEV2Data(1,:) = NEV2Data(1,:) + NSx1LengthIn30k;
-    NEV2Data = reshape(NEV2Data, size(NEV2Data, 1) * size(NEV2Data, 2), 1);
-    NEV2Data = typecast(NEV2Data, 'int8');
+NEV3Data = [NEV1Data; NEV2Data];
 
-    NEV3Data = [NEV1Data; NEV2Data];
+%% Writing data back to combined NEV file
 
-    %% Writing data back to combined NEV file
-
-    % Writing header into the file
-    newFilename = [NEV1FullName(1:end-4) '-combined.' NEV1FullName(end-2:end)];
-    if exist(newFilename, 'file') == 2
-        overwriteFlag = input('The NEV file already exists. Overwrite? ', 's');
-        if ~strcmpi(overwriteFlag, 'y')
-            clear all;
-            return;
-        end
+% Writing header into the file
+newFilename = [NEV1FullName(1:end-4) '-combined.' NEV1FullName(end-2:end)];
+if exist(newFilename, 'file') == 2
+    overwriteFlag = input('The NEV file already exists. Overwrite? ', 's');
+    if ~strcmpi(overwriteFlag, 'y')
+        clear all;
+        return;
     end
-
-    % Writing combined NEV
-    FIDCombined = fopen(newFilename, 'w+', 'ieee-le');
-    disp('Writing NEV data back into the combined file...');
-    fwrite(FIDCombined, NEV3Data, 'int8');
-    fclose(FIDCombined);
-    clear all;
-else
-    disp('One or more NEV files were not found. Skipping NEV merging.');
 end
+
+% Writing combined NSx
+FIDCombined = fopen(newFilename, 'w+', 'ieee-le');
+disp('Writing NEV data back into the combined file...');
+fwrite(FIDCombined, NEV3Data, 'int8');
+fclose(FIDCombined);
+clear all;

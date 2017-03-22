@@ -64,7 +64,6 @@ if encoding_scheme == 0
     ts_index(diff(ts(ts_index))<.0009) = [];
 
     % Fix strobed events
-    warning('get_encoder:old_encoder_format','This encoder format is old. Some strobed events may be missing, which causes jumps in the encoder data')
     ts_index = ts_index( diff(ts_index) == 4 ); % throw out bad points
     time_stamps = ts( ts_index );
 

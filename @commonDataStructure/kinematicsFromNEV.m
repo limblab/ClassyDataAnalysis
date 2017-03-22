@@ -5,7 +5,7 @@ function kinematicsFromNEV(cds,opts)
     end
     %get events:
     event_data = double(cds.NEV.Data.SerialDigitalIO.UnparsedData);
-    event_ts = roundTime(cds.NEV.Data.SerialDigitalIO.TimeStampSec',.00001);%use round time here to sanitize the clock and avoid weird machine precision errors later       
+    event_ts = cds.NEV.Data.SerialDigitalIO.TimeStampSec';       
 
     idx=cds.skipResets(cds.NEV.Data.SerialDigitalIO.TimeStampSec');
     if ~isempty(idx)
@@ -153,7 +153,7 @@ function kinematicsFromNEV(cds,opts)
     if isempty(cds.kin)
         set(cds,'kin',kin);
     elseif ~isempty(kin)
-        set(cds,'kin',mergeTables(cds.kin,kin));
+        cds.mergeTable('kin',kin)
     end
     evntData=loggingListenerEventData('kinematicsFromNEV',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)

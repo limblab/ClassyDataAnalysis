@@ -54,18 +54,12 @@ function getWFTaskTable(cds,times)
         dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
         
         % Target location
-<<<<<<< HEAD
         targetLoc = cds.databursts.db(dbidx, burst_size-15:end);
         targetLoc = bytes2float(targetLoc, 'little')';  
         if isempty(targetLoc)
             warning('databurst(%d) is corrupted, no target info',dbidx);
             targetLoc = [-1 -1 -1 -1];
         end
-=======
-        targetLoc = cds.databursts.db(burst_size-15:end);
-        targetLoc = bytes2float(targetLoc, 'little')';
-        
->>>>>>> 965863604eb2db457946335a3773a8b90ea2da7d
         % catch
         idxCatch = find(catchWords > times.startTime(trial) & catchWords < times.endTime(trial), 1, 'first');
         if isempty(idxCatch)
