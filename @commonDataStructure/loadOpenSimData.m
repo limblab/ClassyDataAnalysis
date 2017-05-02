@@ -33,8 +33,9 @@ function loadOpenSimData(cds,folderPath)
         end
         %look for joint kinematics *_Kinematics_q.sto files with matching
         %prefix:
-        fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
-            [folderPath,prefix{i},'_MuscleAnalysis_Length.sto']};
+        fileNameList={[folderPath,prefix{i},'_Kinematics_u.sto'];...
+%             [folderPath,prefix{i},'_MuscleAnalysis_Length.sto'];...
+            [folderPath,prefix{i},'_Dynamics_q.sto']};
         for j=1:numel(fileNameList)
             foundList=dir(fileNameList{j});
             if ~isempty(foundList)

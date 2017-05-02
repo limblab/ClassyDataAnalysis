@@ -248,7 +248,7 @@ function file2cds(cds,filePath,varargin)
         cds.NEVNSx2cds(opts);
         cds.clearTempFields()
         %try to get open sim data:
-        cds.loadOpenSimData(folderPath);
+%         cds.loadOpenSimData(folderPath);
         if writeSummary
 %        cds.writeSessionSummary()
         end
