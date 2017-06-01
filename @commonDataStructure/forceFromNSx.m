@@ -8,6 +8,7 @@ function forceFromNSx(cds,opts)
     handleforce=[];
     %forces for wf and other tasks that use force_ to denote force channels
     forceCols = find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'force_')));
+    keyboard
     robotForceChannels = find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,'ForceHandle')));
     if isempty(forceCols)&&isempty(robotForceChannels)
         %if we didn't find any forces skip force processing

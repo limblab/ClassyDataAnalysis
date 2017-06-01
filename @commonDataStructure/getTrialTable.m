@@ -81,7 +81,7 @@ function getTrialTable(cds,opts)
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
-                error('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
+                warning('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
             case 'BD' %Tucker's psychophysics bump direction task
                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 
