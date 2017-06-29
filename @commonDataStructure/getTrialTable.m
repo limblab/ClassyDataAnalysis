@@ -33,6 +33,14 @@ function getTrialTable(cds,opts)
     endTime =  cds.words.ts( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     endCodes =  cds.words.word( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     
+    %Check for and remove corrupted endCodes
+    corrupt_idx = mod(endCodes,32) > 3;
+    if any(corrupt_idx)
+        warning('getTrialTable:corruptEndCode','Corrupt trial result codes found, removing trials')
+        endTime = endTime(~corrupt_idx);
+        endCodes = endCodes(~corrupt_idx);
+    end
+    
     %preallocate with -1
     stopTime=nan(size(startTime));
     trialResult=cell(size(stopTime));
