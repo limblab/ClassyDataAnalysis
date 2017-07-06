@@ -1,4 +1,4 @@
-function loadOpenSimData(cds,folderPath)
+function loadOpenSimData(cds,folderPath,postfix)
     %this is a method of the cds class and should be stored in the
     %@commonDataStructure folder with the other class methods.
     %
@@ -6,6 +6,12 @@ function loadOpenSimData(cds,folderPath)
     %This uses the meta field to try and find properly named files in the
     %folder specified. The prefix of the file myst match the name of the
     %source file of the cds
+    %
+    % Postfix can currently be one of:
+    %   '_Kinematics_q.sto'
+    %   '_Kinematics_u.sto'
+    %   '_Dynamics_q.st'
+    %   '_MuscleAnalysis_Length.sto'
     
     
     if ~strcmp(folderPath(end),filesep)
@@ -33,9 +39,11 @@ function loadOpenSimData(cds,folderPath)
         end
         %look for joint kinematics *_Kinematics_q.sto files with matching
         %prefix:
-        fileNameList={[folderPath,prefix{i},'_Kinematics_u.sto'];...
+        fileNameList = {[folderPath,prefix{i},postfix]};
+%         fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
+%             [folderPath,prefix{i},'_MuscleAnalysis_Length.sto']};
 %             [folderPath,prefix{i},'_MuscleAnalysis_Length.sto'];...
-            [folderPath,prefix{i},'_Dynamics_q.sto']};
+%             [folderPath,prefix{i},'_Dynamics_q.sto']};
         for j=1:numel(fileNameList)
             foundList=dir(fileNameList{j});
             if ~isempty(foundList)
@@ -70,7 +78,8 @@ function loadOpenSimData(cds,folderPath)
                     %convert 'time into 't'
                     header{idx}='t';
                 end
-                a=reshape(fscanf(fid,repmat('%f',[1,nCol])),[nCol,nRow])';
+                scanned_input = fscanf(fid,repmat('%f',[1,nCol]));
+                a=reshape(scanned_input,[nCol,nRow])';
                 %sanity check time:
                 SR=mode(diff(a(:,1)));
                 if size(a,1)~=round((1+ (max(a(:,1))-min(a(:,1)))/SR))
