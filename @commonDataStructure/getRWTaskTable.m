@@ -96,9 +96,19 @@ function getRWTaskTable(cds,times)
         yOffsets=       nan(numTrials,1);
         tgtSizes=       nan(numTrials,1);
         for trial = 1:numel(times.startTime)
-            if (cds.databursts.db(trial,1)-18)/8 ~= numTgt
+            % Find databurst associated with startTime
+            dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts < times.endTime(trial));
+            if length(dbidx) > 1
+                warning('rw_trial_table: multiple databursts @ t = %.3f, using first:%d',times.startTime(trial),trial);
+                dbidx = dbidx(1);
+            elseif isempty(dbidx)
+                warning('rw_trial_table: no/deleted databurst @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            end
+            if (cds.databursts.db(dbidx,1)-18)/8 ~= numTgt
                 %catch weird/corrupt databursts with different numbers of targets
-                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial',start_time);
+                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
                 corruptDB=1;
                 continue;
             end
@@ -127,11 +137,11 @@ function getRWTaskTable(cds,times)
                 continue;
             end
             %find target centers
-            ctr=bytes2float(cds.databursts.db(trial,hdrSize+1:end));
+            ctr=bytes2float(cds.databursts.db(dbidx,hdrSize+1:end));
             % Offsets, target size
-            xOffset = bytes2float(cds.databursts.db(trial,7:10));
-            yOffset = bytes2float(cds.databursts.db(trial,11:14));
-            tgtSize = bytes2float(cds.databursts.db(trial,15:18));
+            xOffset = bytes2float(cds.databursts.db(dbidx,7:10));
+            yOffset = bytes2float(cds.databursts.db(dbidx,11:14));
+            tgtSize = bytes2float(cds.databursts.db(dbidx,15:18));
 
             % Build arrays
             goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
