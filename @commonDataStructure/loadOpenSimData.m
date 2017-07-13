@@ -51,6 +51,7 @@ function loadOpenSimData(cds,folderPath,dataType)
             case 'joint_acc'
                 postfix = '_Kinematics_dudt.sto';
                 header_post = '_acc';
+                error('loadOpenSimData:unsupportedDataType','Joint accelerations are currently unsupported until dynamics are added to modeling')
             case 'joint_dyn'
                 postfix = '_Dynamics_q.sto';
                 header_post = ''; % already postfixed by 'moment'
@@ -97,6 +98,12 @@ function loadOpenSimData(cds,folderPath,dataType)
                             error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
                         end
                     case 'muscle_len'
+                        if ~strcmp(tmpLine,'Length')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'muscle_vel'
+                        % temporary until Fiber_velocity file is fixed: take
+                        % gradient of muscle lengths
                         if ~strcmp(tmpLine,'Length')
                             error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
                         end
@@ -155,7 +162,10 @@ function loadOpenSimData(cds,folderPath,dataType)
                 % Temporary until fiber velocity file is fixed: take
                 % gradient for muscle velocity
                 if strcmp(dataType,'muscle_vel')
-                    interpData = gradient(interpData,desiredTime);
+                    for muscle_ctr = 1:size(interpData,2)
+                        grad_interpData(:,muscle_ctr) = gradient(interpData(:,muscle_ctr),desiredTime);
+                    end
+                    interpData = grad_interpData;
                 end
                 
                 kin=array2table([desiredTime,interpData],'VariableNames',header);
