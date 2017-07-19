@@ -33,6 +33,14 @@ function getTrialTable(cds,opts)
     endTime =  cds.words.ts( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     endCodes =  cds.words.word( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     
+    %Check for and remove corrupted endCodes
+    corrupt_idx = mod(endCodes,32) > 3;
+    if any(corrupt_idx)
+        warning('getTrialTable:corruptEndCode','Corrupt trial result codes found, removing trials')
+        endTime = endTime(~corrupt_idx);
+        endCodes = endCodes(~corrupt_idx);
+    end
+    
     %preallocate with -1
     stopTime=nan(size(startTime));
     trialResult=cell(size(stopTime));
@@ -81,7 +89,7 @@ function getTrialTable(cds,opts)
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
-                error('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
+                warning('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
             case 'BD' %Tucker's psychophysics bump direction task
                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 

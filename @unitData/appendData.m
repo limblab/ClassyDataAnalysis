@@ -10,7 +10,7 @@ function appendData(units,data,varargin)
     %in order to append new units onto the existing unit data. This
     %property defines the tests and thresholds that appendData will use to
     %determine whether units are the same across multipel files. The
-    %appendConfig proptery MUST have the following fields:
+    %appendConfig property MUST have the following fields:
     %method:    'shape' | 'ISI' | 'shapeISI' | 'number'
     %           -shape uses cohen's D (d') between pairs of waves, and an
     %           LDA classifier to estimate whether a pair of waves is drawn
@@ -51,7 +51,7 @@ function appendData(units,data,varargin)
     %
 
     if nargin>3
-        error('appendData:tooManyInputs','appendData accpts up to 3 imputs')
+        error('appendData:tooManyInputs','appendData accepts up to 3 imputs')
     end
 
     if ~isempty(varargin)
