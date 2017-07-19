@@ -51,9 +51,9 @@ function varargout=getMoveStart(ex,varargin)
         elseif isempty(find(strcmp('endTime',ex.trials.data.Properties.VariableNames),1))
             error('getMoveStart:noGoCueTime','the trials table does not have endTimes')
         end
-        moveMask=~isnan(ex.trials.data.goCueTime);
+        moveMask=~isnan(ex.trials.data.goCueTime(:,1));
         moveMask(strmatch('I',ex.trials.data.result,'exact'))=false;
-        moveWindows=[ex.trials.data.goCueTime(moveMask),ex.trials.data.endTime(moveMask)];
+        moveWindows=[ex.trials.data.goCueTime(moveMask,1),ex.trials.data.endTime(moveMask)];
         %set flag to put data directly into ex.trials.data:
         updateTrials=true;
     end

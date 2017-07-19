@@ -12,23 +12,13 @@ function fitFA(binned)
 %           dimensionality reduction on (eg. [targetAppearsTrial1,
 %           goCueTrial1;targetAppearsTrial2, goCueTrial2....]
 %           
+%           which : list of binned data column numbers to include in the 
+%           dimensionality reduction
+%
 %           dimension: dimension of reduced dataset
-%
-%           segLength: Lenght of smaller segments to cut trials into. Makes
-%           computation of factors faster for FA and GPFA if trials are of
-%           equal length
-%
-%           trials: trial numbers corresponding to windows
-%
-%           kernSD: smoothing kernel standard deviation. Larger value acts
-%           as a larger low pass filter on trajectories
 
-    dat = binned.dimRedHelper();
-    kernSD = binned.dimReductionConfig.kernSD;
-    runIdx =31;
-    xDim = binned.dimReductionConfig.dimension;
-    result = neuralTraj(runIdx,dat, 'method', 'fa', 'xDim', xDim, 'kernSDList', kernSD, 'segLength', binned.dimReductionConfig.segLength);
-    faData = result;
+    [faData.lambda,faData.PSI,faData.T,faData.stats,faData.F]=factoran(binned.data{windows2mask(binned.data.t,binned.dimReductionConfig.windows),binned.dimReductionConfig.which},binned.dimReductionConfig.dimension);
+
     set(binned,'faData', faData);
     opData = binned.dimReductionConfig;
     evntData=loggingListenerEventData('fitFA',opData);

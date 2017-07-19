@@ -140,6 +140,8 @@ function binData(ex,varargin)
             %last point
             tFR=temp.t(end);
         end
+        bins.t=roundTime(bins.t,median(diff(bins.t)));
+        temp.t=roundTime(temp.t,median(diff(bins.t)));
         tCont=bins.t(end);
         tEnd=min(tFR,tCont);
         contStart=find(bins.t>=tStart,1);

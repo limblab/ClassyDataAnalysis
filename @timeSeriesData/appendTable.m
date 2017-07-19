@@ -27,9 +27,6 @@ function appendTable(tsd,data,varargin)
     if isempty(find(cell2mat({strcmp(data.Properties.VariableNames,'t')}),1))
         error('appendTable:notATimeSeries',['The input table does not have a column labeled t. It is possible this table is misconfigured, or is not time series data. columns in the input table are: ',strjoin(data.Properties.VariableNames,', ')])
     end
-    if ~isempty(tsd.data) && mode(diff(tsd.data.t))~=mode(diff(data.t))
-        error('appendTable:differentSampleRates','the existing data and the new data are at different frequencies. Please decimate one of the two data sets')
-    end
     %get our state variables either from input or from defaults:
     if ~isempty(varargin)
         for i=1:2:length(varargin)
@@ -48,6 +45,9 @@ function appendTable(tsd,data,varargin)
     end
     if ~exist('overWrite','var')
         overWrite=false;
+    end
+    if ~overWrite && ~isempty(tsd.data) && mode(diff(tsd.data.t))~=mode(diff(data.t))
+        error('appendTable:differentSampleRates','the existing data and the new data are at different frequencies. Please decimate one of the two data sets')
     end
     if ~exist('timeShift','var')
         if ~isempty(tsd.data) && ~overWrite

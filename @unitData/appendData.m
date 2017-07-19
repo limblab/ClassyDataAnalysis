@@ -379,8 +379,8 @@ function [coeff,diffDist,matchDist,empDist]=getShapeComps(units,data,SNRThresh)
     unitsThreshold=[units.data.lowThreshold];
     unitsMinMaxTics=nan(numUnits,1);
     unitsMinMaxTicsStd=nan(numUnits,1);
-    unitsLogNEO=nan(numData,1);
-    unitsLogNEOStd=nan(numData,1);
+    unitsLogNEO=nan(numUnits,1);
+    unitsLogNEOStd=nan(numUnits,1);
     for i=1:numUnits
         if(units.data(i).ID==0 || units.data(i).ID==255)
             %don't bother with invalid or unsorted

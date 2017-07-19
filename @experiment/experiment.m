@@ -448,16 +448,16 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
                case 'fitGLM'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])
                case 'fitGpfa'
-                   a.config = ex.bin.gpfaConfig;
+                   a.config = ex.bin.dimReductionConfig;
                    a.data=ex.bin.gpfaData;
               case 'fitFA'
-                   a.config = ex.bin.faConfig;
+                   a.config = ex.bin.dimReductionConfig;
                    a.data=ex.bin.faData;
               case 'fitPCA'
-                   a.config = ex.bin.pcaConfig;
+                   a.config = ex.bin.dimReductionConfig;
                    a.data=ex.bin.pcaData;
               case 'fitPPCA'
-                   a.config = ex.bin.ppcaConfig;
+                   a.config = ex.bin.dimReductionConfig;
                    a.data=ex.bin.ppcaData;
                case 'fitKalman'
                    error('binAnalysisLoggingCallback:UnrecognizedAnalysisName',[evnt.operationName, ' is not yet implemented'])

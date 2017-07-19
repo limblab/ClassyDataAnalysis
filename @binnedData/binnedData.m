@@ -275,7 +275,7 @@ classdef binnedData < matlab.mixin.SetGet
         fitGlm(binned)
         fitWeiner(binned)
         fitGPFA(binned)
-        fitPCA(binned)
+        fitPCA(binned,varargin)
         fitPPCA(binned)
         fitFA(binned)
         fitKalman(binned)
