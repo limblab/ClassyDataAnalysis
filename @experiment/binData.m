@@ -33,7 +33,7 @@ function binData(ex,varargin)
     end
     
     %% get the continuous data into a table:
-    %start with our difined fields
+    %start with our defined fields
     bins=[];
     for i=1:length(ex.binConfig.include)
         currLabel=ex.binConfig.include(i).field;

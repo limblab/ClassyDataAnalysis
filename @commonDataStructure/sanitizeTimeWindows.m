@@ -30,6 +30,10 @@ function sanitizeTimeWindows(cds)
     end
     %% get window where data exists in all continuous fields
     %round each time series to its sig figs
+    if isempty(timeVec) % to allow for cage days that only record units
+        return
+    end
+        
     for i=1:size(timeVec,1)
         %find sig figs of the timestep:
         n=0;

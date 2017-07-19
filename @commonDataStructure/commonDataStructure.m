@@ -145,8 +145,8 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         function set.force(cds,force)
             if ~istable(force)...
                     || isempty(find(strcmp('t',force.Properties.VariableNames),1)) ...
-                    || isempty(find(strcmp('fx',force.Properties.VariableNames),1)) ...
-                    || isempty(find(strcmp('fy',force.Properties.VariableNames),1))
+%                     || isempty(find(strcmp('fx',force.Properties.VariableNames),1)) ...
+%                     || isempty(find(strcmp('fy',force.Properties.VariableNames),1))
                 error('force:badFormat','force must be a table with at least 3 columns: t, fx and fy. t is the time of each sample, and fx and fy are the x and y force respectively. For the robot task these should be handle force, for wrist flexion they will be torque about the wrist')
             else
                 cds.force=force;
@@ -287,7 +287,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('meta:BadlabnumFormat','the labnum field must be a numeric value from the following set: [-1 1 2 3 6]')
             elseif ~isfield(meta,'task') || ~ischar(meta.task)  
                 error('meta:BadtaskFormat','the task field must contain a string')
-            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','Unknown','none','SABES','UCK','OOR','WF'}),1))
+            elseif isempty(find(strcmpi(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','Unknown','none','SABES','UCK','OOR','WF','cage'}),1))
                 %standard loading will catch 'Unknown' 
                 error('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string'])
             elseif ~isfield(meta,'monkey') || ~ischar(meta.monkey)

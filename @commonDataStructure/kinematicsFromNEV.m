@@ -85,7 +85,7 @@ function kinematicsFromNEV(cds,opts)
     if opts.robot
         pos=cds.enc2handlepos(opts.dateTime,opts.labNum);
     else
-        pos=cds.enc2WFpos();
+        pos=cds.enc2WFpos(); % this is for both WF and MG
     end
     if isempty(pos)
         return

@@ -27,7 +27,7 @@ function NEVNSx2cds(cds,opts)
         %if events are already in the cds, then we keep them and ignore any
         %new words in the NEVNSx. Otherwise we load the events from the
         %NEVNSx, followed by the task
-        if isempty(cds.words)
+        if isempty(cds.words) 
             %do this first since the task check requires the words to already be processed, and task is required to work on kinematics and force
             cds.eventsFromNEV(opts)
             % if a task was not passed in, set task varable
@@ -39,7 +39,7 @@ function NEVNSx2cds(cds,opts)
         
     %% the kinematics
         %convert event info into encoder steps:
-        if ~isempty(cds.words)
+        if ~isempty(cds.words) & ~strcmpi(opts.task,'cage')
             cds.kinematicsFromNEV(opts)
         end
        
@@ -51,7 +51,7 @@ function NEVNSx2cds(cds,opts)
     % Build catalogue of entities
         unit_list = unique([cds.NEV.Data.Spikes.Electrode;cds.NEV.Data.Spikes.Unit]','rows');
         if ~isempty(unit_list)   
-            cds.unitsFromNEV(opts)
+0           cds.unitsFromNEV(opts)
         end
         
     %% EMG

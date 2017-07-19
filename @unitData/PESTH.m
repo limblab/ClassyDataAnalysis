@@ -10,7 +10,7 @@ function varargout=PESTH(units,eventTimes,preEventWindow,postEventWindow,unitNum
     %   -events:a vector containing the event timestamps
     %   -preEventWindow: a scalar indicating the pre-event time to include
     %    in the histogram
-    %   -postEventWindow: a scalar indicating the post evenet time to
+    %   -postEventWindow: a scalar indicating the post event time to
     %    include in the histogram
     %   -unitNum: index of the unit to use in the unitData.data struct
     %    array

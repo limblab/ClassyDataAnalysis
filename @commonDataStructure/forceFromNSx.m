@@ -8,7 +8,6 @@ function forceFromNSx(cds,opts)
     handleforce=[];
     %forces for wf and other tasks that use force_ to denote force channels
     forceCols = find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'force_')));
-%     keyboard
     robotForceChannels = find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,'ForceHandle')));
     if isempty(forceCols)&&isempty(robotForceChannels)
         %if we didn't find any forces skip force processing
@@ -32,7 +31,9 @@ function forceFromNSx(cds,opts)
         %truncate to deal with the fact that encoder data doesn't start
         %recording till 1 second into the file and store in a table
         t=roundTime(t,.00001);
-        force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        if ~isempty(cds.enc) %cds.enc doesn't exist for the cage
+            force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        end
     end
     %forces for robot:
     if opts.robot
@@ -65,9 +66,13 @@ function forceFromNSx(cds,opts)
     %cases where machine precision becomes an issue and rounding the time
     %takes care of that.
     timePrecision = 1/cds.kinFilterConfig.sampleRate;
-    min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
-    max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
-    timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
+    if ~isempty(cds.enc) %again, taking into account the cage
+        min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
+        max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
+        timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
+    else
+        timeTable=table(t,'VariableNames',{'t'});
+    end
     forces=[timeTable,handleforce,force];
     if ~isempty(forces)
         forces.Properties.VariableUnits=[{'s'} repmat({'N'},1,size(handleforce,2)+size(force,2))];

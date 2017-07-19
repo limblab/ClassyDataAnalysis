@@ -51,6 +51,7 @@ function file2cds(cds,filePath,varargin)
     %                   RP:resist perturbations
     %                   DCO: dynamic center out
     %                   UCK: 2 target cisek
+    %                   Cage: plastic cage recordings
     %'arrayARRAYNAME'   specifies the array used for data collection.
     %               file2cds looks for the first part of the argument to
     %               match the string 'array' and then takes the remainder of
