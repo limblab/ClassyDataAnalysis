@@ -17,7 +17,20 @@ function fitFA(binned)
 %
 %           dimension: dimension of reduced dataset
 
-    [faData.lambda,faData.PSI,faData.T,faData.stats,faData.F]=factoran(binned.data{windows2mask(binned.data.t,binned.dimReductionConfig.windows),binned.dimReductionConfig.which},binned.dimReductionConfig.dimension);
+    data=binned.data{windows2mask(binned.data.t,binned.dimReductionConfig.windows),binned.dimReductionConfig.which};
+    if binned.dimReductionConfig.rootTransform
+        data=sqrt(data);
+    end
+    if binned.dimReductionConfig.useTrialTime
+        times=nan(size(binned.data.t));
+        for i=1:size(binned.dimReductionConfig.windows,1)
+            idxList=find(binned.data.t>=binned.dimReductionConfig.windows(i,1) & binned.data.t <=binned.dimReductionConfig.windows(i,2));
+            timeList=binned.data.t(idxList)-binned.data.t(idxList(1));
+            times(idxList)=timeList;
+        end
+        data=[times(~isnan(times));data];
+    end
+    [faData.lambda,faData.PSI,faData.T,faData.stats,faData.F]=factoran(data,binned.dimReductionConfig.dimension);
 
     set(binned,'faData', faData);
     opData = binned.dimReductionConfig;

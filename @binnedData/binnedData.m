@@ -59,7 +59,14 @@ classdef binnedData < matlab.mixin.SetGet
 %             set(binned,'faConfig',fac);
 %             kc=struct('structData','this is a stub struct that needs to be coded');
 %             set(binned,'kalmanConfig',kc);
-            drc=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
+            drc=struct('units',[],...
+                        'windows',[],...
+                        'dimension', 8,...
+                        'segLength', inf,...
+                        'trialNums', -1,...
+                        'trials', [],...
+                        'rootTransform',true,...
+                        'useTrialTime',false);
             set(binned,'dimReductionConfig',drc);
             
             pdc.method='glm';
@@ -140,9 +147,13 @@ classdef binnedData < matlab.mixin.SetGet
                 elseif ~isfield(drc,'dimension')
                     error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionalit of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
                 elseif ~isfield(drc,'segLength')
-                    error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLenght field')
+                    error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLength field')
                 elseif ~isfield(drc,'trials')
                     error('dimReductionConfig:noTrials','the dimReductionConfig must have a trials field')
+                elseif ~isfield(drc,'rootTransform')
+                    error('dimReductionConfig:noRootTransform','the dimReductionConfig must have a rootTransform field containing a boolean flag. If true firing rates will be root-transformed prior to application of dimensionality reduction')
+                elseif ~isfield(drc,'useTrialTime')
+                    error('dimReductionConfig:noUseTrialTime','the dimReductionConfig must have a useTrialTime field containing a boolean flag. if true, the time within the trial window will be appended to the feature vectors before application of dimensionality reduction.')
                 end
             end
             binned.dimReductionConfig=drc;

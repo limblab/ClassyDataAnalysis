@@ -3,6 +3,12 @@ function fitPCA(binned,varargin)
 %       inputs:
 %            binned data structure with pcaConfig filled with needed
 %            parameters
+%            rootTransform:  A boolean flag to root transform firing rate
+%               data so that it is more normally distributed
+%            useTrialTime:   A boolean flag to include an additional
+%               feature vector that is the time within the window. This
+%               will produce features correlated with time and may obscure
+%               target effects
 %            Optional: Key-value pair specifying additional operations
 %            {'MachensFloor',classVector}:  flags binned.fitPCA to try and 
 %               estimate the noise floor for the PCA data. classVector must
@@ -15,11 +21,6 @@ function fitPCA(binned,varargin)
 %               cumulative sum noise vector, and a flag vector indicating 
 %               whether the eigenvalue for the PC's in pcData.latent 
 %               exceeds the noise floor.
-%           {'useTrialTime',bool}: flags binned.fitPCA to append time
-%               within the window to the feature space. If windows are 
-%               trials, this is equivalent to time within trial, if windows 
-%               are from go cue to peak speed, this is equivalent to time 
-%               since go-cue.
 %       Outputs:
 %           puts data into pcaData, and sets ranPCAFit event
 %           
@@ -45,10 +46,6 @@ function fitPCA(binned,varargin)
                 case 'MachensFloor'
                     doMachensFloor=true;
                     classList=varargin{i+1};
-                case 'useTrialTime'
-                    useTrialTime=varargin{i+1};
-                case 'rootTransform'
-                    rootTransform=varargin{i+1};
                 otherwise
                     error('fitPCA:unrecognizedInputKey',['did not recognize the input key: ',varargin{i}])
             end
@@ -57,16 +54,12 @@ function fitPCA(binned,varargin)
     if ~exist('doMachensFloor','var')
         doMachensFloor=false;
     end
-    if ~exist('useTrialTime','var')
-        useTrialTime=false;
-    end
-    
-    
+
     data=binned.data{windows2mask(binned.data.t,binned.dimReductionConfig.windows),binned.dimReductionConfig.which};
-    if rootTransform
+    if binned.dimReductionConfig.rootTransform
         data=sqrt(data);
     end
-    if useTrialTime
+    if binned.dimReductionConfig.useTrialTime
         times=nan(size(binned.data.t));
         for i=1:size(binned.dimReductionConfig.windows,1)
             idxList=find(binned.data.t>=binned.dimReductionConfig.windows(i,1) & binned.data.t <=binned.dimReductionConfig.windows(i,2));
