@@ -59,21 +59,38 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
             error('calc_from_raw_script:Lab2RotHandle','the rotate handle option was never used in Lab2. If lab2 has been updated with a loadcell and you are using the handle in a rotated position you need to modify raw2handleforce to reflect this')
         end
     elseif labnum==6 %If lab6 was used for data collection
+        if datenum(dateTime) < datenum('5/27/2010')            
         % Fx,Fy,scaleX,scaleY from ATI calibration file:
         % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
         % fhcal = [Fx;Fy]./[scaleX;scaleY]
         % force_offsets acquired empirically by recording static
         % handle.
-        fhcal = [0.02653 0.02045 -0.10720 5.94762 0.20011 -6.12048;...
-                0.15156 -7.60870 0.05471 3.55688 -0.09915 3.44508;...
-                10.01343 0.36172 10.30551 0.39552 10.46860 0.38238;...
-                -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
-                -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
-                0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
         if datenum(dateTime) < datenum('07-Mar-2016')
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [0.02653 0.02045 -0.10720 5.94762 0.20011 -6.12048;...
+                    0.15156 -7.60870 0.05471 3.55688 -0.09915 3.44508;...
+                    10.01343 0.36172 10.30551 0.39552 10.46860 0.38238;...
+                    -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
+                    -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
+                    0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
             rotcal = eye(6);
             forceOffsets = [];
-        else
+        elseif datenum(dateTime) < datenum('17-Jul-2017')
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [0.02653 0.02045 -0.10720 5.94762 0.20011 -6.12048;...
+                    0.15156 -7.60870 0.05471 3.55688 -0.09915 3.44508;...
+                    10.01343 0.36172 10.30551 0.39552 10.46860 0.38238;...
+                    -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
+                    -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
+                    0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
             % rotation of the load cell to match forearm frame
             % (load cell is upside down and slightly rotated)
             theta_off = atan2(3,27); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
@@ -86,6 +103,31 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0    0             0              1]'; 
             forceOffsets = [-240.5144  245.3220 -103.0073 -567.6240  332.3762 -591.9336]; %measured 3/17/16
 %                         force_offsets = [];
+        else
+            % replaced lab 6 load cell + handle with lab 3 load cell + handle
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+
+            % fhcal = [-0.0129 0.0254 -0.1018 -6.2876 -0.1127 6.2163;...
+            %         -0.2059 7.1801 -0.0804 -3.5910 0.0641 -3.6077]'./1000;
+            error('Load cell from RAW code is untested since load cell was replaced in July 17, 2017')
+            fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
+                    -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
+                    -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
+                    -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
+                    36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./1000;
+            
+            Fy_invert = 1;
+            if rothandle
+                rotcal = diag([-1 1 1 -1 1 1]);  
+            else
+                rotcal = eye(6);  
+            end
+
         end
         Fy_invert = 1;    
         if rothandle
