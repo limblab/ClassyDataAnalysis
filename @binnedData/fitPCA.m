@@ -46,6 +46,9 @@ function fitPCA(binned,varargin)
                 case 'MachensFloor'
                     doMachensFloor=true;
                     classList=varargin{i+1};
+                case 'VAF'
+                    doVAF=true;
+                    VAFThreshold=varargin{i+1};
                 otherwise
                     error('fitPCA:unrecognizedInputKey',['did not recognize the input key: ',varargin{i}])
             end
@@ -54,7 +57,9 @@ function fitPCA(binned,varargin)
     if ~exist('doMachensFloor','var')
         doMachensFloor=false;
     end
-
+    if ~exist('doVAF','var')
+        doVAF=false;
+    end
     data=binned.data{windows2mask(binned.data.t,binned.dimReductionConfig.windows),binned.dimReductionConfig.which};
     if binned.dimReductionConfig.rootTransform
         data=sqrt(data);
@@ -77,7 +82,7 @@ function fitPCA(binned,varargin)
             disp(['estimating noise for class# ',num2str(i)])
             classWindows{i}=binned.dimReductionConfig.windows(classList==classes(i),:);
             machensData=binned.data{windows2mask(binned.data.t,classWindows{i}),binned.dimReductionConfig.which};
-            if rootTransform
+            if binned.dimReductionConfig.rootTransform
                 machensData=sqrt(machensData);
             end
             noiseFloor(i,:)=getNoiseEst(machensData,'nBoot',100);
@@ -86,7 +91,9 @@ function fitPCA(binned,varargin)
         pcaData.MachensFloor.noise=noiseFloor;
         pcaData.MachensFloor.goodPC=pcaData.latent>pcaData.MachensFloor.noise;
     end
-    
+    if doVAF
+        pcaData.VAF.goodPC=cumsum(pcaData.explained)<=VAFThreshold;
+    end
     set(binned,'pcaData', pcaData);
     opData = binned.dimReductionConfig;
     evntData=loggingListenerEventData('fitPCA',opData);

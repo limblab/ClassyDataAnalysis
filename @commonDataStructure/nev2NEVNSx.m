@@ -85,8 +85,16 @@ function nev2NEVNSx(cds,fname,varargin)
                 if numel(sortedPath)>1
                     error('nev2NEVNSx:multipleSorted',['found multiple sorted files in the target directory. Please remove the extraneous sorts, or rename them so that only 1 file has the format: FILENAME-s.nev'])
                 end
-                disp(['located a sorted file. Continuing using: ' folderPath filesep fileName '-s.nev'])
-                NEVpath=sortedPath;
+                %check to see if we have a *.mat file with the same name as
+                %our target:
+                matPath=dir([folderPath filesep fileName '-s.mat']);
+                if ~isempty(matPath)
+                    disp(['located a mat-file with the same name as sorted file. Continuing using: ' folderPath filesep fileName '-s.mat'])
+                    NEVpath=sortedPath;
+                else
+                    disp(['located a sorted file. Continuing using: ' folderPath filesep fileName '-s.nev'])
+                    NEVpath=sortedPath;
+                end
             else
                 warning('nev2NEVNSx:multipleNEVFiles',['Found multiple files that start with the name given, but could not find files matching the pattern: ',fname,'_nodigital*.nev + ',fname,'_nospikes.mat'])
                 disp(['continuing by loading the NEV that is an exact match for: ',fname,'.nev'])

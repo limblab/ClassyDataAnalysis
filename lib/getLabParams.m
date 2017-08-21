@@ -60,12 +60,12 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
         end
     elseif labnum==6 %If lab6 was used for data collection
         if datenum(dateTime) < datenum('5/27/2010')            
-        % Fx,Fy,scaleX,scaleY from ATI calibration file:
-        % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
-        % fhcal = [Fx;Fy]./[scaleX;scaleY]
-        % force_offsets acquired empirically by recording static
-        % handle.
-        if datenum(dateTime) < datenum('07-Mar-2016')
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+        elseif datenum(dateTime) < datenum('07-Mar-2016')
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
             % fhcal = [Fx;Fy]./[scaleX;scaleY]
