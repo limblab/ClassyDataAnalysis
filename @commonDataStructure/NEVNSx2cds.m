@@ -39,7 +39,7 @@ function NEVNSx2cds(cds,opts)
         
     %% the kinematics
         %convert event info into encoder steps:
-        if ~isempty(cds.words) & ~strcmpi(opts.task,'cage')
+        if ~isempty(cds.words) && ~strcmp(opts.task,'cage')
             cds.kinematicsFromNEV(opts)
         end
        
@@ -51,7 +51,7 @@ function NEVNSx2cds(cds,opts)
     % Build catalogue of entities
         unit_list = unique([cds.NEV.Data.Spikes.Electrode;cds.NEV.Data.Spikes.Unit]','rows');
         if ~isempty(unit_list)   
-0           cds.unitsFromNEV(opts)
+           cds.unitsFromNEV(opts)
         end
         
     %% EMG
