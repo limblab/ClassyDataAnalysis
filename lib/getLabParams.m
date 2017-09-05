@@ -65,7 +65,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
         % fhcal = [Fx;Fy]./[scaleX;scaleY]
         % force_offsets acquired empirically by recording static
         % handle.
-        if datenum(dateTime) < datenum('07-Mar-2016')
+        elseif datenum(dateTime) < datenum('07-Mar-2016')
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
             % fhcal = [Fx;Fy]./[scaleX;scaleY]
@@ -113,7 +113,6 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
 
             % fhcal = [-0.0129 0.0254 -0.1018 -6.2876 -0.1127 6.2163;...
             %         -0.2059 7.1801 -0.0804 -3.5910 0.0641 -3.6077]'./1000;
-            error('Load cell from RAW code is untested since load cell was replaced in July 17, 2017')
             fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
                     -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
                     -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
