@@ -109,6 +109,9 @@ function getTrialTable(cds,opts)
                 
             case 'OOR' % Raeed's Out-out reach task
                 cds.getOORTaskTable(times);
+
+            case 'TRT' % Raeed's two workspace random target task
+                cds.getTRTTaskTable(times);
                 
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
