@@ -87,7 +87,6 @@ function getTRTTaskTable(cds,times)
             numAttempted(trial,:)=      tgtsAttempted;      % ?
             xOffsets(trial)=            xOffset;            % x offset
             yOffsets(trial)=            yOffset;            % y offset
-            tgtSizes(trial)=            tgtSize;            % target size
             tgtCtrs(trial,:)=           ctr;                %center positions of the targets
         end
 
