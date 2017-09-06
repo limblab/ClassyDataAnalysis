@@ -92,7 +92,7 @@ function getTRTTaskTable(cds,times)
 
         trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtCtrs,...
                     'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtCtr'});
-        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','cm'};
+        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm'};
         trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target center position'};
 
     elseif dbversion==1
