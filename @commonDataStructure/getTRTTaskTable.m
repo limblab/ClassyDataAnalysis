@@ -19,12 +19,11 @@ function getTRTTaskTable(cds,times)
     goCodes=  cds.words.word(bitand(hex2dec('f0'), cds.words.word) == wordGo)-wordGo;
 
     %check DB version number and run appropriate parsing code
-    % DB version 0 has 17 bytes before target position
-    % DB version 1 has 21 bytes before target position
+    % DB version 0 has 25 bytes before target position
     db_version=cds.databursts.db(1,2);
 
     if db_version==0
-        hdrSize=17;
+        hdrSize=25;
         numTgt = (cds.databursts.db(1)-hdrSize)/8;
 
         goCueList=      nan(numTrials,numTgt);
@@ -33,79 +32,8 @@ function getTRTTaskTable(cds,times)
         numAttempted=   nan(numTrials,1);
         xOffsets=       nan(numTrials,1); 
         yOffsets=       nan(numTrials,1);
-        for trial = 1:numel(times.startTime)
-            % Find databurst associated with startTime
-            dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts < times.endTime(trial));
-            if length(dbidx) > 1
-                warning('trt_trial_table: multiple databursts @ t = %.3f, using first:%d',times.startTime(trial),trial);
-                dbidx = dbidx(1);
-            elseif isempty(dbidx)
-                warning('trt_trial_table: no/deleted databurst @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
-                corruptDB=1;
-                continue;
-            end
-            if (cds.databursts.db(dbidx,1)-hdrSize)/8 ~= numTgt
-                %catch weird/corrupt databursts with different numbers of targets
-                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
-                corruptDB=1;
-                continue;
-            end
-
-            % Go cues
-            idxGo = find(goCues > times.startTime(trial) & goCues < times.endTime(trial));
-
-            %get the codes and times for the go cues
-            goCue = nan(1,numTgt);
-            goCode= nan(1,numTgt);
-            if isempty(idxGo)
-                tgtsAttempted = 0;
-            else
-                tgtsAttempted = length(idxGo);
-            end
-            if tgtsAttempted>0
-                goCue(1:tgtsAttempted)=goCues(idxGo);
-                goCode(1:tgtsAttempted)= goCodes(idxGo);
-            end
-
-            %identify trials with corrupt end codes that might end up with extra
-            %targets
-            if length(idxGo) > numTgt
-                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
-                corruptDB=1;
-                continue;
-            end
-            %find target centers
-            ctr=bytes2float(cds.databursts.db(dbidx,hdrSize+1:end));
-            % Offsets, target size
-            xOffset = bytes2float(cds.databursts.db(dbidx,10:13));
-            yOffset = bytes2float(cds.databursts.db(dbidx,14:17));
-
-            % Build arrays
-            goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
-            goCodeList(trial,:)=        goCode;             % ?
-            numTgts(trial)=             numTgt;             % max number of targets
-            numAttempted(trial,:)=      tgtsAttempted;      % ?
-            xOffsets(trial)=            xOffset;            % x offset
-            yOffsets(trial)=            yOffset;            % y offset
-            tgtCtrs(trial,:)=           ctr;                %center positions of the targets
-        end
-
-        trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtCtrs,...
-                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtCtr'});
-        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm'};
-        trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target center position'};
-
-    elseif dbversion==1
-        hdrSize=21;
-        numTgt = (cds.databursts.db(1)-hdrSize)/8;
-
-        goCueList=      nan(numTrials,numTgt);
-        goCodeList=     nan(numTrials,numTgt);
-        numTgts=        numTgt*ones(numTrials,1);
-        numAttempted=   nan(numTrials,1);
-        xOffsets=       nan(numTrials,1); 
-        yOffsets=       nan(numTrials,1);
-        tgtSizes=       nan(numTrials,1); % new in dbversion 1
+        tgtSizes=       nan(numTrials,1);
+        wsnums=         nan(numTrials,1);
         for trial = 1:numel(times.startTime)
             % Find databurst associated with startTime
             dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts < times.endTime(trial));
@@ -153,6 +81,7 @@ function getTRTTaskTable(cds,times)
             xOffset = bytes2float(cds.databursts.db(dbidx,10:13));
             yOffset = bytes2float(cds.databursts.db(dbidx,14:17));
             tgtSize = bytes2float(cds.databursts.db(dbidx,18:21));
+            wsnum = bytes2float(cds.databursts.db(dbidx,22:25));
 
             % Build arrays
             goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
@@ -166,9 +95,9 @@ function getTRTTaskTable(cds,times)
         end
 
         trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,tgtCtrs,...
-                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','tgtCtr'});
-        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','cm'};
-        trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','target center position'};
+                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
+        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','int','cm'};
+        trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
 
     else
         error('rw_trial_table_hdr:BadDataburstVersion',['Trial table parsing not implemented for databursts with version: ', num2str(db_version)])
