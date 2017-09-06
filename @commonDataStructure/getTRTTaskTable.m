@@ -91,10 +91,11 @@ function getTRTTaskTable(cds,times)
             xOffsets(trial)=            xOffset;            % x offset
             yOffsets(trial)=            yOffset;            % y offset
             tgtSizes(trial)=            tgtSize;            % target size
+            wsnums(trial)=              wsnum;              % workspace number
             tgtCtrs(trial,:)=           ctr;                %center positions of the targets
         end
 
-        trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,tgtCtrs,...
+        trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,tgtCtrs,...
                     'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
         trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','int','cm'};
         trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
