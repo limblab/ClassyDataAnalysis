@@ -16,7 +16,10 @@ function getTRTTaskTable(cds,times)
     numTrials = length(times.number);
     wordGo = hex2dec('30');
     goCues =  cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordGo);
-    goCodes=  cds.words.word(bitand(hex2dec('f0'), cds.words.word) == wordGo)-wordGo;
+    
+    wordTargHold = hex2dec('a0');
+    targMask=bitand(hex2dec('f0'),cds.words.word) == wordTargHold;
+    targHoldTimes = cds.words.ts( targMask);
 
     %check DB version number and run appropriate parsing code
     % DB version 0 has 25 bytes before target position
@@ -26,8 +29,8 @@ function getTRTTaskTable(cds,times)
         hdrSize=25;
         numTgt = (cds.databursts.db(1)-hdrSize)/8;
 
+        targStartList=  nan(numTrials,1);
         goCueList=      nan(numTrials,numTgt);
-        goCodeList=     nan(numTrials,numTgt);
         numTgts=        numTgt*ones(numTrials,1);
         numAttempted=   nan(numTrials,1);
         xOffsets=       nan(numTrials,1); 
@@ -47,31 +50,39 @@ function getTRTTaskTable(cds,times)
             end
             if (cds.databursts.db(dbidx,1)-hdrSize)/8 ~= numTgt
                 %catch weird/corrupt databursts with different numbers of targets
-                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                warning('trt_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
                 corruptDB=1;
                 continue;
             end
 
+            % Target on times
+            idxTargHold = find(targHoldTimes > times.startTime(trial) & targHoldTimes < times.endTime(trial),1,'first');
+            %identify trials with corrupt codes that might end up with extra
+            %targets
+            if isempty(idxTargHold)
+                targStart = NaN;
+            else
+                targStart = targHoldTimes(idxTargHold);
+            end
+            
             % Go cues
             idxGo = find(goCues > times.startTime(trial) & goCues < times.endTime(trial));
 
             %get the codes and times for the go cues
             goCue = nan(1,numTgt);
-            goCode= nan(1,numTgt);
             if isempty(idxGo)
                 tgtsAttempted = 0;
             else
                 tgtsAttempted = length(idxGo);
             end
-            if tgtsAttempted>0
+            if tgtsAttempted>1
                 goCue(1:tgtsAttempted)=goCues(idxGo);
-                goCode(1:tgtsAttempted)= goCodes(idxGo);
             end
 
             %identify trials with corrupt end codes that might end up with extra
             %targets
             if length(idxGo) > numTgt
-                warning('rw_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                warning('trt_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
                 corruptDB=1;
                 continue;
             end
@@ -84,8 +95,8 @@ function getTRTTaskTable(cds,times)
             wsnum = bytes2float(cds.databursts.db(dbidx,22:25));
 
             % Build arrays
+            targStartList(trial,:)=     targStart;          % time of first target onset
             goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
-            goCodeList(trial,:)=        goCode;             % ?
             numTgts(trial)=             numTgt;             % max number of targets
             numAttempted(trial,:)=      tgtsAttempted;      % ?
             xOffsets(trial)=            xOffset;            % x offset
@@ -95,10 +106,10 @@ function getTRTTaskTable(cds,times)
             tgtCtrs(trial,:)=           ctr;                %center positions of the targets
         end
 
-        trials=table(goCueList,goCodeList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,tgtCtrs,...
-                    'VariableNames',{'goCueTime','tgtID','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
-        trials.Properties.VariableUnits={'s','int','int','int','cm','cm','cm','int','cm'};
-        trials.Properties.VariableDescriptions={'go cue time','code of the go cue','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
+        trials=table(targStartList,goCueList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,tgtCtrs,...
+                    'VariableNames',{'targetStartTime','goCueTime','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
+        trials.Properties.VariableUnits={'s','s','int','int','cm','cm','cm','int','cm'};
+        trials.Properties.VariableDescriptions={'first target hold time','go cue time','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
 
     else
         error('rw_trial_table_hdr:BadDataburstVersion',['Trial table parsing not implemented for databursts with version: ', num2str(db_version)])
