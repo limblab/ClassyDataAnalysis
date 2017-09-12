@@ -16,6 +16,12 @@ function getTRTTaskTable(cds,times)
     numTrials = length(times.number);
     wordGo = hex2dec('30');
     goCues =  cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordGo);
+
+    wordInitGo = hex2dec('35');
+    initGoCues =  cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordInitGo);
+
+    wordCTHold = hex2dec('A0');
+    ctHoldTimes = cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordCTHold);
     
     wordTargHold = hex2dec('a0');
     targMask=bitand(hex2dec('f0'),cds.words.word) == wordTargHold;
@@ -111,6 +117,113 @@ function getTRTTaskTable(cds,times)
         trials.Properties.VariableUnits={'s','s','int','int','cm','cm','cm','int','cm'};
         trials.Properties.VariableDescriptions={'first target hold time','go cue time','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
 
+    elseif db_version==1
+        hdrSize=25;
+        numTgt = (cds.databursts.db(1)-hdrSize)/8;
+
+        ctHoldList=     nan(numTrials,1);
+        targStartList=  nan(numTrials,1);
+        goCueList=      nan(numTrials,numTgt);
+        numTgts=        numTgt*ones(numTrials,1);
+        numAttempted=   nan(numTrials,1);
+        xOffsets=       nan(numTrials,1); 
+        yOffsets=       nan(numTrials,1);
+        tgtSizes=       nan(numTrials,1);
+        wsnums=         nan(numTrials,1);
+        for trial = 1:numel(times.startTime)
+            % Find databurst associated with startTime
+            dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts < times.endTime(trial));
+            if length(dbidx) > 1
+                warning('trt_trial_table: multiple databursts @ t = %.3f, using first:%d',times.startTime(trial),trial);
+                dbidx = dbidx(1);
+            elseif isempty(dbidx)
+                warning('trt_trial_table: no/deleted databurst @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            end
+            if (cds.databursts.db(dbidx,1)-hdrSize)/8 ~= numTgt
+                %catch weird/corrupt databursts with different numbers of targets
+                warning('trt_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            end
+
+            % CT hold start times
+            idxCTHold = find(ctHoldTimes > times.startTime(trial) & ctHoldTimes < times.endTime(trial));
+            %identify trials with corrupt codes that might end up with extra
+            %targets
+            if isempty(idxCTHold)
+                ctHold = NaN;
+            elseif length(idxCTHold) > 1
+                warning('trt_trial_table: Multiple center hold @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            else
+                ctHold = ctHoldTimes(idxInitGo);
+            end
+            
+            % Target on times
+            idxInitGo = find(initGoCues > times.startTime(trial) & initGoCues < times.endTime(trial));
+            %identify trials with corrupt codes that might end up with extra
+            %targets
+            if isempty(idxInitGo)
+                targStart = NaN;
+            elseif length(idxInitGo) > 1
+                warning('trt_trial_table: Multiple initial go cues @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            else
+                targStart = initGoCues(idxInitGo);
+            end
+            
+            % Go cues
+            idxGo = find(goCues > times.startTime(trial) & goCues < times.endTime(trial));
+
+            %get the codes and times for the go cues
+            goCue = nan(1,numTgt);
+            if isnan(targStart) && isempty(idxGo)
+                tgtsAttempted = 0;
+            elseif isempty(idxGo)
+                tgtsAttempted = 1;
+            else
+                tgtsAttempted = length(idxGo) + 1;
+            end
+            if tgtsAttempted>1
+                goCue(1:tgtsAttempted)=[targStart goCues(idxGo)];
+            end
+
+            %identify trials with corrupt end codes that might end up with extra
+            %targets
+            if length(idxGo) > numTgt
+                warning('trt_trial_table: Inconsistent number of targets @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
+                corruptDB=1;
+                continue;
+            end
+            %find target centers
+            ctr=bytes2float(cds.databursts.db(dbidx,hdrSize+1:end));
+            % Offsets, target size
+            xOffset = bytes2float(cds.databursts.db(dbidx,10:13));
+            yOffset = bytes2float(cds.databursts.db(dbidx,14:17));
+            tgtSize = bytes2float(cds.databursts.db(dbidx,18:21));
+            wsnum = bytes2float(cds.databursts.db(dbidx,22:25));
+
+            % Build arrays
+            ctHoldList(trial,:)=        ctHold;             % start time of center hold
+            targStartList(trial,:)=     targStart;          % time of first target onset
+            goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
+            numTgts(trial)=             numTgt;             % max number of targets
+            numAttempted(trial,:)=      tgtsAttempted;      % ?
+            xOffsets(trial)=            xOffset;            % x offset
+            yOffsets(trial)=            yOffset;            % y offset
+            tgtSizes(trial)=            tgtSize;            % target size
+            wsnums(trial)=              wsnum;              % workspace number
+            tgtCtrs(trial,:)=           ctr;                %center positions of the targets
+        end
+
+        trials=table(ctHoldList,targStartList,goCueList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,tgtCtrs,...
+                    'VariableNames',{'ctHoldTime','targetStartTime','goCueTime','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
+        trials.Properties.VariableUnits={'s','s','s','int','int','cm','cm','cm','int','cm'};
+        trials.Properties.VariableDescriptions={'time of center hold start','first target go cue time','go cue time','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
     else
         error('rw_trial_table_hdr:BadDataburstVersion',['Trial table parsing not implemented for databursts with version: ', num2str(db_version)])
     end
