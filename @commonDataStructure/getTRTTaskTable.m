@@ -17,9 +17,6 @@ function getTRTTaskTable(cds,times)
     wordGo = hex2dec('30');
     goCues =  cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordGo);
 
-    wordInitGo = hex2dec('35');
-    initGoCues =  cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordInitGo);
-
     wordCTHold = hex2dec('A0');
     ctHoldTimes = cds.words.ts(bitand(hex2dec('f0'), cds.words.word) == wordCTHold);
     
@@ -181,16 +178,16 @@ function getTRTTaskTable(cds,times)
 
             %get the codes and times for the go cues
             goCue = nan(1,numTgt);
-            if isnan(targStart) && isempty(idxGo)
+            if isempty(idxGo)
                 tgtsAttempted = 0;
-            elseif isempty(idxGo)
-                tgtsAttempted = 1;
             else
-                tgtsAttempted = length(idxGo) + 1;
+                tgtsAttempted = length(idxGo);
             end
-            if tgtsAttempted>1
-                goCue(1:tgtsAttempted)=[targStart goCues(idxGo)];
+            if tgtsAttempted>0
+                goCue(1:tgtsAttempted)=goCues(idxGo);
             end
+            % extract first go cue
+            targStart = goCue(1);
 
             %identify trials with corrupt end codes that might end up with extra
             %targets
