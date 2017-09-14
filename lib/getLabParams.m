@@ -103,7 +103,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0    0             0              1]'; 
             forceOffsets = [-240.5144  245.3220 -103.0073 -567.6240  332.3762 -591.9336]; %measured 3/17/16
 %                         force_offsets = [];
-        else
+        elseif datenum(dateTime) < datenum('08-Sep-2017')
             % replaced lab 6 load cell + handle with lab 3 load cell + handle
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
@@ -113,7 +113,6 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
 
             % fhcal = [-0.0129 0.0254 -0.1018 -6.2876 -0.1127 6.2163;...
             %         -0.2059 7.1801 -0.0804 -3.5910 0.0641 -3.6077]'./1000;
-            error('Load cell from RAW code is untested since load cell was replaced in July 17, 2017')
             fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
                     -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
                     -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
@@ -127,7 +126,36 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
             else
                 rotcal = eye(6);  
             end
+        else
+            % replaced handle with old lab 6 handle and lab 3 load cell
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
 
+            % fhcal = [-0.0129 0.0254 -0.1018 -6.2876 -0.1127 6.2163;...
+            %         -0.2059 7.1801 -0.0804 -3.5910 0.0641 -3.6077]'./1000;
+            fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
+                    -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
+                    -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
+                    -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
+                    36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./1000;
+            
+            Fy_invert = 1;
+            % rotation of the load cell to match forearm frame
+            % (load cell is upside down and slightly rotated)
+            theta_off = atan2(3,27); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
+%                         theta_off = 0;
+            rotcal = [-cos(theta_off) -sin(theta_off) 0    0             0              0;...
+                      -sin(theta_off) cos(theta_off)  0    0             0              0;...
+                      0                 0             1    0             0              0;...
+                      0                 0             0 -cos(theta_off) -sin(theta_off) 0;...
+                      0                 0             0 -sin(theta_off) cos(theta_off)  0;...
+                      0                 0             0    0             0              1]'; 
+
+            warning('getLabParams:Untested','New handle has not been tested yet, please run some tests to check load cell orientation')
         end
         Fy_invert = 1;    
         if rothandle
