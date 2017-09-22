@@ -32,7 +32,7 @@ function NEVNSx2cds(cds,opts)
             cds.eventsFromNEV(opts)
             % if a task was not passed in, set task varable
             if strcmp(opts.task,'Unknown')%if no task label was passed into the function call try to get one automatically
-                opts=cds.getTask(task,opts);
+                opts=cds.getTask(opts.task,opts);
             end
             
         end
