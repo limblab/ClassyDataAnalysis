@@ -86,6 +86,8 @@ function getTrialTable(cds,opts)
                 cds.getCOTaskTable(times);
             case 'CObump'
                 cds.getCObumpTaskTable(times);
+            case 'COactpas' % aliased with CObump
+                cds.getCObumpTaskTable(times);
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
