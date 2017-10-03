@@ -443,7 +443,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)
         checkLfp60hz(cds)
-        still=isStill(cds,data)
+        still=isStill(cds,data,varargin)
         writeSessionSummary(cds)
         sanitizeTimeWindows(cds)
         idx=skipResets(cds,time)
