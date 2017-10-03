@@ -23,11 +23,11 @@ function [pos]=enc2handlepos(cds,dateTime,lab)
         elseif datenum(dateTime) <datenum('07-Mar-2016')
             l1=46.8; l2=45;
         elseif datenum(dateTime) <datenum('17-Jul-2017')
-            l1 = 24; l2=27;
+            l1 = 24.5; l2=27;
         elseif datenum(dateTime) <datenum('08-Sep-2017')
-            l1 = 24; l2=28.5;
+            l1 = 24.5; l2=28.5;
         else
-            l1 = 24; l2=28;
+            l1 = 24.5; l2=28;
         end
     else
         l1 = 25.0; l2 = 26.8;   %use lab1 robot arm lengths as default
