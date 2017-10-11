@@ -27,6 +27,7 @@ function handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
         if sum(cds.kin.still) > cds.kinFilterConfig.sampleRate * 0.2  % Only use still data if there are more than 100 movement free samples                
             force_offsets = mean(raw_force(cds.kin.still(t_idx),:));
             appendLoadCellOffsets(force_offsets,opts.labNum,opts.dateTime);
+            disp(['Appended load cell offsets to lab ' num2str(opts.labNum) ' file'])
         else
             %issue error
             error('NEVNSx2cds:noStillTime','Could not find 0.2s of still time to compute load cell offsets. Not appending to calibration file.')

@@ -17,7 +17,7 @@ function appendLoadCellOffsets(offsets,labNum,dateTime)
     str_offsets = num2str(offsets,'%f\t');
     
     % append with a line containing the date and load cell offsets
-    fprintf(fid,['\n' num2str(datenum(dateTime)) '\t' str_offsets]);
+    fprintf(fid,[num2str(datenum(dateTime)) '\t' str_offsets '\n']);
     
     fclose(fid);
 end
