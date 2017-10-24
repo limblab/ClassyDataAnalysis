@@ -91,6 +91,8 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                     -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
                     -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
                     0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
+                
+            Fy_invert = 1;
             % rotation of the load cell to match forearm frame
             % (load cell is upside down and slightly rotated)
             theta_off = atan2(3,27); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
