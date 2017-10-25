@@ -186,6 +186,7 @@ function fitPds(binned)
                 type=pdType{i};
                 if(binned.pdConfig.(type))
                     vNames={[type,'Dir'],[type,'DirCI'],[type,'Moddepth'],[type,'ModdepthCI'],[type,'IsTuned']};
+                    data.(type).allIstuned(isnan(data.(type).allIstuned)) = 0; 
                     pdTable=[pdTable,table(data.(type).allPDs,data.(type).allPDCIs,data.(type).allModdepth,data.(type).allModdepthCI,logical(data.(type).allIstuned),'VariableNames',vNames)];
                 end
             end

@@ -23,14 +23,66 @@ function handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
     t_idx = roundTime(cds.enc.t,timePrecision)>=min_t & roundTime(cds.enc.t,timePrecision)<=max_t;
     
     %calculate offsets for the load cell and remove them from the force:
-    if sum(cds.kin.still) > 100  % Only use still data if there are more than 100 movement free samples                
-        force_offsets = mean(raw_force(cds.kin.still(t_idx),:));
+    if opts.getLoadCellOffsets
+        if sum(cds.kin.still) > cds.kinFilterConfig.sampleRate * 0.2  % Only use still data if there are more than 100 movement free samples                
+            force_offsets = mean(raw_force(cds.kin.still(t_idx),:));
+            appendLoadCellOffsets(force_offsets,opts.labNum,opts.dateTime);
+            disp(['Appended load cell offsets to lab ' num2str(opts.labNum) ' file'])
+        else
+            %issue error
+            error('NEVNSx2cds:noStillTime','Could not find 0.2s of still time to compute load cell offsets. Not appending to calibration file.')
+        end
     else
-        %issue warning
-        warning('NEVNSx2cds:noStillTime','Could not find 100 points of still time to compute load cell offsets. Defaulting to mean of force data')
-        %make known problem entry
-        cds.addProblem('No still data to use for computing load cell offsets. Offsets computed as mean of all load cell data')
-        force_offsets = mean(raw_force);
+        if sum(cds.kin.still) > cds.kinFilterConfig.sampleRate * 0.2  % Only use still data if there is more than 0.2 s of movement free data                
+            force_offsets = mean(raw_force(cds.kin.still(t_idx),:));
+        else
+            if ~opts.useMeanForce
+                [dates,loadCellOffsets] = getLoadCellOffsets(opts.labNum,opts.dateTime);
+                while 1
+                    if(length(dates)>=2)
+                        disp('Could not find 0.2s of still time to compute load cell offsets. Choose from the below options:')
+                        s=input(['1) Load cell offsets from date and time: ' dates{1} '\n' ...
+                                 '2) Load cell offsets from date and time: ' dates{2} '\n' ...
+                                 '3) Use mean load cell outputs as offsets\n'],'s');
+                        if strcmpi(s,'1')
+                            force_offsets = loadCellOffsets{1};
+                            break
+                        elseif strcmpi(s,'2')
+                            force_offsets = loadCellOffsets{2};
+                            break
+                        elseif strcmpi(s,'3')
+                            opts.useMeanForce = true;
+                            break
+                        else
+                            disp([s,' is not a valid response'])
+                        end
+                    elseif length(dates)==1
+                        disp('Could not find 0.2s of still time to compute load cell offsets. Choose from the below options:')
+                        s=input(['1) Load cell offsets from date and time: ' dates{1} '\n' ...
+                                 '2) Use mean load cell outputs as offsets\n'],'s');
+                        if strcmpi(s,'1')
+                            force_offsets = loadCellOffsets{1};
+                            break
+                        elseif strcmpi(s,'2')
+                            opts.useMeanForce = true;
+                            break
+                        else
+                            disp([s,' is not a valid response'])
+                        end
+                    else
+                        opts.useMeanForce = true;
+                        break
+                    end
+                end
+            end
+            if opts.useMeanForce % TODO: ADD OPTION TO USE CLOSEST CALIBRATION
+                %issue warning
+                warning('NEVNSx2cds:noStillTime','Could not find 0.2s of still time to compute load cell offsets. Defaulting to mean of force data')
+                %make known problem entry
+                cds.addProblem('No still data to use for computing load cell offsets. Offsets computed as mean of all load cell data')
+                force_offsets = mean(raw_force);
+            end
+        end
     end
 
     % Get calibration parameters based on lab number            

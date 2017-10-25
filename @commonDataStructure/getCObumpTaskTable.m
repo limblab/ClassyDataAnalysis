@@ -137,16 +137,16 @@ function getCObumpTaskTable(cds,times)
                 hideCursorMax(trial)=bytes2float(cds.databursts.db(idxDB,55:58));
 
                 abortDuringBump(trial)=cds.databursts.db(idxDB,59);
-                ctrHoldBump(trial)=cds.databursts.db(idxDB,61);
-                delayBump(trial)=cds.databursts.db(idxDB,62);
-                moveBump(trial)=cds.databursts.db(idxDB,63);
+                ctrHoldBump(trial)=cds.databursts.db(idxDB,60);
+                delayBump(trial)=cds.databursts.db(idxDB,61);
+                moveBump(trial)=cds.databursts.db(idxDB,62);
                 
-                bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,64:67));
-                bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,68:71));
-                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,72:75));
-                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,76:79));
+                bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,63:66));
+                bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,67:70));
+                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,71:74));
+                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,75:78));
                 
-                stimTrial(trial)=cds.databursts.db(idxDB,80);
+                stimTrial(trial)=cds.databursts.db(idxDB,79);
 
 
                 %now get things that rely only on words and word timing:

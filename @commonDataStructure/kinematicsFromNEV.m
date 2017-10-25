@@ -129,7 +129,13 @@ function kinematicsFromNEV(cds,opts)
     end
     
     %find still periods, and build table of kinematics flags:
-    still=cds.isStill(sqrt(pos(:,1).^2+pos(:,2).^2));
+    if opts.useAbsoluteStillThresh
+        % calculate the dX corresponding to 1e-4 cm/s
+        thresh = 1e-4 * 1/cds.kinFilterConfig.sampleRate;
+        still=cds.isStill(sqrt(pos(:,1).^2+pos(:,2).^2),'tolerance',thresh);
+    else
+        still=cds.isStill(sqrt(pos(:,1).^2+pos(:,2).^2));
+    end
     
     %use pos to compute vel:
     vx=gradient(pos(:,1),1/cds.kinFilterConfig.sampleRate);

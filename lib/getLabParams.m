@@ -91,6 +91,8 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                     -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
                     -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
                     0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
+                
+            Fy_invert = 1;
             % rotation of the load cell to match forearm frame
             % (load cell is upside down and slightly rotated)
             theta_off = atan2(3,27); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
@@ -118,7 +120,8 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                     -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
                     -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
                     36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
-                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./1000;
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./...
+                    repmat([5.218 5.218 1.772 217.518 217.518 217.669],6,1)./1000;
             
             Fy_invert = 1;
             if rothandle
@@ -141,7 +144,8 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                     -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
                     -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
                     36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
-                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./1000;
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./...
+                    repmat([5.218 5.218 1.772 217.518 217.518 217.669],6,1)./1000;
             
             Fy_invert = 1;
             % rotation of the load cell to match forearm frame
@@ -155,9 +159,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
-            warning('getLabParams:Untested','New handle has not been tested yet, please run some tests to check load cell orientation')
-        end
-        Fy_invert = 1;    
+        end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  
         end

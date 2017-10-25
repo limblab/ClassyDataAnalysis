@@ -26,6 +26,15 @@ function file2cds(cds,filePath,varargin)
     %               concatenate data for all sync events. If left empty,
     %               the loading routine will discard all data before the
     %               last sync event.
+    %'getLoadCellOffsets'   flags the nev loading routine to use the given
+    %               file to collect load cell offset data and append it to
+    %               a calibration document in ClassyDataAnalysis/lib
+    %'useMeanForce'     flags the nev loading routine to use the mean load
+    %               cell outputs as the load cell offsets in the case that
+    %               there is not enough still data
+    %'useAbsoluteStillThresh'   flags the nev loading routine to use a
+    %               threshold of 1e-4 cm/s as a threshold for stillness in
+    %               the kinematics
     %'useBlockBLOCKNAME'    flags the nev loading routing what data block
     %               to use in the case of re-sync events in the data. if
     %               BLOCKNAME is 'first' then the nev/nsx loading routine
@@ -80,7 +89,9 @@ function file2cds(cds,filePath,varargin)
     %in map.cmp.
     
     %% construct opts structure:
-    opts=struct('labNum',-1,'rothandle',false,'ignore_jumps',false,'ignore_filecat',false,'robot',false,'task','Unknown','hasChaoticLoad',false); 
+    opts=struct('labNum',-1,'rothandle',false,'ignore_jumps',false,'ignore_filecat',false,...
+        'robot',false,'task','Unknown','hasChaoticLoad',false,'getLoadCellOffsets',false,...
+        'useMeanForce',false,'useAbsoluteStillThresh',false); 
 
     %%
         % Parse arguments
@@ -99,6 +110,12 @@ function file2cds(cds,filePath,varargin)
                     doDB=false;
                 elseif strcmp(optStr,'recoverPreSync')
                     opts.recoverPreSync=true;
+                elseif strcmp(optStr,'getLoadCellOffsets')
+                    opts.getLoadCellOffsets=true;
+                elseif strcmp(optStr,'useMeanForce')
+                    opts.useMeanForce=true;
+                elseif strcmp(optStr,'useAbsoluteStillThresh')
+                    opts.useAbsoluteStillThresh=true;
                 elseif ischar(optStr) && length(optStr)>8 && strcmp(optStr(1:8),'useBlock')
                     opts.block=optStr(9:end);
                 elseif strcmp(optStr, 'ignoreFilecat')
