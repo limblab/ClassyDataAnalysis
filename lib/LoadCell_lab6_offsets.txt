@@ -1,3 +1,5 @@
 #WARNING: This file is used by getLoadCellOffsets and modified by appendLoadCellOffsets. DO NOT modify this file outside of those functions. Offsets should start from line 2. P.S. Windows Notepad doesn't read newline characters.
 736970.8361	261.516010	-1250.749706	 -152.497835	 -484.327287	 -346.889457	  626.299065
 736979.8356	256.603696	-1217.262342	 -111.216485	 -457.694200	 -345.394580	  669.707502
+736998.7625	276.790077	-1232.882112	 -108.056097	 -439.547500	 -378.670400	  590.902311
+737016.8266	319.115369	-1218.363244	 -120.709124	 -414.352327	 -380.599408	  562.319172
