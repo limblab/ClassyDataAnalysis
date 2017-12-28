@@ -190,7 +190,7 @@ function loadOpenSimData(cds,folderPath,dataType)
                 end
                 foundFiles=[foundFiles;fileNameList(j)];
             else
-                warning('loadOpenSimData:fileNotFound',['The specified file: ' fileNameList{j} ' was not found. Check file name and try again.']);
+                warning('loadOpenSimData:fileNotFound','The specified file: %s was not found. Check file name and try again.',fileNameList{j});
             end
         end
            
