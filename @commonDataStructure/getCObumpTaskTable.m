@@ -36,6 +36,7 @@ function getCObumpTaskTable(cds,times)
     bumpList=nan(numTrials,1);
     goCueList=nan(numTrials,1);
     ctrHold=nan(numTrials,1);
+    otHold=nan(numTrials,1);
     delayHold=nan(numTrials,1);
     movePeriod=nan(numTrials,1);
     bumpDelay=nan(numTrials,1);
@@ -66,6 +67,9 @@ function getCObumpTaskTable(cds,times)
     stimInsteadOfBump=false(numTrials,1);
     stimDelay=nan(numTrials,1);
     stimTimeList=nan(numTrials,1);
+    
+    trialRedo=nan(numTrials,1);
+    
     %get the databurst version:
     dbVersion=cds.databursts.db(1,2);
     skipList=[];
@@ -477,7 +481,7 @@ function getCObumpTaskTable(cds,times)
             % * Version 5 (0x05)
             %  * ----------------
             %  * byte  0:		uchar		=> number of bytes to be transmitted
-            %  * byte  1:		uchar		=> version number (in this case 0)
+            %  * byte  1:		uchar		=> version number (in this case 5)
             %  * byte  2-4:		uchar		=> task code 'C' 'O' 'B'
             %  * bytes 5-6:		uchar       => version code
             %  * byte  7-8:		uchar		=> version code (micro)
@@ -613,6 +617,158 @@ function getCObumpTaskTable(cds,times)
 
             trialsTable.Properties.VariableDescriptions={'center hold time','outer target onset time','instructed delay time','go cue time','movement time','intertrial time','penalty time',...
                                                             'size of targets','angle of outer target','x-y position of outer target',...
+                                                            'time of bump onset','would we abort during bumps','did we have a center hold bump',...
+                                                                'did we have a delay period bump','did we have a movement period bump','the time the bump was held at peak amplitude',...
+                                                                'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
+                                                                'time of stimulus on this trial','stim code issued in stim word','flag indicating the stimulus occurred concurrent with a bump',...
+                                                                'flag indicating the simulus replaced a bump on this trial','delay after period start at which stimulus word was issued by xpc'};
+
+        case 6
+            % * Version 6 (0x06)
+            %  * ----------------
+            %   Adding idiot mode and outer target hold
+            %  * byte  0:		uchar		=> number of bytes to be transmitted
+            %  * byte  1:		uchar		=> version number (in this case 6)
+            %  * byte  2-4:		uchar		=> task code 'C' 'O' 'B'
+            %  * bytes 5-6:		uchar       => version code
+            %  * byte  7-8:		uchar		=> version code (micro)
+
+            %  * bytes 9-12:	float		=> center hold time
+            %  * bytes 13-16:	float		=> delay time
+            %  * bytes 17-20:	float		=> move time
+            %  * bytes 21-24:	float		=> bump delay time
+            %  * bytes 25-28:	float		=> bump hold time
+            %  * bytes 29-32:	float		=> intertrial time
+            %  * bytes 33-36:	float		=> penalty time
+
+            %  * bytes 37-40:	float		=> target size
+            %  * bytes 41-44:	float		=> target radius
+            %  * bytes 45-48:	float		=> target angle
+
+            %  * byte 49:		uchar		=> hide cursor
+            %  * bytes 50-53:	float		=> hide radius min
+            %  * bytes 54-57:	float		=> hide radius max
+
+            %  * byte 58:		uchar		=> abort during bumps
+            %  * byte 59:		uchar		=> do center hold bump
+            %  * byte 60:		uchar		=> do delay period bump
+            %  * byte 61:		uchar		=> do move bump
+            %  * bytes 62-65:	float		=> bump hold at peak
+            %  * bytes 66-69:	float		=> bump rise time
+            %  * bytes 70-73:	float		=> bump magnitude
+            %  * bytes 74-77:	float		=> bump direction
+
+            %  * byte 78:		uchar		=> stim trial
+            %  * byte 79:		uchar		=> stim during bump
+            %  * byte 80:		uchar		=> stim instead of bump
+            %  * bytes 81-84:	float		=> stim delay time
+
+            %  * bytes 85-88:   float       => outer target hold time
+            %  * byte 89:       uchar       => redo trial (bool, true if trial is redone because of idiot mode)
+            %  */
+            % loop thorugh our trials and build our list vectors:
+            for trial = 1:numTrials
+                %find and parse the current databurst:
+                idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
+                if isempty(idxDB)
+                    skipList=[skipList,trial];
+                    continue
+                end
+
+                ctrHold(trial)=bytes2float(cds.databursts.db(idxDB,10:13));
+                delayHold(trial)=bytes2float(cds.databursts.db(idxDB,14:17));
+                movePeriod(trial)=bytes2float(cds.databursts.db(idxDB,18:21));
+                bumpDelay(trial)=bytes2float(cds.databursts.db(idxDB,22:25));
+                bumpHold(trial)=bytes2float(cds.databursts.db(idxDB,26:29));
+                intertrialPeriod(trial)=bytes2float(cds.databursts.db(idxDB,30:33));
+                penaltyPeriod(trial)=bytes2float(cds.databursts.db(idxDB,34:37));
+
+                tgtSize(trial)=bytes2float(cds.databursts.db(idxDB,38:41));
+                tgtAngle(trial)=bytes2float(cds.databursts.db(idxDB,46:49));
+                tgtCtr(trial,:)=bytes2float(cds.databursts.db(idxDB,42:45))*[cos(tgtAngle(trial)*pi/180),sin(tgtAngle(trial)*pi/180)];
+
+                hideCursor(trial)=cds.databursts.db(idxDB,50);
+                hideCursorMin(trial)=bytes2float(cds.databursts.db(idxDB,51:54));
+                hideCursorMax(trial)=bytes2float(cds.databursts.db(idxDB,55:58));
+
+                abortDuringBump(trial)=cds.databursts.db(idxDB,59);
+                ctrHoldBump(trial)=cds.databursts.db(idxDB,60);
+                delayBump(trial)=cds.databursts.db(idxDB,61);
+                moveBump(trial)=cds.databursts.db(idxDB,62);
+                
+                bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,63:66));
+                bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,67:70));
+                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,71:74));
+                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,75:78));
+                
+                stimTrial(trial)=cds.databursts.db(idxDB,79);
+
+                stimDuringBump(trial)=cds.databursts.db(idxDB,80);
+                stimInsteadOfBump(trial)=cds.databursts.db(idxDB,81);
+                stimDelay(trial)=bytes2float(cds.databursts.db(idxDB,82:85));
+                
+                otHold(trial)=bytes2float(cds.databursts.db(idxDB,86:89));
+                trialRedo(trial)=cds.databursts.db(idxDB,90);
+
+                %now get things that rely only on words and word timing:
+                idxOT=find(otOnTimes>times.startTime(trial) & otOnTimes < times.endTime(trial),1,'first');
+                if isempty(idxOT)
+                    tgtOnTime(trial)=nan;
+                    %tgtID(trial)=nan; %target ID has no meaning in this version of the databurst
+                else
+                    tgtOnTime(trial)=otOnTimes(idxOT);
+                    %tgtID(trial)=otOnCodes(idxOT); %target ID has no meaning in this version of the databurst
+                end
+
+                % Bump code and time
+                idxBump = find(bumpTimes > times.startTime(trial) & bumpTimes < times.endTime(trial), 1, 'first');
+                if isempty(idxBump)
+                    bumpTimeList(trial) = nan;
+                    %bumpList(trial) = nan;%bump ID has no meaning in this version of the databurst
+                    bumpAngle(trial)=nan;
+                else
+                    bumpTimeList(trial) = bumpTimes(idxBump);
+                    %bumpList(trial) = bitand(hex2dec('0f'),bumpCodes(idxBump));%bump ID has no meaning in this version of the databurst
+                end
+
+                % Go cue
+                idxGo = find(goCueTime > times.startTime(trial) & goCueTime < times.endTime(trial), 1, 'first');
+                if isempty(idxGo)
+                    goCueList(trial) = nan;
+                else
+                    goCueList(trial) = goCueTime(idxGo);
+                end
+
+                %Stim code
+                idx = find(stimTimes > times.startTime(trial) & stimTimes < times.endTime(trial),1,'first');
+                if isempty(idx)
+                    stimCode(trial) = nan;
+                else
+                    stimTimeList(trial)=stimTimes(idx);
+                    stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
+                end
+            end
+            
+            % convert bump direction into degrees
+            bumpAngle = round(bumpAngle*180/pi);
+            
+            %build table:
+            trialsTable=table(ctrHold,otHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
+                                trialRedo,tgtSize,tgtAngle,round(tgtCtr,4),...
+                                bumpTimeList,abortDuringBump,ctrHoldBump,delayBump,moveBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
+                                stimTimeList,stimCode,stimDuringBump,stimInsteadOfBump,stimDelay,...
+                                'VariableNames',{'ctrHold','otHold','tgtOnTime','delayHold','goCueTime','movePeriod','intertrialPeriod','penaltyPeriod',...
+                                'trialRedo','tgtSize','tgtDir','tgtCtr',...
+                                'bumpTime','abortDuringBump','ctrHoldBump','delayBump','moveBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
+                                'stimTime','stimCode','stimDuringBump','stimInsteadOfBump','stimDelay'});
+
+            trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s','s',...
+                                                    'bool','cm','deg','cm, cm',...
+                                                    's','bool','bool','bool','bool','s','s','N','deg',...
+                                                    's','int','bool','bool','s'};
+
+            trialsTable.Properties.VariableDescriptions={'center hold time','outer target hold time','outer target onset time','instructed delay time','go cue time','movement time','intertrial time','penalty time',...
+                                                            'whether this trial is a redo','size of targets','angle of outer target','x-y position of outer target',...
                                                             'time of bump onset','would we abort during bumps','did we have a center hold bump',...
                                                                 'did we have a delay period bump','did we have a movement period bump','the time the bump was held at peak amplitude',...
                                                                 'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
