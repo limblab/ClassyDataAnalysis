@@ -101,8 +101,8 @@ function merged=mergeAnalogTables(table1,table2)
     tend2=table2.t(end);
     dt2=table2.t(2)-tstart2;
     %check our frequencies
-    if round(dt,15)~=round(dt2,15)
-        error('mergeTable:differentFrequency',['Field: ',fieldName,' was collected at different frequencies in the cds and the new data and cannot be merged. Either re-load both data sets using the same filterspec, or refilter the data in one of the cds structures using decimation to get to the frequencies to match'])
+    if round(dt, 7)~=round(dt2, 7)
+        error('mergeTable:differentFrequency',['Data was collected at different frequencies in the cds and the new data and cannot be merged. Either re-load both data sets using the same filterspec, or refilter the data in one of the cds structures using decimation to get to the frequencies to match'])
     end
     %check if we have duplicate columns:
     for j=1:length(table1.Properties.VariableNames)
