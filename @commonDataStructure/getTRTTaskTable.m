@@ -347,7 +347,7 @@ function getTRTTaskTable(cds,times)
             %identify trials with corrupt codes that might end up with extra bumps
             if isempty(idxBump)
                 bumpTime = NaN;
-            elseif length(idxCTHold) > 1
+            elseif length(idxBump) > 1
                 warning('trt_trial_table: Multiple bump times @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
                 corruptDB=1;
                 continue;
