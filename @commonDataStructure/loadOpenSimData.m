@@ -2,18 +2,18 @@ function loadOpenSimData(cds,folderPath,dataType)
     %this is a method of the cds class and should be stored in the
     %@commonDataStructure folder with the other class methods.
     %
-    %attempts to load Open Sim data from the source directory of the cds.
-    %This uses the meta field to try and find properly named files in the
-    %folder specified. The prefix of the file myst match the name of the
-    %source file of the cds
+    %attempts to load Open Sim data from the given path in the cds.
     %
-    % Postfix can currently be one of:
+    % dataType can currently be one of:
     %   'joint_ang'
     %   'joint_vel'
     %   'joint_acc'
     %   'joint_dyn'
     %   'muscle_len'
     %   'muscle_vel'
+    %   'hand_pos'
+    %   'hand_vel'
+    %   'hand_acc'
     
     
     if ~strcmp(folderPath(end),filesep)
@@ -64,8 +64,17 @@ function loadOpenSimData(cds,folderPath,dataType)
 %                 postfix = '_MuscleAnalysis_FiberVelocity.sto';
                 postfix = '_MuscleAnalysis_Length.sto';
                 header_post = '_muscVel';
+            case 'hand_pos'
+                postfix = '_PointKinematics_hand_pos.sto';
+                header_post = '_handPos';
+            case 'hand_vel'
+                postfix = '_PointKinematics_hand_vel.sto';
+                header_post = '_handVel';
+            case 'hand_acc'
+                postfix = '_PointKinematics_hand_acc.sto';
+                header_post = '_handAcc';
             otherwise
-                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len''}')
+                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc''}')
         end
         fileNameList = {[folderPath,prefix{i},postfix]};
 %         fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
@@ -107,6 +116,18 @@ function loadOpenSimData(cds,folderPath,dataType)
                         if ~strcmp(tmpLine,'Length')
                             error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
                         end
+                    case 'hand_pos'
+                        if ~strcmp(tmpLine,'PointPosition')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'hand_vel'
+                        if ~strcmp(tmpLine,'PointVelocity')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'hand_acc'
+                        if ~strcmp(tmpLine,'PointAcceleration')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
                     otherwise
                         error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len''}')
                 end
@@ -136,6 +157,16 @@ function loadOpenSimData(cds,folderPath,dataType)
                 else
                     %convert 'time into 't'
                     header{idx}='t';
+                end
+                
+                % look for badly named headers (mostly for point
+                % kinematics)
+                header_aliases = {'state_0','Y';'state_1','Z';'state_2','X'};
+                for header_ctr = 1:size(header_aliases,1)
+                    state_idx=find(strcmp(header,header_aliases{header_ctr,1}),1);
+                    if ~isempty(state_idx)
+                        header{state_idx} = header_aliases{header_ctr,2};
+                    end
                 end
                 
                 % convert header to specify type of data
