@@ -203,9 +203,8 @@ function getTRTTaskTable(cds,times)
                     ctHold = NaN;
                 end
             elseif length(idxCTHold) > 1
-                warning('trt_trial_table: Multiple center hold @ t = %.3f, skipping trial:%d',times.startTime(trial),trial);
-                corruptDB=1;
-                continue;
+                % pick last CT hold time in trial
+                ctHold = ctHoldTimes(idxCTHold(end));
             else
                 ctHold = ctHoldTimes(idxCTHold);
             end
