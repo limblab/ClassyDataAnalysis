@@ -220,6 +220,8 @@ function loadOpenSimData(cds,folderPath,dataType)
                     cds.analog{match}=mergeTables(cds.analog{match},kin);
                 end
                 foundFiles=[foundFiles;fileNameList(j)];
+                
+                fclose(fid);
             else
                 warning('loadOpenSimData:fileNotFound','The specified file: %s was not found. Check file name and try again.',fileNameList{j});
             end
