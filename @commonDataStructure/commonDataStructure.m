@@ -396,6 +396,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         file2cds(cds,filePath,varargin)
         database2cds(cds,conn,filepath,varargin)
         loadOpenSimData(cds,folderPath,dataType)
+        affine_xform = loadRawMarkerData(cds,marker_data_path,affine_xform)
         
     end
     methods (Static = true)
@@ -439,6 +440,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getDCOTaskTable(cds,times)
         getSABESTaskTable(cds,times)
         getUCKTaskTable(cds,times)
+        getTRTTaskTable(cds,times)
         %general functions
         addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)
