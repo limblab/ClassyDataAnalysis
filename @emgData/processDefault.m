@@ -15,7 +15,7 @@ function processDefault(emg)
     EMGIDX = contains(tmp.Properties.VariableNames,'EMG');
     tmp{:,EMGIDX} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,tmp{:,EMGIDX})));
     
-    set(emg,'data',tmp)
+    set(emg,'rectEMG',tmp)
 
     evntData=loggingListenerEventData('processDefault',[]);
     notify(emg,'processedDefault',evntData)

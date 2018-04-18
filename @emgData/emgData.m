@@ -2,6 +2,9 @@ classdef emgData < timeSeriesData
     %sub-class inheriting from timeSeriesData so that emg specific methods
     % may be added. See also the timeSeriesData
     % class definition for inherited properties and methods
+    properties (SetAccess = protected, GetAccess = public, SetObservable = true)
+        rectEMG
+    end    
     methods (Static = true)
         %constructor
         function emg=emgData()

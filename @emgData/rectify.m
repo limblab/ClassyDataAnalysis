@@ -7,7 +7,7 @@ function rectify(emg)
     %nothing
     tmp=emg.data;
     tmp{:,2:end}=abs(tmp{:,2:end});
-    set(emg,'data',tmp)
+    set(emg,'rectEMG',tmp)
 
     evntData=loggingListenerEventData('rectify',[]);
     notify(emg,'rectified',evntData)

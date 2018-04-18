@@ -138,7 +138,7 @@ classdef binnedData < matlab.mixin.SetGet
                 elseif ~isfield(drc,'windows')
                     error('dimReductionConfig:noWindows','the dimReductionConfig must have a windows field giving the time windows for the trials of interest')
                 elseif ~isfield(drc,'dimension')
-                    error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionalit of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
+                    error('dimReductionConfig:noDimension','the dimReductionConfig must have a dimension field giving the dimensionality of the final space. For PCA or PPCA this field will be ignored so you can just leave it empty')
                 elseif ~isfield(drc,'segLength')
                     error('dimReductionConfig:noSegLength','the dimReductionConfig must have a segLenght field')
                 elseif ~isfield(drc,'trials')

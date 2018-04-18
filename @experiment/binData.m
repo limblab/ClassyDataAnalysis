@@ -36,26 +36,36 @@ function binData(ex,varargin)
     %start with our defined fields
     bins=[];
     for i=1:length(ex.binConfig.include)
-        currLabel=ex.binConfig.include(i).field;
-        if strcmp(currLabel,'units') || strcmp(currLabel,'analog') 
+        currLabel=ex.binConfig.include(i).field; % current field we're working through
+        if strcmp(currLabel,'units') || strcmp(currLabel,'analog')  % if it's analog or units, skip the rest of this jazz, go to the specialized stuff later
             continue
         end
-        if isempty(ex.(currLabel).data)
+        if isempty(ex.(currLabel).data) % if there isn't any data in that section
             error('binData:missingData',['tried to bin field ',currLabel,', which is empty'])
         end
-        if strcmp(currLabel,'trials')
+        if strcmp(currLabel,'trials') % can't bin a trial data structure
             warning('binData:noMethodForTrials','trials are not continuous data and cannot be binned. Trials will be skipped. remove the trials entry in binConfig.include to suppress this message')
             continue
         end
+        
+
         if isempty(ex.binConfig.include(i).which)
             includeNames=ex.(currLabel).data.Properties.VariableNames(2:end);
-            temp=decimateData(ex.(currLabel).data{:,:},ex.binConfig.filterConfig);
+            if strcmp(currLabel,'emg') % this is because the rectified data will be in rectEMG in the emgData subclass
+                temp=decimateData(ex.(currLabel).rectEMG{:,:},ex.binConfig.filterConfig);
+            else
+                temp=decimateData(ex.(currLabel).data{:,:},ex.binConfig.filterConfig);
+            end
         else
             includeNames=ex.binConfig.include(i).which;
-            temp=zeros(numel(ex.(currLabel).data.t),numel(ex.binConfig.include(i).which)+1);
+            temp=zeros(numel(ex.(currLabel).data.t),numel(ex.binConfig.include(i).which)+1); % preallocate a matrix
             temp(:,1)=ex.(currLabel).data.t;
             for j=1:length(ex.binConfig.include(i).which)
-                temp(:,j+1)=ex.(currLabel).data.(ex.binConfig.include(i).which{j});
+                if strcmp(currLabel,'emg')
+                    temp(:,j+1)=ex.(currLabel).rectEMG.(ex.binConfig.include(i).which{j});
+                else
+                    temp(:,j+1)=ex.(currLabel).data.(ex.binConfig.include(i).which{j});
+                end
             end
             temp=decimateData(temp,ex.binConfig.filterConfig);
         end
