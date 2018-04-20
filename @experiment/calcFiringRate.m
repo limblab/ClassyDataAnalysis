@@ -59,7 +59,7 @@ function calcFiringRate(ex,varargin)
     end
     
     if offset==0
-        warning('calcFiringRate:zeroOffset','There is no offset between neural and external data. Normally you want some offset to account for effernt/affernt latency')
+        warning('calcFiringRate:zeroOffset','There is no offset between neural and external data. Normally you want some offset to account for efferent/afferent latency')
     elseif offset>.1
         warning('calcFiringRate:largeOffset',['The offset specified is very large: (',num2str(offset),'). Normal offsets are .015s to .05s. It is possible that the offset is entered in ms rather than s'])
     end

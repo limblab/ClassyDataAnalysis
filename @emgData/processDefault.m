@@ -11,8 +11,8 @@ function processDefault(emg)
 
     [blow,alow] = butter(4,20/samprate);
     [bhigh,ahigh] = butter(4,10/samprate,'high');
-
-    EMGIDX = contains(tmp.Properties.VariableNames,'EMG');
+    
+    EMGIDX = cellfun(@(x)~isempty(strfind(x,'EMG')),tmp.Properties.VariableNames);
     tmp{:,EMGIDX} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,tmp{:,EMGIDX})));
     
     set(emg,'rectEMG',tmp)
