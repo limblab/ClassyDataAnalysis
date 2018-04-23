@@ -64,6 +64,9 @@ function getReactionTimeTaskTable(cds,times)
     bumpTimeList = nan(numTrials,1);
     goCueList = nan(numTrials,1);
     
+    abortDuringBump = nan(numTrials,1);
+    forceReaction = nan(numTrials,1);
+    
     %get the databurst version:
     dbVersion=cds.databursts.db(1,2);
     skipList=[];
@@ -84,70 +87,72 @@ function getReactionTimeTaskTable(cds,times)
                 % * ----------------
                 % * byte  0:		uchar		=> number of bytes to be transmitted
                 % * byte  1:		uchar		=> version number (in this case one)
-                % * byte  2-3:	uchar		=> task code ('FC')
-                % * bytes 4-5:	uchar       => version code
-                % * byte  5-6:	uchar		=> version code (micro)
+                % * byte  2:        uchar       => databurst task code
+                % * byte  3-4:	uchar		=> task code ('FC')
+                % * bytes 4-6:	uchar       => version code
+                % * byte  7-8:	uchar		=> version code (micro)
                 % *
-                % * bytes 7-10:  float		=> target angle
-                % * byte  11:	uchar           => random target flag
-                % * bytes 12-15: float		=> target radius
-                % * bytes 16-19: float		=> target size
-                % * byte  20:	uchar		=> show target during bump
+                % * bytes 9-12:  float		=> target angle
+                % * byte  13:	uchar           => random target flag
+                % * bytes 14-17: float		=> target radius
+                % * bytes 18-21: float		=> target size
+                % * byte  22:	uchar		=> show target during bump
                 % *
-                % * byte  21:                => bump trial flag
-                % * bytes 22-25: float		=> bump direction
-                % * bytes 26-29: float       => bump magnitude
-                % * bytes 30-33: float		=> bump floor (minimum force(N) bump can take)
-                % * bytes 34-37:	float		=> bump ceiling (maximum force(N) bump can take)
-                % * bytes 38-41:	float		=> bump step
-                % * bytes 42-45: float		=> bump duration
-                % * bytes 46-49: float		=> bump ramp
+                % * byte  23:                => bump trial flag
+                % * bytes 24-27: float		=> bump direction
+                % * bytes 28-31: float       => bump magnitude
+                % * bytes 32-35: float		=> bump floor (minimum force(N) bump can take)
+                % * bytes 36-39:	float		=> bump ceiling (maximum force(N) bump can take)
+                % * bytes 40-43:	float		=> bump step
+                % * bytes 44-47: float		=> bump duration
+                % * bytes 48-51: float		=> bump ramp
                 % *
-                % * byte  50:	uchar		=> stim trial flag
-                % * bytes 51:    uchar       => stim code
+                % * byte  52:	uchar		=> stim trial flag
+                % * bytes 53:    uchar       => stim code
                 % *
-                % * byte  52:    uchar       => training trial flag
+                % * byte  54:    uchar       => training trial flag
                 % *
-                % * byte  53:	uchar		=> recenter cursor flag
-                % * byte  54:    uchar       => hide cursor during bump
+                % * byte  55:	uchar		=> recenter cursor flag
+                % * byte  56:    uchar       => hide cursor during bump
                 % *
-                % * bytes 55-58: float		=> intertrial time
-                % * bytes 59-62: float		=> penalty time
-                % * bytes 63-67: float		=> bump hold time
-                % * bytes 68-71: float		=> center hold time
-                % * bytes 72-75: float		=> bump delay time
+                % * bytes 57-60: float		=> intertrial time
+                % * bytes 61-64: float		=> penalty time
+                % * bytes 65-68: float		=> bump hold time
+                
+                % * bytes 72-75: float		=> center hold time
+                % * bytes 76-79: float		=> bump delay time
                 % */
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-                tgtAngle(trial)=bytes2float(cds.databursts.db(idxDB,7:10));
-                randomTargets(trial)=cds.databursts.db(idxDB,11);
-                tgtRadius(trial)=bytes2float(cds.databursts.db(12:15));
-                tgtSize(trial)=bytes2float(cds.databursts.db(idxDB,16:19));
-                showTgtDuringBump(trial) = cds.databursts.db(idxDB,20);
+                tgtAngle(trial)=bytes2float(cds.databursts.db(idxDB,10:13));
+                randomTargets(trial)=cds.databursts.db(idxDB,14);
+                tgtRadius(trial)=bytes2float(cds.databursts.db(15:18));
+                tgtSize(trial)=bytes2float(cds.databursts.db(idxDB,19:22));
+                showTgtDuringBump(trial) = cds.databursts.db(idxDB,23);
 
-                bumpTrial(trial) = cds.databursts.db(idxDB,21);
-                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,22:25));
-                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,26:29));
-                bumpFloor(trial) = bytes2float(cds.databursts.db(idxDB,30:33));
-                bumpCeiling(trial) = bytes2float(cds.databursts.db(idxDB,34:37));
-                bumpStep(trial) = bytes2float(cds.databursts.db(idxDB,38:41));
-                bumpHoldPeriod(trial) = bytes2float(cds.databursts.db(idxDB,42:45));
-                bumpRisePeriod(trial) = bytes2float(cds.databursts.db(idxDB,46:49));
+                bumpTrial(trial) = cds.databursts.db(idxDB,24);
+                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,25:28));
+                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,29:32));
+                bumpFloor(trial) = bytes2float(cds.databursts.db(idxDB,33:36));
+                bumpCeiling(trial) = bytes2float(cds.databursts.db(idxDB,37:40));
+                bumpStep(trial) = bytes2float(cds.databursts.db(idxDB,41:44));
+                bumpHoldPeriod(trial) = bytes2float(cds.databursts.db(idxDB,45:48));
+                bumpRisePeriod(trial) = bytes2float(cds.databursts.db(idxDB,49:52));
                 
-                stimTrial(trial)= cds.databursts.db(idxDB,50);
-                stimCode(trial) = cds.databursts.db(idxDB,51);
+                stimTrial(trial)= cds.databursts.db(idxDB,53);
+                stimCode(trial) = cds.databursts.db(idxDB,54);
                 
-                isTrainingTrial(trial)=cds.databursts.db(idxDB,52);
+                isTrainingTrial(trial)=cds.databursts.db(idxDB,55);
                 
-                recenterCursor(trial)=cds.databursts.db(idxDB,53);
-                hideCursor(trial)=cds.databursts.db(idxDB,54);
+                recenterCursor(trial)=cds.databursts.db(idxDB,56);
+                hideCursor(trial)=cds.databursts.db(idxDB,57);
 
-                intertrialPeriod(trial)=bytes2float(cds.databursts.db(idxDB,55:58));
-                penaltyPeriod(trial)=bytes2float(cds.databursts.db(idxDB,59:62));
-                ctrHold=bytes2float(cds.databursts.db(idxDB,67:70));
-                bumpDelay=bytes2float(cds.databursts.db(idxDB,71:74));
+                intertrialPeriod(trial)=bytes2float(cds.databursts.db(idxDB,58:61));
+                penaltyPeriod(trial)=bytes2float(cds.databursts.db(idxDB,62:65));
+                ctrHold(trial)=bytes2float(cds.databursts.db(idxDB,66:69));
+                bumpDelay(trial)=bytes2float(cds.databursts.db(idxDB,70:73));
                 
-                abortDuringBump = cds.databursts.db(idxDB,75);
-                forceReaction = cds.databursts.db(idxDB,76);
+                abortDuringBump(trial) = cds.databursts.db(idxDB,78);
+                forceReaction(trial) = cds.databursts.db(idxDB,79);
                 
                 %now get things that rely only on words and word timing:
                 idxOT=find(otOnTimes>times.startTime(trial) & otOnTimes < times.endTime(trial),1,'first');
@@ -194,24 +199,30 @@ function getReactionTimeTaskTable(cds,times)
                                 bumpTimeList,abortDuringBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
                                 stimTrial,stimCode,... 
                                 recenterCursor,forceReaction,hideCursor,...
+                                bumpStep,bumpCeiling,bumpFloor,...
                                 'VariableNames',{'ctrHold','tgtOnTime','goCueTime','intertrialPeriod','penaltyPeriod',...
                                 'bumpDelay','bumpHoldTime','tgtSize','tgtDir','tgtDistance',...
                                 'isTrainingTrial',...
                                 'bumpTime','abortDuringBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
                                 'isStimTrial','stimCode',...
-                                'recenterCursor','forceReaction','hideCursor'});
+                                'recenterCursor','forceReaction','hideCursor',...
+                                'bumpStep','bumpCeiling','bumpFloor'});
 
             trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s',...
-                                                    'cm','deg','cm, cm','cm','bool','deg','deg','bool','pct',...
-                                                    's','bool','bool','bool','bool','s','s','N','deg',...
-                                                    'bool','pct','int',...
-                                                    'bool','bool'};
+                                                    'cm','deg','cm',...
+                                                    'bool',...
+                                                    's','bool','s','s','N','deg'...
+                                                    'bool','int',...
+                                                    'bool','bool','bool',...
+                                                    'int','N','N'};
             trialsTable.Properties.VariableDescriptions={'center hold time','outer target onset time','go cue time','intertrial time','penalty time','time after entering ctr tgt that bump happens','time after bump onset before go cue',...
-                                                            'size of targets','angle of outer target','distance to outer target from center','only the correct target was shown',...
+                                                            'size of targets','angle of outer target','distance to outer target from center',...
+                                                            'only the correct target was shown',...
                                                             'time of bump onset','would we abort during bumps','the time the bump was held at peak amplitude',...
                                                             'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
                                                             'was there stimulation','code in the stim word',...
-                                                            'did the cursor recenter after bump','did we force reaction time',,'did we hide the cursor'};
+                                                            'did the cursor recenter after bump','did we force reaction time','did we hide the cursor',...
+                                                            'step number of the bump staircase','staircase ceiling force','staircase floor force'};
             
        
         otherwise
@@ -222,7 +233,6 @@ function getReactionTimeTaskTable(cds,times)
     trialsTable.Properties.Description='Trial table for the CObump task';
     %sanitize trial table by masking off corrupt databursts with nan's:
     mask= ( trialsTable.ctrHold<0           | trialsTable.ctrHold>10000 | ...
-            trialsTable.delayHold<0         | trialsTable.delayHold>10000 |...
             trialsTable.intertrialPeriod<0  | trialsTable.intertrialPeriod>10000 |...
             trialsTable.penaltyPeriod<0     | trialsTable.penaltyPeriod>10000 |...
             trialsTable.bumpHoldPeriod<0     | trialsTable.bumpHoldPeriod>10000 |...
