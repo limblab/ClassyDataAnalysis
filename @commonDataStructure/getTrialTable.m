@@ -21,6 +21,7 @@ function getTrialTable(cds,opts)
     
     if isempty(cds.words) || isempty(cds.databursts)
         %this file has no trial info
+        cds.getGenericTaskTable()
         return
     end
     
