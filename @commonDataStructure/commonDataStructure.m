@@ -441,6 +441,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getSABESTaskTable(cds,times)
         getUCKTaskTable(cds,times)
         getTRTTaskTable(cds,times)
+        getGenericTaskTable(cds)
         %general functions
         addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)
