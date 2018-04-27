@@ -125,7 +125,7 @@ function getReactionTimeTaskTable(cds,times)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
                 tgtAngle(trial)=bytes2float(cds.databursts.db(idxDB,10:13));
                 randomTargets(trial)=cds.databursts.db(idxDB,14);
-                tgtRadius(trial)=bytes2float(cds.databursts.db(15:18));
+                tgtRadius(trial)=bytes2float(cds.databursts.db(idxDB,15:18));
                 tgtSize(trial)=bytes2float(cds.databursts.db(idxDB,19:22));
                 showTgtDuringBump(trial) = cds.databursts.db(idxDB,23);
 
