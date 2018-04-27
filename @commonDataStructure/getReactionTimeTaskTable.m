@@ -68,7 +68,7 @@ function getReactionTimeTaskTable(cds,times)
     forceReaction = nan(numTrials,1);
     
     bumpStaircaseIdx = nan(numTrials,1);
-    bumpStaircaseValue = nan(numTrials,2);
+    bumpStaircaseValue = nan(numTrials,1);
     %get the databurst version:
     dbVersion=cds.databursts.db(1,2);
     skipList=[];
@@ -316,8 +316,8 @@ function getReactionTimeTaskTable(cds,times)
                 abortDuringBump(trial) = cds.databursts.db(idxDB,78);
                 forceReaction(trial) = cds.databursts.db(idxDB,79);
                 
-                bumpStaircaseIdx(trial) = cds.databursts.db(idxDB,80:83);
-                bumpStaircaseValue(trial) = cds.databursts.db(idxDB,84:87);
+                bumpStaircaseIdx(trial) = bytes2float(cds.databursts.db(idxDB,80:83));
+                bumpStaircaseValue(trial) = bytes2float(cds.databursts.db(idxDB,84:87));
                 %now get things that rely only on words and word timing:
                 idxOT=find(otOnTimes>times.startTime(trial) & otOnTimes < times.endTime(trial),1,'first');
                 if isempty(idxOT)
