@@ -21,6 +21,7 @@ function getTrialTable(cds,opts)
     
     if isempty(cds.words) || isempty(cds.databursts)
         %this file has no trial info
+        cds.getGenericTaskTable()
         return
     end
     
@@ -114,6 +115,8 @@ function getTrialTable(cds,opts)
 
             case 'TRT' % Raeed's two workspace random target task
                 cds.getTRTTaskTable(times);
+            case 'RT' % reaction time task
+                cds.getReactionTimeTaskTable(times);
                 
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')

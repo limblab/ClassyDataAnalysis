@@ -45,7 +45,9 @@ function NEVNSx2cds(cds,opts)
        
 
     %% the kinetics
-        cds.forceFromNSx(opts)
+        if opts.robot
+            cds.forceFromNSx(opts)
+        end
 
     %% The Units
     % Build catalogue of entities
@@ -74,6 +76,9 @@ function NEVNSx2cds(cds,opts)
             if strcmp(opts.task,'Unknown') 
                 warning('NEVNSx2cds:UnknownTask','The task for this file is not known, the trial data table may be inaccurate')
             end
+            cds.getTrialTable(opts)
+        elseif (isempty(cds.databursts) && isempty(cds.trials) && strcmp(opts.task, 'Unknown'))
+            opts.no_task = true;
             cds.getTrialTable(opts)
         end
     %% sanitize times so that all our data is in the same window.
