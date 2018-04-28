@@ -3,14 +3,14 @@ function processDefault(emg)
     %in the @emgData folder
     %
     %emg.process_default()
-    %high pass at 10 Hz, rectify, low pass at 25 Hz
+    %high pass at 50 Hz, rectify, low pass at 10 Hz
     tmp=emg.data;
     
     % find sampling rate
     samprate = 1/mode(diff(tmp.t));
 
-    [blow,alow] = butter(4,20/samprate);
-    [bhigh,ahigh] = butter(4,10/samprate,'high');
+    [blow,alow] = butter(4,2*10/samprate); % butter constructs off 1/2 the sampling frequency!!! 
+    [bhigh,ahigh] = butter(4,2*50/samprate,'high');
 
     EMGIDX = contains(tmp.Properties.VariableNames,'EMG');
     tmp{:,EMGIDX} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,tmp{:,EMGIDX})));
