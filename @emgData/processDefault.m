@@ -12,7 +12,7 @@ function processDefault(emg)
     [blow,alow] = butter(4,2*10/samprate); % butter constructs off 1/2 the sampling frequency!!! 
     [bhigh,ahigh] = butter(4,2*50/samprate,'high');
 
-    EMGIDX = contains(tmp.Properties.VariableNames,'EMG');
+    EMGIDX = ~cellfun(@(x)isempty(strfind(x,'EMG')),tmp.Properties.VariableNames);
     tmp{:,EMGIDX} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,tmp{:,EMGIDX})));
     
     set(emg,'data',tmp)
