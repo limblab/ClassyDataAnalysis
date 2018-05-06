@@ -92,10 +92,8 @@ function varargout=getGitLog(obj,path,varargin)
             end
         end
     end
-
     varargout{1}=gitLogStruct;
-    
-    
+
     %% if necessary parse the filelog string into a struct:
     if nargout==2
         fileLog=strsplit(fileLogString,'\n');
