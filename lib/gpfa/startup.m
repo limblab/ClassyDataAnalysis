@@ -1,8 +1,15 @@
-addpath core_gpfa
-addpath core_twostage
-addpath plotting
-addpath util
-addpath util/precomp
+p = mfilename('fullpath'); % location of this file
+p = strsplit(p,filesep); % pull apart the file path
+p = strjoin(p(1:end-1),filesep); % rejoin without the filename
+
+% adding relative path names in case the gpfa folder isn't currently on the
+% path
+addpath(p);
+addpath([p,filesep,'core_gpfa']);
+addpath([p,filesep,'core_twostage']);
+addpath([p,filesep,'plotting']);
+addpath([p,filesep,'util']);
+addpath([p,filesep,'util',filesep,'precomp']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The following code checks for the relevant MEX files (such as .mexa64
@@ -10,7 +17,7 @@ addpath util/precomp
 % mex file if it can not find the right one.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Toeplitz Inversion
-path(path,'util/invToeplitz');
+path(path,[p,filesep,'util',filesep,'invToeplitz']);
 % Create the mex file if necessary.
 if ~exist(sprintf('util/invToeplitz/invToeplitzFastZohar.%s',mexext),'file')
   try
@@ -25,7 +32,7 @@ if ~exist(sprintf('util/invToeplitz/invToeplitzFastZohar.%s',mexext),'file')
 end
   
 % Posterior Covariance Precomputation  
-path(path,'util/precomp');
+path(path,[p,filesep,'util',filesep,'precomp']);
 % Create the mex file if necessary.
 if ~exist(sprintf('util/precomp/makePautoSumFast.%s',mexext),'file')
   try
