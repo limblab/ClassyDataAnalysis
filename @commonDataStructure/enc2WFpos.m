@@ -6,5 +6,5 @@ function pos=enc2WFpos(cds)
 %first column is the start of a window where there were missing points, and
 %the second column is 
     
-    pos=cds.enc{:,:};
+    pos=cds.enc{:,2:3};
 end

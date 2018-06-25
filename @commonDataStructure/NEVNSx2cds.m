@@ -45,7 +45,7 @@ function NEVNSx2cds(cds,opts)
        
 
     %% the kinetics
-        if opts.robot
+        if opts.robot || strcmp(opts.task,'WF')
             cds.forceFromNSx(opts)
         end
 

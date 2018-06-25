@@ -47,3 +47,4 @@ if ~exist(sprintf('util/precomp/makePautoSumFast.%s',mexext),'file')
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
+clear p;
