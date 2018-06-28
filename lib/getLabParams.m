@@ -155,7 +155,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
-        else
+        elseif datenum(dateTime)<datenum('10-Jun-2018')
             % replaced load cell with new lab 6 load cell and amp
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\New load cell (20180309)\FT23102.cal
@@ -182,6 +182,21 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
+        else
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [-0.0129 0.0254 -0.1018 -6.2876 -0.1127 6.2163;...
+                    0.2059 -7.1801 0.0804 3.5910 -0.0641 33.6077]'./1000;
+            
+            Fy_invert = 1;
+            if rothandle
+                rotcal = [-1 0; 0 1];  
+            else
+                rotcal = [1 0; 0 1];  
+            end
         end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  
