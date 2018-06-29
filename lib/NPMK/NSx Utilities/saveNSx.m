@@ -24,12 +24,12 @@ else
 end
 
 
-Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
-if strcmpi(Accept,'y')
-else
-    disp('Ending Script...');
-    return
-end
+% Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
+% if strcmpi(Accept,'y')
+% else
+%     disp('Ending Script...');
+%     return
+% end
 
 %%
 % Write the basic header into the file
