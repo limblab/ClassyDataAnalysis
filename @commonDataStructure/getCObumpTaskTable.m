@@ -147,7 +147,7 @@ function getCObumpTaskTable(cds,times)
                 else
                     stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
                 end
-            end
+            
 
             % Reorient bump angle to be relative to world coordinates instead of target
             bumpAngle = mod(bumpAngle + tgtAngle,360);
