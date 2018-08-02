@@ -441,6 +441,8 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getSABESTaskTable(cds,times)
         getUCKTaskTable(cds,times)
         getTRTTaskTable(cds,times)
+        getReactionTimeTaskTable(cds,times)
+        getRingReportingTaskTable(cds,times)
         getGenericTaskTable(cds)
         %general functions
         addProblem(cds,problem,varargin)%data preprocessing functions

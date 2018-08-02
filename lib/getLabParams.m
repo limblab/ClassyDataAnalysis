@@ -155,7 +155,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
-        else
+        elseif datenum(dateTime)<datenum('10-Jun-2018')
             % replaced load cell with new lab 6 load cell and amp
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\New load cell (20180309)\FT23102.cal
@@ -182,6 +182,25 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
+        else
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
+                    -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
+                    -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
+                    -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
+                    36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./...
+                    repmat([5.218 5.218 1.772 217.518 217.518 217.669],6,1)./1000;
+            Fy_invert = 1;
+            if rothandle
+                rotcal = diag([-1 1 1 -1 1 1]);  
+            else
+                rotcal = eye(6);  
+            end
         end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  

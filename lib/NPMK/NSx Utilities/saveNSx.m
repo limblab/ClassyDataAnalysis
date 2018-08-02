@@ -14,42 +14,53 @@ function saveNSx(NSx,varargin)
 
 
 %% 
+reportFlag=true;
+overwriteFlag=false;
+FilePath=[];
+if nargin > 1
+    for idx = 1:numel(varargin)
+        if strcmpi(varargin{idx}, 'noreport')
+            reportFlag = false;
+        elseif strcmpi(varargin{idx}, 'overwrite')
+            overwriteFlag=true;
+        elseif length(varargin{idx})>3 && ...
+                (strcmpi(varargin{idx}(3),'\') || ...
+                 strcmpi(varargin{idx}(1),'/') || ...
+                 strcmpi(varargin{idx}(2),'/') || ...
+                 strcmpi(varargin{idx}(1:2), '\\')) 
+            FilePath = varargin{1};
+        end
+    end
+end
 % Verify FilePath and establish overwrite paramaters
-if not(isempty(varargin))
-    FilePath = varargin{1};
-else
+if isempty(FilePath)
     FilePath = [fullfile(NSx.MetaTags.FilePath,NSx.MetaTags.Filename) NSx.MetaTags.FileExt];
     [File,Path] = uiputfile;
     FilePath = [fullfile(Path,NSx.MetaTags.Filename(1:end-4)),'-Modified',  NSx.MetaTags.FileExt];
 end
-
-
-% Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
-% if strcmpi(Accept,'y')
-% else
-%     disp('Ending Script...');
-%     return
-% end
+if reportFlag
+    Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
+    if strcmpi(Accept,'y')
+    else
+        disp('Ending Script...');
+        return
+    end
+end
 
 %%
 % Write the basic header into the file
 %FullFile
 Debug = 1;
-
-if exist(FilePath)
-        if exist(FilePath)
-        disp('File already exists!');
-        OverwritePrompt = input('Would you like to overwrite? (Y/N)','s');
-        if strcmpi(OverwritePrompt,'y')
-            Overwrite = 1;
-            delete(FilePath);
-        else
-            return
-        end
-        end
+if exist(FilePath,'file') && ~overwriteFlag
+    disp('File already exists!');
+    OverwritePrompt = input('Would you like to overwrite? (Y/N)','s');
+    if strcmpi(OverwritePrompt,'y')
+        delete(FilePath);
+    else
+        return
+    end
 end
 
-clear Overwrite
 clear OverwritePrompt
 clear varargin
 

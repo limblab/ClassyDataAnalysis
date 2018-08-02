@@ -45,7 +45,7 @@ function NEVNSx2cds(cds,opts)
        
 
     %% the kinetics
-        if opts.robot
+        if opts.robot || strcmp(opts.task,'WF')
             cds.forceFromNSx(opts)
         end
 
@@ -72,15 +72,15 @@ function NEVNSx2cds(cds,opts)
     %% trial data
         %if we have databursts and we don't have a trial table yet, compute
         %the trial data, otherwise skip it
-        if (~isempty(cds.databursts) && isempty(cds.trials))
-            if strcmp(opts.task,'Unknown') 
-                warning('NEVNSx2cds:UnknownTask','The task for this file is not known, the trial data table may be inaccurate')
-            end
-            cds.getTrialTable(opts)
-        elseif (isempty(cds.databursts) && isempty(cds.trials) && strcmp(opts.task, 'Unknown'))
-            opts.no_task = true;
-            cds.getTrialTable(opts)
-        end
+%         if (~isempty(cds.databursts) && isempty(cds.trials))
+%             if strcmp(opts.task,'Unknown') 
+%                 warning('NEVNSx2cds:UnknownTask','The task for this file is not known, the trial data table may be inaccurate')
+%             end
+%             cds.getTrialTable(opts)
+%         elseif (isempty(cds.databursts) && isempty(cds.trials) && strcmp(opts.task, 'Unknown'))
+%             opts.no_task = true;
+%             cds.getTrialTable(opts)
+%         end
     %% sanitize times so that all our data is in the same window.
         cds.sanitizeTimeWindows
     %% Set metadata. Some metadata will already be set, but this should finish the job

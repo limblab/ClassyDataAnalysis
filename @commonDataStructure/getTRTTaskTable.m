@@ -415,7 +415,7 @@ function getTRTTaskTable(cds,times)
             yOffset = bytes2float(cds.databursts.db(dbidx,14:17));
             
             %offset target centers
-            ctr = ctr + repmat([xOffset yOffset],size(ctr,1),1);
+            ctr = ctr + repmat([xOffset;yOffset],size(ctr,1)/2,1);
             
             tgtSize = bytes2float(cds.databursts.db(dbidx,18:21));
             wsnum = bytes2float(cds.databursts.db(dbidx,22:25));
