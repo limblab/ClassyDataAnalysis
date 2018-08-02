@@ -94,8 +94,8 @@ function getTrialTable(cds,opts)
             case 'multi_gadget'
                 warning('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
             case 'BD' %Tucker's psychophysics bump direction task
-                error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
-                
+%                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
+                cds.getBDTaskTable(times);
             case 'UNT' %Brian Dekleva's uncertainty task
                 cds.getUNTTaskTable(times);
             case 'RP' %Ricardo's resist perturbations task
