@@ -14,6 +14,9 @@ function loadOpenSimData(cds,folderPath,dataType)
     %   'hand_pos'
     %   'hand_vel'
     %   'hand_acc'
+    %   'elbow_pos'
+    %   'elbow_vel'
+    %   'elbow_acc'
     
     
     if ~strcmp(folderPath(end),filesep)
@@ -73,8 +76,17 @@ function loadOpenSimData(cds,folderPath,dataType)
             case 'hand_acc'
                 postfix = '_PointKinematics_hand_acc.sto';
                 header_post = '_handAcc';
+            case 'elbow_pos'
+                postfix = '_PointKinematics_elbow_pos.sto';
+                header_post = '_elbowPos';
+            case 'elbow_vel'
+                postfix = '_PointKinematics_elbow_vel.sto';
+                header_post = '_elbowVel';
+            case 'elbow_acc'
+                postfix = '_PointKinematics_elbow_acc.sto';
+                header_post = '_elbowAcc';
             otherwise
-                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc''}')
+                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc'',''elbow_pos'',''elbow_vel'',''elbow_acc''}')
         end
         fileNameList = {[folderPath,prefix{i},postfix]};
 %         fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
@@ -128,8 +140,20 @@ function loadOpenSimData(cds,folderPath,dataType)
                         if ~strcmp(tmpLine,'PointAcceleration')
                             error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
                         end
+                    case 'elbow_pos'
+                        if ~strcmp(tmpLine,'PointPosition')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'elbow_vel'
+                        if ~strcmp(tmpLine,'PointVelocity')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'elbow_acc'
+                        if ~strcmp(tmpLine,'PointAcceleration')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
                     otherwise
-                        error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len''}')
+                        error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc'',''elbow_pos'',''elbow_vel'',''elbow_acc''}')
                 end
                 while ~strcmp(tmpLine,'endheader')
                     if ~isempty(strfind(tmpLine,'nRows'))
