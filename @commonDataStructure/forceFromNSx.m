@@ -15,7 +15,7 @@ function forceFromNSx(cds,opts)
         return
     end
     if ~isempty(forceCols)
-        [loadCellData,t]=cds.getFilteredFromNSx(cds.kinFilterConfig,forceCols);
+        [loadCellData,t]=cds.getFilteredFromNSx(cds.forceFilterConfig,forceCols);
         %build our table of force data:
         labels=cell(1,length(forceCols));
         for i=1:length(forceCols)
@@ -46,7 +46,7 @@ function forceFromNSx(cds,opts)
                     achan_index(i)=find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,['ForceHandle',num2str(i)])));
                 end
                 %pull filtered analog data for load cell:
-                [loadCellData,t]=cds.getFilteredFromNSx(cds.kinFilterConfig,achan_index);
+                [loadCellData,t]=cds.getFilteredFromNSx(cds.forceFilterConfig,achan_index);
                 %truncate to handle the fact that encoder data doesn't start
                 %recording until 1 second into the file and convert load cell 
                 %voltage data into forces
@@ -64,7 +64,7 @@ function forceFromNSx(cds,opts)
     %sorry about the rounding time on the line below. there are some edge
     %cases where machine precision becomes an issue and rounding the time
     %takes care of that.
-    timePrecision = 1/cds.kinFilterConfig.sampleRate;
+    timePrecision = 1/cds.forceFilterConfig.sampleRate;
     min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
     max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
     timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
@@ -83,6 +83,6 @@ function forceFromNSx(cds,opts)
     elseif ~isempty(force)
         set(cds,'force',mergeTable(cds.force,forces));
     end
-    evntData=loggingListenerEventData('forceFromNSx',cds.kinFilterConfig);
+    evntData=loggingListenerEventData('forceFromNSx',cds.forceFilterConfig);
     notify(cds,'ranOperation',evntData)
 end

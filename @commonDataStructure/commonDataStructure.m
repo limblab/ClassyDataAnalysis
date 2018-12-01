@@ -14,6 +14,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         %Not saved with the common_data_structure. used to store transient
         %data during loading
         kinFilterConfig
+        forceFilterConfig
         NEV
         NS1
         NS2
@@ -76,7 +77,8 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 m.numIncomplete=0;
                 set(cds,'meta',m);
             %% filters
-                set(cds,'kinFilterConfig',filterConfig('poles',8,'cutoff',250,'sampleRate',1000));%a low pass butterworth 
+                set(cds,'kinFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',1000));%a low pass butterworth 
+                set(cds,'forceFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',1000));%a low pass butterworth 
             %% empty kinetics tables
                 cds.enc=cell2table(cell(0,3),'VariableNames',{'t','th1','th2'});
                 cds.kin=cell2table(cell(0,9),'VariableNames',{'t','x','y','vx','vy','ax','ay','still','good'});
