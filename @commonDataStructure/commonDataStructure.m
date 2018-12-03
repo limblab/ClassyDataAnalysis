@@ -126,6 +126,14 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 cds.kinFilterConfig=FilterConfig;
             end
         end
+        
+        function set.forceFilterConfig(cds,FilterConfig)
+            if ~isa(FilterConfig,'filterConfig')
+                error('forceFilterConfig:badFormat','forceFilterConfig must be a filterConfig object')
+            else
+                cds.forceFilterConfig=FilterConfig;
+            end
+        end
 
         function set.kin(cds,kin)
             if ~istable(kin) || size(kin,2)~=9 ...
