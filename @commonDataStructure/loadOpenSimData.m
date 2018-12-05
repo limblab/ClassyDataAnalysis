@@ -217,22 +217,7 @@ function loadOpenSimData(cds,folderPath,dataType)
                 unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;
                 %find sampling rate and look for matching rate in analog data:
-                SR=round(1/mode(diff(kin.t)));
-                cdsFrequencies=zeros(1,length(cds.analog));
-                for k=1:length(cds.analog)
-                    cdsFrequencies(k)=round(1/mode(diff(cds.analog{k}.t)));
-                end
-                match=find(cdsFrequencies==SR);
-                %append new data into the analog cell array:
-                if isempty(match)
-                    %stick the data in a new cell at the end of the cds.analog
-                    %cell array:
-                    cds.analog{end+1}=kin;
-                else
-                    %append the new data to the table with the matching
-                    %frequency:
-                    cds.analog{match}=mergeTables(cds.analog{match},kin);
-                end
+                cds.analog{end+1}=kin;
                 foundFiles=[foundFiles;fileNameList(j)];
                 
                 fclose(fid);
