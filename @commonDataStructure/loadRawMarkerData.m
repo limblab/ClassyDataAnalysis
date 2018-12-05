@@ -63,3 +63,10 @@ else
     cds.analog{match}=mergeTables(cds.analog{match},md_table);
 end
 
+% set new data window
+cds.setDataWindow()
+
+logStruct=struct('fileName',marker_data_path);
+evntData=loggingListenerEventData('loadRawMarkerData',logStruct);
+notify(cds,'ranOperation',evntData)
+

@@ -397,6 +397,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         database2cds(cds,conn,filepath,varargin)
         loadOpenSimData(cds,folderPath,dataType)
         affine_xform = loadRawMarkerData(cds,marker_data_path,affine_xform)
+        sanitizeTimeWindows(cds)
         
     end
     methods (Static = true)
@@ -451,9 +452,9 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         checkLfp60hz(cds)
         still=isStill(cds,data,varargin)
         writeSessionSummary(cds)
-        sanitizeTimeWindows(cds)
         idx=skipResets(cds,time)
         clearTempFields(cds)
+        setDataWindow(cds)
         %storage functions
         upload2DB(cds)
         save2fsmres(cds)

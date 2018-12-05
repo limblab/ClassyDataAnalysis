@@ -253,8 +253,9 @@ function loadOpenSimData(cds,folderPath,dataType)
            
     end
     
+    % set new data window
+    cds.setDataWindow()
     
-    cds.sanitizeTimeWindows
     logStruct=struct('folder',folderPath,'fileNames',foundFiles);
     evntData=loggingListenerEventData('loadOpenSimData',logStruct);
     notify(cds,'ranOperation',evntData)

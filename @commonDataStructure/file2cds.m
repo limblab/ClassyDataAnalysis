@@ -35,6 +35,10 @@ function file2cds(cds,filePath,varargin)
     %'useAbsoluteStillThresh'   flags the nev loading routine to use a
     %               threshold of 1e-4 cm/s as a threshold for stillness in
     %               the kinematics
+    %'unsanitizedTimes'    flag on whether to sanitize times at the end.
+    %               is false, but you might want to set it to true if
+    %               you're going to be loading markers or OpenSim data
+    %               afterwards.
     %'useBlockBLOCKNAME'    flags the nev loading routing what data block
     %               to use in the case of re-sync events in the data. if
     %               BLOCKNAME is 'first' then the nev/nsx loading routine
@@ -91,7 +95,7 @@ function file2cds(cds,filePath,varargin)
     %% construct opts structure:
     opts=struct('labNum',-1,'rothandle',false,'ignore_jumps',false,'ignore_filecat',false,...
         'robot',false,'task','Unknown','hasChaoticLoad',false,'getLoadCellOffsets',false,...
-        'useMeanForce',false,'useAbsoluteStillThresh',false); 
+        'useMeanForce',false,'useAbsoluteStillThresh',false,'unanitizedTimes',false); 
 
     %%
         % Parse arguments
@@ -116,6 +120,8 @@ function file2cds(cds,filePath,varargin)
                     opts.useMeanForce=true;
                 elseif strcmp(optStr,'useAbsoluteStillThresh')
                     opts.useAbsoluteStillThresh=true;
+                elseif strcmp(optStr,'unsanitizedTimes')
+                    opts.unsanitizedTimes=true;
                 elseif ischar(optStr) && length(optStr)>8 && strcmp(optStr(1:8),'useBlock')
                     opts.block=optStr(9:end);
                 elseif strcmp(optStr, 'ignoreFilecat')

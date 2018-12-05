@@ -32,7 +32,6 @@ function metaFromNEVNSx(cds,opts)
 
     %timing
     meta.dateTime=opts.dateTime;
-    meta.duration=cds.NEV.MetaTags.DataDurationSec;
 
     meta.task=opts.task;
     meta.lab=opts.labNum;
@@ -68,26 +67,9 @@ function metaFromNEVNSx(cds,opts)
         end
     end
     
-    meta.percentStill=sum(cds.kin.still)/size(cds.kin.still,1);
-    meta.stillTime=meta.percentStill*meta.duration;
-    meta.dataWindow=[0 meta.duration];
-    %find the real data Window:
-    if meta.hasEmg
-        meta.dataWindow=[max(meta.dataWindow(1),cds.emg.t(1)),min(meta.dataWindow(2),cds.emg.t(end))];
-    end
-    if meta.hasLfp
-        meta.dataWindow=[max(meta.dataWindow(1),cds.lfp.t(1)),min(meta.dataWindow(2),cds.lfp.t(end))];
-    end
     if meta.hasKinematics
-        meta.dataWindow=[max(meta.dataWindow(1),cds.kin.t(1)),min(meta.dataWindow(2),cds.kin.t(end))];
-    end
-    if meta.hasForce
-        meta.dataWindow=[max(meta.dataWindow(1),cds.force.t(1)),min(meta.dataWindow(2),cds.force.t(end))];
-    end
-    if meta.hasAnalog
-        for j=1:length(cds.analog)
-            meta.dataWindow=[max(meta.dataWindow(1),cds.analog{j}.t(1)),min(meta.dataWindow(2),cds.analog{j}.t(end))];
-        end
+        meta.percentStill=sum(cds.kin.still)/size(cds.kin.still,1);
+        meta.stillTime=meta.percentStill*(cds.kin.t(end)-cds.kin.t(1));
     end
     
     meta.numTrials=size(cds.trials,1);
@@ -114,8 +96,13 @@ function metaFromNEVNSx(cds,opts)
     end
     meta.cdsName=[meta.monkey,'_',arrayNames,'_',meta.task,'_',splitDate{1},'_lab',num2str(meta.lab)];
     
+    % duration and datawindow are set in their own function now
+    meta.dataWindow = [0 0];
+    meta.duration = 0;
+    
     %put new meta structure into cds.meta
     set(cds,'meta',meta)
+    
     %log the update to cds.meta
     evntData=loggingListenerEventData('metaFromNEVNSx',[]);
     notify(cds,'ranOperation',evntData)

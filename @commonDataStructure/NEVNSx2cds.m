@@ -82,9 +82,12 @@ function NEVNSx2cds(cds,opts)
             cds.getTrialTable(opts)
         end
     %% sanitize times so that all our data is in the same window.
-        cds.sanitizeTimeWindows
+        if ~opts.unsanitizedTimes
+            cds.sanitizeTimeWindows
+        end
     %% Set metadata. Some metadata will already be set, but this should finish the job
         cds.metaFromNEVNSx(opts)
+        cds.setDataWindow()
     %% reset the text interpreter:
         set(0, 'defaulttextinterpreter', defaultTextInterpreter);
         
