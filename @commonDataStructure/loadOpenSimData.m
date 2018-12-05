@@ -23,14 +23,6 @@ function loadOpenSimData(cds,folderPath,dataType)
         folderPath=[folderPath,filesep];
     end
     
-    %interpolate onto times aligned with the existing kinematic data. If no
-    %existing kinematic data, just use a 100hz signal aligned to zero.
-    if ~isempty(cds.kin)
-        dt=mode(diff(cds.kin.t));
-    else
-        dt=.01;
-    end
-    
     prefix=cds.meta.rawFileName;
     if ~iscell(prefix)
         prefix={prefix};
@@ -52,8 +44,8 @@ function loadOpenSimData(cds,folderPath,dataType)
                 postfix = '_Kinematics_u.sto';
                 header_post = '_vel';
             case 'joint_acc'
-                postfix = '_Kinematics_dudt.sto';
-                header_post = '_acc';
+                % postfix = '_Kinematics_dudt.sto';
+                % header_post = '_acc';
                 error('loadOpenSimData:unsupportedDataType','Joint accelerations are currently unsupported until dynamics are added to modeling')
             case 'joint_dyn'
                 postfix = '_Dynamics_q.sto';
@@ -64,7 +56,7 @@ function loadOpenSimData(cds,folderPath,dataType)
             case 'muscle_vel'
                 % temporary until Fiber_velocity file is fixed: take
                 % gradient of muscle lengths
-%                 postfix = '_MuscleAnalysis_FiberVelocity.sto';
+                % postfix = '_MuscleAnalysis_FiberVelocity.sto';
                 postfix = '_MuscleAnalysis_Length.sto';
                 header_post = '_muscVel';
             case 'hand_pos'
@@ -208,22 +200,20 @@ function loadOpenSimData(cds,folderPath,dataType)
                     disp('data will be interpolated to reconstruct missing points')
                     cds.addProblem('kinect data has missing timepoints, data in the cds has been interpolated to reconstruct them')
                 end
-                %interpolate to desired time vector:
-                desiredTime=roundTime(a(1,1):dt:a(end,1));%uniformly samples a with spacing dt, then shifts time bins to be zero aligned
-                desiredTime=desiredTime(desiredTime>min(a(:,1)) & desiredTime<max(a(:,1)))';%clear out any points that fall outside the original time window due to the shift
                 
-                interpData = interp1(a(:,1),a(:,2:end),desiredTime);
+                % resample data at uniform sampling rate
+                [resampData,timevec] = resample(a(:,2:end),a(:,1));
                 
                 % Temporary until fiber velocity file is fixed: take
                 % gradient for muscle velocity
                 if strcmp(dataType,'muscle_vel')
-                    for muscle_ctr = 1:size(interpData,2)
-                        grad_interpData(:,muscle_ctr) = gradient(interpData(:,muscle_ctr),desiredTime);
+                    for muscle_ctr = 1:size(resampData,2)
+                        grad_interpData(:,muscle_ctr) = gradient(resampData(:,muscle_ctr),timevec);
                     end
-                    interpData = grad_interpData;
+                    resampData = grad_interpData;
                 end
                 
-                kin=array2table([desiredTime,interpData],'VariableNames',header);
+                kin=array2table([timevec,resampData],'VariableNames',header);
                 unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;
                 %find sampling rate and look for matching rate in analog data:
