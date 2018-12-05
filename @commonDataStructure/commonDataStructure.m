@@ -14,7 +14,6 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         %Not saved with the common_data_structure. used to store transient
         %data during loading
         kinFilterConfig
-        forceFilterConfig
         NEV
         NS1
         NS2
@@ -78,7 +77,6 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 set(cds,'meta',m);
             %% filters
                 set(cds,'kinFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',1000));%a low pass butterworth 
-                set(cds,'forceFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',1000));%a low pass butterworth 
             %% empty kinetics tables
                 cds.enc=cell2table(cell(0,3),'VariableNames',{'t','th1','th2'});
                 cds.kin=cell2table(cell(0,9),'VariableNames',{'t','x','y','vx','vy','ax','ay','still','good'});
@@ -124,14 +122,6 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('kinFilterConfig:badFormat','kinFilterConfig must be a filterConfig object')
             else
                 cds.kinFilterConfig=FilterConfig;
-            end
-        end
-        
-        function set.forceFilterConfig(cds,FilterConfig)
-            if ~isa(FilterConfig,'filterConfig')
-                error('forceFilterConfig:badFormat','forceFilterConfig must be a filterConfig object')
-            else
-                cds.forceFilterConfig=FilterConfig;
             end
         end
 
@@ -427,6 +417,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             kinematicsFromNEV(cds,opts)
             forceFromNSx(cds,opts)
             [filteredData,time]=getFilteredFromNSx(cds,filterConfig,chans)
+            [resampledData,time]=getResampledFromNSx(cds,desiredFreq,chans)
             handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
             unitsFromNEV(cds,opts)
             testSorting(cds)
