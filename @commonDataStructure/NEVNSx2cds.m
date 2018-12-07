@@ -19,7 +19,7 @@ function NEVNSx2cds(cds,opts)
         
         %get the date of the file so processing that depends on when the
         %file was collected has something to work with
-        opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(1)) ...
+        opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(1)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) ...
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
         
