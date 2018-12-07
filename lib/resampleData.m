@@ -29,13 +29,17 @@ function [dataResampled]=resampleData(data,desiredFreq)
     temp=resample(dataDetrend,p,q);
     
     % get rid of extrapolated points
+    % turns out upsampling->downsampling is equivalent to
+    % downsampling->upsampling, so we do that to save memory. Only
+    % difference is that the two have a different number of trailing
+    % zeros, so we deal with that in the extrap_idx part
     resamp_vec = ones(size(data,1),1);
-    resamp_vec = downsample(upsample(resamp_vec,p),q);
-    ty=downsample(upsample(data(:,1),p),q);
+    resamp_vec = upsample(downsample(resamp_vec,q),p);
+    ty=upsample(downsample(data(:,1),q),p);
     ty=interp1(find(resamp_vec>0),ty(resamp_vec>0),(1:length(ty))');
     extrap_idx = isnan(ty);
     ty(extrap_idx) = [];
-    temp(extrap_idx,:) = [];
+    temp(extrap_idx(1:size(temp,1)),:) = [];
     
     dataResampled = zeros(size(temp,1),size(temp,2));
     for i=1:size(dataDetrend,2)
