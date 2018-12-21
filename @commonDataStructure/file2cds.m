@@ -95,7 +95,7 @@ function file2cds(cds,filePath,varargin)
     %% construct opts structure:
     opts=struct('labNum',-1,'rothandle',false,'ignore_jumps',false,'ignore_filecat',false,...
         'robot',false,'task','Unknown','hasChaoticLoad',false,'getLoadCellOffsets',false,...
-        'useMeanForce',false,'useAbsoluteStillThresh',false,'unanitizedTimes',false); 
+        'useMeanForce',false,'useAbsoluteStillThresh',false,'unsanitizedTimes',false); 
 
     %%
         % Parse arguments

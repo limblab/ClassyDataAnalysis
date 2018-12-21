@@ -70,6 +70,9 @@ function metaFromNEVNSx(cds,opts)
     if meta.hasKinematics
         meta.percentStill=sum(cds.kin.still)/size(cds.kin.still,1);
         meta.stillTime=meta.percentStill*(cds.kin.t(end)-cds.kin.t(1));
+    else
+        meta.percentStill = NaN;
+        meta.stillTime = NaN;
     end
     
     meta.numTrials=size(cds.trials,1);
