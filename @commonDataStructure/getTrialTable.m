@@ -15,8 +15,8 @@ function getTrialTable(cds,opts)
     %assumes that cds.words exists and is non-empty
     %
     %if there is a trial start word and no end word before the next trial
-    %start, that trial start will be ignored. Also ignores the first 1s of
-    %data to avoid problems associated with the missing 1s of kinematic
+    %start, that trial start will be ignored. Also ignores the first 1sec of
+    %data to avoid problems associated with the missing 1sec of kinematic
     %data
     
     if isempty(cds.words) || isempty(cds.databursts)
@@ -26,6 +26,7 @@ function getTrialTable(cds,opts)
     end
     
     wordStart = hex2dec('10');
+    
     
     startTime =  cds.words.ts( bitand(hex2dec('f0'),cds.words.word) == wordStart &  cds.words.ts>1.000);
     numTrials = length(startTime);
@@ -92,7 +93,9 @@ function getTrialTable(cds,opts)
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
-                warning('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
+                cds.getMultiGadgetTaskTable(times);
+            case 'ball_drop'
+                cds.getMultiGadgetTaskTable(times); % runs off the same trial table as the multigadget, but this way we have different values in the meta information
             case 'BD' %Tucker's psychophysics bump direction task
 %                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 cds.getBDTaskTable(times);
