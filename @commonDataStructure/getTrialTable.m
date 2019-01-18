@@ -35,6 +35,13 @@ function getTrialTable(cds,opts)
     endTime =  cds.words.ts( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     endCodes =  cds.words.word( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     
+    % old CO task goes straight from bump state to pretrial with no end code
+    if strcmpi(opts.task,'CO')
+        bumpWordBase = hex2dec('50');
+        bumpTimes = cds.words.ts(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
+        bumpCodes = cds.words.word(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
+    end
+    
     %Check for and remove corrupted endCodes
     corrupt_idx = mod(endCodes,32) > 3;
     if any(corrupt_idx)
@@ -50,17 +57,28 @@ function getTrialTable(cds,opts)
     for ind = 1:numTrials-1
         % Find the end of the trial
         if ind==numTrials
-            trial_end_idx = find(endTime > startTime(ind), 1, 'first');
+            next_trial_start = inf;
         else
             next_trial_start = startTime(ind+1);
-            trial_end_idx = find(endTime > startTime(ind) & endTime < next_trial_start, 1, 'first');
         end
+        trial_end_idx = find(endTime > startTime(ind) & endTime < next_trial_start, 1, 'first');
+        
         if isempty(trial_end_idx)
             stopTime(ind) = nan;
             trialResult(ind) = {'-'};
         else
             stopTime(ind) = endTime(trial_end_idx);
             trialResult(ind) = {resultCodes(mod(endCodes(trial_end_idx),32)+1)}; %0 is reward, 1 is abort, 2 is fail, and 3 is incomplete (incomplete should never happen)
+        end
+        
+        % CO task goes straight from bump state to pretrial with no end code
+        if isnan(stopTime(ind)) && strcmpi(opts.task,'CO')
+            % look for bumps
+            trial_bump_idx = find(bumpTimes > startTime(ind) & bumpTimes < next_trial_start, 1, 'first');
+            if ~isempty(trial_bump_idx)
+                stopTime(ind) = bumpTimes(trial_bump_idx);
+                trialResult(ind) = {'R'};
+            end
         end
     end
     mask=~isnan(stopTime);

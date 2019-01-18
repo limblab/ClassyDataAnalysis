@@ -12,8 +12,9 @@ function getCOTaskTable(cds,times)
 %get our word timing for changes in the state machine:
 % Isolate the individual word timestamps
 bumpWordBase = hex2dec('50');
-bumpTimes = cds.words.ts(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+5))';
-bumpCodes = cds.words.word(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+5))';
+bumpTimes = cds.words.ts(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
+bumpTimes = roundTime(bumpTimes,0.001); % round to nearest millisecond to deal with in-trial detection issues
+bumpCodes = cds.words.word(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
 
 word_ot_on = hex2dec('40');
 otOnTimes = cds.words.ts( bitand(hex2dec('f0'),cds.words.word) == word_ot_on);
@@ -69,7 +70,7 @@ for trial = 1:numTrials
         end
         
         % Bump code and time
-        idxBump = find(bumpTimes > times.startTime(trial) & bumpTimes < times.endTime(trial), 1, 'first');
+        idxBump = find(bumpTimes > times.startTime(trial) & bumpTimes <= times.endTime(trial), 1, 'first');
         if isempty(idxBump)
             bumpTimeList(trial) = nan;
             bumpList(trial) = nan;
