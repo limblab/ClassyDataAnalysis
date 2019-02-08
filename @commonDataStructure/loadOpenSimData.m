@@ -90,6 +90,7 @@ function loadOpenSimData(cds,folderPath,dataType)
             if ~isempty(foundList)
                 %load data from file into table 'kin':
                 fid=fopen(fileNameList{j});
+                try
                 %loop through the header till we find the first row of data:
                 tmpLine=fgetl(fid);
                 %check for correct file given dataType
@@ -219,6 +220,10 @@ function loadOpenSimData(cds,folderPath,dataType)
                 %find sampling rate and look for matching rate in analog data:
                 cds.analog{end+1}=kin;
                 foundFiles=[foundFiles;fileNameList(j)];
+                catch ME
+                    fclose(fid);
+                    rethrow(ME)
+                end
                 
                 fclose(fid);
             else

@@ -52,6 +52,8 @@ function getTRTTaskTable(cds,times)
         hdrSize=25;
         numTgt = (cds.databursts.db(1)-hdrSize)/8;
 
+        ctHoldList=     nan(numTrials,1);
+        otHoldList=     nan(numTrials,numTgt);
         targStartList=  nan(numTrials,1);
         goCueList=      nan(numTrials,numTgt);
         numTgts=        numTgt*ones(numTrials,1);
@@ -60,6 +62,8 @@ function getTRTTaskTable(cds,times)
         yOffsets=       nan(numTrials,1);
         tgtSizes=       nan(numTrials,1);
         wsnums=         nan(numTrials,1);
+        bumpTimesList=  nan(numTrials,1);
+        bumpDirList=    nan(numTrials,1);
         for trial = 1:numel(times.startTime)
             % Find databurst associated with startTime
             dbidx = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts < times.endTime(trial));
@@ -83,9 +87,9 @@ function getTRTTaskTable(cds,times)
             %identify trials with corrupt codes that might end up with extra
             %targets
             if isempty(idxTargHold)
-                targStart = NaN;
+                targHold = NaN;
             else
-                targStart = targHoldTimes(idxTargHold);
+                targHold = targHoldTimes(idxTargHold);
             end
             
             % Go cues
@@ -118,7 +122,8 @@ function getTRTTaskTable(cds,times)
             wsnum = bytes2float(cds.databursts.db(dbidx,22:25));
 
             % Build arrays
-            targStartList(trial,:)=     targStart;          % time of first target onset
+            otHoldList(trial,:) = targHold;
+            targStartList(trial,:)=     goCue(1);          % time of first target onset
             goCueList(trial,:)=         goCue;              % time stamps of go_cue(s)
             numTgts(trial)=             numTgt;             % max number of targets
             numAttempted(trial,:)=      tgtsAttempted;      % ?
@@ -129,11 +134,10 @@ function getTRTTaskTable(cds,times)
             tgtCtrs(trial,:)=           ctr;                %center positions of the targets
         end
 
-        trials=table(targStartList,goCueList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,tgtCtrs,...
-                    'VariableNames',{'targetStartTime','goCueTime','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','tgtCtr'});
-        trials.Properties.VariableUnits={'s','s','int','int','cm','cm','cm','int','cm'};
-        trials.Properties.VariableDescriptions={'first target hold time','go cue time','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','target center position'};
-
+        trials=table(ctHoldList,bumpTimesList,targStartList,goCueList,otHoldList,numTgts,numAttempted,xOffsets,yOffsets,tgtSizes,wsnums,bumpDirList,tgtCtrs,...
+                    'VariableNames',{'ctHoldTime','bumpTime','targetStartTime','goCueTime','otHoldTime','numTgt','numAttempted','xOffset','yOffset','tgtSize','spaceNum','bumpDir','tgtCtr'});
+        trials.Properties.VariableUnits={'s','s','s','s','s','int','int','cm','cm','cm','int','rad','cm'};
+        trials.Properties.VariableDescriptions={'time of center hold start','time of bump','first target go cue time','go cue time','time of target hold','number of targets','number of targets attempted','x offset','y offset','target size','workspace number','bump direction','target center position'};
     elseif db_version==1
         % *  Version 1 (0x01)
         % * ----------------
