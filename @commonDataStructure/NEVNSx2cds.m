@@ -40,13 +40,13 @@ function NEVNSx2cds(cds,opts)
     %% the kinematics
     
         %convert event info into encoder steps:
-        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage','multi_gadget'}))
+        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage','multi_gadget','ball_drop'}))
             cds.kinematicsFromNEV(opts)
         end
        
 
     %% the kinetics
-        if opts.robot || strcmp(opts.task,'WF')
+        if opts.robot || any(strcmp(opts.task,{'WF','multi_gadget'}))
             cds.forceFromNSx(opts)
         end
 

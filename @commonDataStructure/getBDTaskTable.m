@@ -1,4 +1,8 @@
 function getBDTaskTable(cds,times)
+    % THIS IS FOR THE BUMP DIRECTION TASK, NOT THE BALL DROP TASK. DESPITE
+    % THE FACT THAT BALL DROP IS LABELED AS BD IN THE MASTERCON BEHAVIOR
+    % CODE. SORRY, BUT BLAME SOMEONE ELSE FOR NAMING THIS.
+    % 
     %this is a method function for the common_data_structure (cds) class, and
     %should be located in a folder '@common_data_structure' with the class
     %definition file and other method files
