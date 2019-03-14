@@ -18,7 +18,6 @@ function getMultiGadgetTaskTable(cds,times)
     wordCatch = hex2dec('32');
     wordGadgetOn = hex2dec('40');
     wordReach = hex2dec('70');
-    wordPickup = hex2dec('90');
     
     % touchPad times
     TouchPadWords = cds.words.ts(cds.words.word == wordTouchPad);
@@ -37,9 +36,7 @@ function getMultiGadgetTaskTable(cds,times)
     ReachWords = cds.words.ts(bitand(hex2dec('f0'),cds.words.word) == wordReach);
     ReachCodes = cds.words.word(bitand(hex2dec('f0'),cds.words.word) == wordReach);
     
-    % pickup -- for the ball drop task, friends
-    PickupWords = cds.words.ts(cds.words.word == wordPickup);
-    
+   
     % useful stuff -- number of trials, burst size, and NaN filled lists
     % for each of the important things we want
     burst_size = size(cds.databursts.db,2);
@@ -53,7 +50,6 @@ function getMultiGadgetTaskTable(cds,times)
     TargetCorners = nan(numTrials,4);
     TargetCenters = nan(numTrials,2);
     TargetDir = nan(numTrials,1);
-    PickupTimeList = nan(numTrials,1);
     
     
     for trial = 1:numTrials
@@ -125,14 +121,6 @@ function getMultiGadgetTaskTable(cds,times)
             gNumber = GadgetCodes(idxG);
         end
         
-        % Pickup times - for the ball drop task
-        idxPU = find(PickupWords > times.startTime(trial) & PickupWords < times.endTime(trial), 1, 'first');
-        if isempty(idxPU)
-            PUTime = nan;
-        else
-            PUTime = PickupWords(idxPU);
-        end
-        
         
         % build up the arrays
         TouchPadTimeList(trial) = TPTime;
@@ -143,7 +131,7 @@ function getMultiGadgetTaskTable(cds,times)
         TargetCorners(trial,:) = targetLoc;
         TargetCenters(trial,:)=[targetLoc(1)+targetLoc(3),targetLoc(2)+targetLoc(4)]/2; %center coordinates of outer target 
         TargetDir(trial)=atan2d(TargetCenters(trial,2),TargetCenters(trial,1)); %Direction (in degrees) of outer target
-        PickupTimeList(trial) = PUTime;
+
         
         
     end
@@ -152,10 +140,10 @@ function getMultiGadgetTaskTable(cds,times)
     % compile everything into the trial table
     trialsTable = table(TouchPadTimeList,GoCueTimeList,CatchFlag,GadgetTimeList,...
         GadgetNumber,TargetCorners,TargetCenters,TargetDir,PickupTimeList,...
-        'VariableNames',{'touchPad','goCue','catchFlag','gadgetOn','gadgetNumber',...
-        'tgtCorners','tgtCenter','tgtDir','pickup'});
+        'VariableNames',{'touchPadTime','goCueTime','catchFlag','gadgetOnTime','gadgetNumber',...
+        'tgtCorners','tgtCenter','tgtDir'});
     
-    trialsTable.Properties.VariableUnits = {'s','s','int','s','int','int','int','deg','s'};
+    trialsTable.Properties.VariableUnits = {'s','s','int','s','int','int','int','deg'};
     trialsTable.Properties.VariableDescriptions = {...
         'monkey touches touchpad time',...
         'go cue time',...
@@ -164,8 +152,7 @@ function getMultiGadgetTaskTable(cds,times)
         'gadget location identification',...
         'x-y pairs for upper left and lower right target corners',...
         'x-y pairs for target center',...
-        'target direction (in degrees)',...
-        'pickup time (ball drop task)'};
+        'target direction (in degrees)'};
     trialsTable = [times,trialsTable];
     trialsTable.Properties.Description = 'Trial table for the multi_gadget tasks';
 

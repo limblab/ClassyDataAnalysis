@@ -32,7 +32,11 @@ function forceFromNSx(cds,opts)
         %truncate to deal with the fact that encoder data doesn't start
         %recording till 1 second into the file and store in a table
         t=roundTime(t,.00001);
-        force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        if opts.robot % non-robot devices don't have any encoder data
+            force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        else
+            force = array2table(loadCellData);
+        end
     end
     %forces for robot:
     if opts.robot

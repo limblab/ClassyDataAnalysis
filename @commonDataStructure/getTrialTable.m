@@ -113,7 +113,7 @@ function getTrialTable(cds,opts)
             case 'multi_gadget'
                 cds.getMultiGadgetTaskTable(times);
             case 'ball_drop'
-                cds.getMultiGadgetTaskTable(times); % runs off the same trial table as the multigadget, but this way we have different values in the meta information
+                cds.getBallDropTaskTable(times); 
             case 'BD' %Tucker's psychophysics bump direction task
 %                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
                 cds.getBDTaskTable(times);
