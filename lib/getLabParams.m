@@ -183,7 +183,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
-        else
+        elseif datenum(dateTime)<datenum('01-Nov-2018')
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
             % fhcal = [Fx;Fy]./[scaleX;scaleY]
@@ -202,6 +202,36 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
             else
                 rotcal = eye(6);  
             end
+        else
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab
+            % 6\FT25831.cal (this was sent back for recalibration and
+            % received 20180901)
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+           
+            fhcal = [  0.54394   0.05569  -0.95964   33.11326   0.40244  -33.79878;...
+                     -1.22429 -39.12317  0.02792   18.80600  -0.33459   19.53948;...
+                     17.87880   -0.32145  19.05080   -0.1956  18.23279  0.16308;...
+                      0.35868  -0.10436   32.59968   0.24722  -32.92496   -0.76043;...
+                     -36.11741  0.12455   18.86971  -0.16965   18.26433   0.66712;...
+                      -0.30954 -19.51322   0.18811  -19.05310   0.48341  -19.31874]'./...
+                      repmat([10.4365219 10.4365219 3.54463927 435.0360510 435.0360510 435.3391356],6,1)./1000;
+            
+            Fy_invert = 1;
+            % rotation of the load cell to match forearm frame
+            % (load cell is upside down and slightly rotated)
+            theta_off = deg2rad(180); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
+%                         theta_off = 0;
+            rotcal = [-cos(theta_off) -sin(theta_off) 0    0             0              0;...
+                      -sin(theta_off) cos(theta_off)  0    0             0              0;...
+                      0                 0             1    0             0              0;...
+                      0                 0             0 -cos(theta_off) -sin(theta_off) 0;...
+                      0                 0             0 -sin(theta_off) cos(theta_off)  0;...
+                      0                 0             0    0             0              1]'; 
+            
+             
         end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  
