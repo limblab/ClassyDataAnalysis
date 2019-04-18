@@ -73,7 +73,7 @@ function file2cds(cds,filePath,varargin)
     %               file2cds looks for the first part of the argument to
     %               match the string 'monkey' and then takes the remainder of
     %               the string to be the monkey name. for example 'monkeyChips'
-    %               would result in the task being set to 'Chips'
+    %               would result in the monkey being set to 'Chips'
     %'ranByPERSONNAME'  specifies the person who handled the monkey for the
     %               experiment. file2cds looks for the first part of the
     %               argument to match the string 'ranBy' and then takes the
