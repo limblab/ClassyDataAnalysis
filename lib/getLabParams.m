@@ -77,6 +77,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                     -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
                     -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
                     0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
+            Fy_invert = 1;
             rotcal = eye(6);
             forceOffsets = [];
         elseif datenum(dateTime) < datenum('17-Jul-2017')
@@ -155,7 +156,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
-        else
+        elseif datenum(dateTime)<datenum('10-Jun-2018')
             % replaced load cell with new lab 6 load cell and amp
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\New load cell (20180309)\FT23102.cal
@@ -182,6 +183,55 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
 
+        elseif datenum(dateTime)<datenum('01-Nov-2018')
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 3\FT7520.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [-0.06745   0.13235  -0.53124 -32.81043  -0.58791  32.43832;...
+                    -1.07432  37.46745  -0.41935 -18.73869   0.33458 -18.82582;...
+                    -18.56153   1.24337 -18.54582   0.85789 -18.70268   0.63662;...
+                    -0.14634   0.36156 -31.67889   0.77952  32.39412  -0.81438;...
+                    36.65668  -1.99599 -19.00259   0.79078 -18.87751   0.31411;...
+                    -0.31486  18.88139   0.09343  18.96202  -0.46413  18.94001]'./...
+                    repmat([5.218 5.218 1.772 217.518 217.518 217.669],6,1)./1000;
+            Fy_invert = 1;
+            if rothandle
+                rotcal = diag([-1 1 1 -1 1 1]);  
+            else
+                rotcal = eye(6);  
+            end
+        else
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab
+            % 6\FT25831.cal (this was sent back for recalibration and
+            % received 20180901)
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+           
+            fhcal = [  0.54394   0.05569  -0.95964   33.11326   0.40244  -33.79878;...
+                     -1.22429 -39.12317  0.02792   18.80600  -0.33459   19.53948;...
+                     17.87880   -0.32145  19.05080   -0.1956  18.23279  0.16308;...
+                      0.35868  -0.10436   32.59968   0.24722  -32.92496   -0.76043;...
+                     -36.11741  0.12455   18.86971  -0.16965   18.26433   0.66712;...
+                      -0.30954 -19.51322   0.18811  -19.05310   0.48341  -19.31874]'./...
+                      repmat([10.4365219 10.4365219 3.54463927 435.0360510 435.0360510 435.3391356],6,1)./1000;
+            
+            Fy_invert = 1;
+            % rotation of the load cell to match forearm frame
+            % (load cell is upside down and slightly rotated)
+            theta_off = deg2rad(30); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
+%                         theta_off = 0;
+            rotcal = [-cos(theta_off) -sin(theta_off) 0    0             0              0;...
+                      -sin(theta_off) cos(theta_off)  0    0             0              0;...
+                      0                 0             1    0             0              0;...
+                      0                 0             0 -cos(theta_off) -sin(theta_off) 0;...
+                      0                 0             0 -sin(theta_off) cos(theta_off)  0;...
+                      0                 0             0    0             0              1]'; 
+            
+             
         end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  

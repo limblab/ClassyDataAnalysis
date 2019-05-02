@@ -46,20 +46,15 @@ for fn = 1:num_markers
 end
 
 %% add to CDS (passed by reference)
-SR=round(1/mode(diff(md_table.t)));
-cdsFrequencies=zeros(1,length(cds.analog));
-for k=1:length(cds.analog)
-    cdsFrequencies(k)=round(1/mode(diff(cds.analog{k}.t)));
-end
-match=find(cdsFrequencies==SR);
 %append new data into the analog cell array:
-if isempty(match)
-    %stick the data in a new cell at the end of the cds.analog
-    %cell array:
-    cds.analog{end+1}=md_table;
-else
-    %append the new data to the table with the matching
-    %frequency:
-    cds.analog{match}=mergeTables(cds.analog{match},md_table);
-end
+%stick the data in a new cell at the end of the cds.analog
+%cell array:
+cds.analog{end+1}=md_table;
+
+% set new data window
+cds.setDataWindow()
+
+logStruct=struct('fileName',marker_data_path);
+evntData=loggingListenerEventData('loadRawMarkerData',logStruct);
+notify(cds,'ranOperation',evntData)
 

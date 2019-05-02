@@ -64,9 +64,10 @@ function fitWeiner(binned)
                     'reserveMask',[]);
     for i=1:binned.weinerConfig.numFolds
         disp(['working on fold ',num2str(i),' of ',num2str(binned.weinerConfig.numFolds)])
-        %get weiner model from fold data
+        %get weiner model from training data
         [wData(i).model.weights,wData(i).model.VAF,wData(i).model.MCC]=filMIMO4(inputData{~reserveMask(:,i),:},outputData{~reserveMask(:,i),:},numLags,numSides,fs);
         %get polynomial:
+        
         
         %predict outputs in reserve data:
         [predictedData,~,truncatedOutputData]=predMIMO4(   inputData{reserveMask(:,i),:},...

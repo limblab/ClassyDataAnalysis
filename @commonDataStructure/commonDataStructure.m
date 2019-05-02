@@ -76,7 +76,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 m.numIncomplete=0;
                 set(cds,'meta',m);
             %% filters
-                set(cds,'kinFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',100));%a low pass butterworth 
+                set(cds,'kinFilterConfig',filterConfig('poles',8,'cutoff',25,'sampleRate',1000));%a low pass butterworth 
             %% empty kinetics tables
                 cds.enc=cell2table(cell(0,3),'VariableNames',{'t','th1','th2'});
                 cds.kin=cell2table(cell(0,9),'VariableNames',{'t','x','y','vx','vy','ax','ay','still','good'});
@@ -397,6 +397,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         database2cds(cds,conn,filepath,varargin)
         loadOpenSimData(cds,folderPath,dataType)
         affine_xform = loadRawMarkerData(cds,marker_data_path,affine_xform)
+        sanitizeTimeWindows(cds)
         
     end
     methods (Static = true)
@@ -417,6 +418,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
             kinematicsFromNEV(cds,opts)
             forceFromNSx(cds,opts)
             [filteredData,time]=getFilteredFromNSx(cds,filterConfig,chans)
+            [resampledData,time]=getResampledFromNSx(cds,desiredFreq,chans)
             handleForce=handleForceFromRaw(cds,loadCellData,t,opts)
             unitsFromNEV(cds,opts)
             testSorting(cds)
@@ -450,9 +452,9 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         checkLfp60hz(cds)
         still=isStill(cds,data,varargin)
         writeSessionSummary(cds)
-        sanitizeTimeWindows(cds)
         idx=skipResets(cds,time)
         clearTempFields(cds)
+        setDataWindow(cds)
         %storage functions
         upload2DB(cds)
         save2fsmres(cds)

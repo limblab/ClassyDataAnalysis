@@ -93,6 +93,8 @@ function getWFTaskTable(cds,times)
             targetDir(trial)=atan2d(targetCenters(trial,2),targetCenters(trial,1)); %Direction (in degrees) of outer target
             catchFlag(trial)=isCatch;  % whether or not trial is a catch trial
             adaptFlag(trial)=isAdapt;  % whether or not trial is an adaptation trial
+            
+
     end
 
     %build table:

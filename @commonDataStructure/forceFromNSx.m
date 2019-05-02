@@ -15,7 +15,7 @@ function forceFromNSx(cds,opts)
         return
     end
     if ~isempty(forceCols)
-        [loadCellData,t]=cds.getFilteredFromNSx(cds.kinFilterConfig,forceCols);
+        [loadCellData,t]=cds.getResampledFromNSx(cds.kinFilterConfig.sampleRate,forceCols);
         %build our table of force data:
         labels=cell(1,length(forceCols));
         for i=1:length(forceCols)
@@ -32,7 +32,11 @@ function forceFromNSx(cds,opts)
         %truncate to deal with the fact that encoder data doesn't start
         %recording till 1 second into the file and store in a table
         t=roundTime(t,.00001);
-        force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        if opts.robot % non-robot devices don't have any encoder data
+            force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
+        else
+            force = array2table(loadCellData);
+        end
     end
     %forces for robot:
     if opts.robot
@@ -46,7 +50,7 @@ function forceFromNSx(cds,opts)
                     achan_index(i)=find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,['ForceHandle',num2str(i)])));
                 end
                 %pull filtered analog data for load cell:
-                [loadCellData,t]=cds.getFilteredFromNSx(cds.kinFilterConfig,achan_index);
+                [loadCellData,t]=cds.getResampledFromNSx(cds.kinFilterConfig.sampleRate,achan_index);
                 %truncate to handle the fact that encoder data doesn't start
                 %recording until 1 second into the file and convert load cell 
                 %voltage data into forces

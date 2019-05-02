@@ -15,8 +15,8 @@ function getTrialTable(cds,opts)
     %assumes that cds.words exists and is non-empty
     %
     %if there is a trial start word and no end word before the next trial
-    %start, that trial start will be ignored. Also ignores the first 1s of
-    %data to avoid problems associated with the missing 1s of kinematic
+    %start, that trial start will be ignored. Also ignores the first 1sec of
+    %data to avoid problems associated with the missing 1sec of kinematic
     %data
     
     if isempty(cds.words) || isempty(cds.databursts)
@@ -27,12 +27,20 @@ function getTrialTable(cds,opts)
     
     wordStart = hex2dec('10');
     
+    
     startTime =  cds.words.ts( bitand(hex2dec('f0'),cds.words.word) == wordStart &  cds.words.ts>1.000);
     numTrials = length(startTime);
 
     wordEnd = hex2dec('20');
     endTime =  cds.words.ts( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
     endCodes =  cds.words.word( bitand(hex2dec('f0'), cds.words.word) == wordEnd);
+    
+    % old CO task goes straight from bump state to pretrial with no end code
+    if strcmpi(opts.task,'CO')
+        bumpWordBase = hex2dec('50');
+        bumpTimes = cds.words.ts(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
+        bumpCodes = cds.words.word(cds.words.word >= (bumpWordBase) & cds.words.word <= (bumpWordBase+14))';
+    end
     
     %Check for and remove corrupted endCodes
     corrupt_idx = mod(endCodes,32) > 3;
@@ -49,17 +57,28 @@ function getTrialTable(cds,opts)
     for ind = 1:numTrials-1
         % Find the end of the trial
         if ind==numTrials
-            trial_end_idx = find(endTime > startTime(ind), 1, 'first');
+            next_trial_start = inf;
         else
             next_trial_start = startTime(ind+1);
-            trial_end_idx = find(endTime > startTime(ind) & endTime < next_trial_start, 1, 'first');
         end
+        trial_end_idx = find(endTime > startTime(ind) & endTime < next_trial_start, 1, 'first');
+        
         if isempty(trial_end_idx)
             stopTime(ind) = nan;
             trialResult(ind) = {'-'};
         else
             stopTime(ind) = endTime(trial_end_idx);
             trialResult(ind) = {resultCodes(mod(endCodes(trial_end_idx),32)+1)}; %0 is reward, 1 is abort, 2 is fail, and 3 is incomplete (incomplete should never happen)
+        end
+        
+        % CO task goes straight from bump state to pretrial with no end code
+        if isnan(stopTime(ind)) && strcmpi(opts.task,'CO')
+            % look for bumps
+            trial_bump_idx = find(bumpTimes > startTime(ind) & bumpTimes < next_trial_start, 1, 'first');
+            if ~isempty(trial_bump_idx)
+                stopTime(ind) = bumpTimes(trial_bump_idx);
+                trialResult(ind) = {'R'};
+            end
         end
     end
     mask=~isnan(stopTime);
@@ -94,10 +113,12 @@ function getTrialTable(cds,opts)
             case 'WF' %wrist flexion task
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
-                warning('getTrialTable:taskNotImplemented','the code to create a trial table for the multi_gadget task is not implemented. Please help by implementing it! ')
+                cds.getMultiGadgetTaskTable(times);
+            case 'ball_drop'
+                cds.getBallDropTaskTable(times); 
             case 'BD' %Tucker's psychophysics bump direction task
-                error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
-                
+%                 error('getTrialTable:taskNotImplemented','the code to create a trial table for the psychophysics task is not implemented. Please help by implementing it! ')
+                cds.getBDTaskTable(times);
             case 'UNT' %Brian Dekleva's uncertainty task
                 cds.getUNTTaskTable(times);
             case 'RP' %Ricardo's resist perturbations task
