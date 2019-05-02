@@ -1,4 +1,4 @@
-function eventsWithListeners=findAllListeners(obj)
+clfunction eventsWithListeners=findAllListeners(obj)
     %this function attempts to find all the events with listeners in obj or
     %its properties. 
     %eventsWithListeners=findAllListeners(obj)
