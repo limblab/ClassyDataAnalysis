@@ -73,7 +73,11 @@ function kinematicsFromNEV(cds,opts)
         end
         %interpolate enc to new times:
         newtime=enc(1,1):mode(dt):enc(end,1);
-        enc=[newtime',interp1(enc(:,1),enc(:,2:3),newtime)];
+        enc_temp=interp1(enc(:,1),enc(:,2:3),newtime');
+        
+        % shift to get rid of superfluous precision
+        shifttime=roundTime(newtime(1),mode(dt)):mode(dt):roundTime(newtime(end),mode(dt));
+        enc = [shifttime' enc_temp];
     end
     
     enc=decimateData(enc,cds.kinFilterConfig);

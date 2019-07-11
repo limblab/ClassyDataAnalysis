@@ -32,5 +32,18 @@ function [dataD]=decimateData(data,fc)
     cutoff=fc.cutoff*(SF/q)*2;
     [b, a] = butter(fc.poles, cutoff);%butterworth uses cutoff/(samplerate/2), or 2*cutoff/samplerate to specify cutoff
     dataD=filtfilt(b,a,dataD);
-    dataD=[(data(1,1):DF:data(end,1))',dataD(1:p:end-q+1,:)];
+    dataD=downsample(dataD,p);
+    
+    % get time vector
+    resamp_vec = ones(size(data,1),1);
+    resamp_vec = downsample(upsample(resamp_vec,q),p);
+    dataT=downsample(upsample(data(:,1),q),p);
+    dataT=interp1(find(resamp_vec>0),dataT(resamp_vec>0),(1:length(dataT))');
+    
+    % get rid of extrapolated points
+    extrap_idx = isnan(dataT);
+    dataT(extrap_idx) = [];
+    dataD(extrap_idx) = [];
+    
+    dataD=[dataT dataD];
 end

@@ -14,18 +14,13 @@ function loadOpenSimData(cds,folderPath,dataType)
     %   'hand_pos'
     %   'hand_vel'
     %   'hand_acc'
+    %   'elbow_pos'
+    %   'elbow_vel'
+    %   'elbow_acc'
     
     
     if ~strcmp(folderPath(end),filesep)
         folderPath=[folderPath,filesep];
-    end
-    
-    %interpolate onto times aligned with the existing kinematic data. If no
-    %existing kinematic data, just use a 100hz signal aligned to zero.
-    if ~isempty(cds.kin)
-        dt=mode(diff(cds.kin.t));
-    else
-        dt=.01;
     end
     
     prefix=cds.meta.rawFileName;
@@ -49,8 +44,8 @@ function loadOpenSimData(cds,folderPath,dataType)
                 postfix = '_Kinematics_u.sto';
                 header_post = '_vel';
             case 'joint_acc'
-                postfix = '_Kinematics_dudt.sto';
-                header_post = '_acc';
+                % postfix = '_Kinematics_dudt.sto';
+                % header_post = '_acc';
                 error('loadOpenSimData:unsupportedDataType','Joint accelerations are currently unsupported until dynamics are added to modeling')
             case 'joint_dyn'
                 postfix = '_Dynamics_q.sto';
@@ -61,7 +56,7 @@ function loadOpenSimData(cds,folderPath,dataType)
             case 'muscle_vel'
                 % temporary until Fiber_velocity file is fixed: take
                 % gradient of muscle lengths
-%                 postfix = '_MuscleAnalysis_FiberVelocity.sto';
+                % postfix = '_MuscleAnalysis_FiberVelocity.sto';
                 postfix = '_MuscleAnalysis_Length.sto';
                 header_post = '_muscVel';
             case 'hand_pos'
@@ -73,8 +68,17 @@ function loadOpenSimData(cds,folderPath,dataType)
             case 'hand_acc'
                 postfix = '_PointKinematics_hand_acc.sto';
                 header_post = '_handAcc';
+            case 'elbow_pos'
+                postfix = '_PointKinematics_elbow_pos.sto';
+                header_post = '_elbowPos';
+            case 'elbow_vel'
+                postfix = '_PointKinematics_elbow_vel.sto';
+                header_post = '_elbowVel';
+            case 'elbow_acc'
+                postfix = '_PointKinematics_elbow_acc.sto';
+                header_post = '_elbowAcc';
             otherwise
-                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc''}')
+                error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc'',''elbow_pos'',''elbow_vel'',''elbow_acc''}')
         end
         fileNameList = {[folderPath,prefix{i},postfix]};
 %         fileNameList={[folderPath,prefix{i},'_Kinematics_q.sto'];...
@@ -86,6 +90,7 @@ function loadOpenSimData(cds,folderPath,dataType)
             if ~isempty(foundList)
                 %load data from file into table 'kin':
                 fid=fopen(fileNameList{j});
+                try
                 %loop through the header till we find the first row of data:
                 tmpLine=fgetl(fid);
                 %check for correct file given dataType
@@ -128,8 +133,20 @@ function loadOpenSimData(cds,folderPath,dataType)
                         if ~strcmp(tmpLine,'PointAcceleration')
                             error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
                         end
+                    case 'elbow_pos'
+                        if ~strcmp(tmpLine,'PointPosition')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'elbow_vel'
+                        if ~strcmp(tmpLine,'PointVelocity')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
+                    case 'elbow_acc'
+                        if ~strcmp(tmpLine,'PointAcceleration')
+                            error('loadOpenSimData:wrongFile',['Header in analysis file ' fileNameList{j} ' is incorrect'])
+                        end
                     otherwise
-                        error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len''}')
+                        error('loadOpenSimData:invalidDataType', 'Data type must be one of {''joint_ang'', ''joint_vel'', ''joint_dyn'', ''muscle_len'',''muscle_vel'',''hand_pos'',''hand_vel'',''hand_acc'',''elbow_pos'',''elbow_vel'',''elbow_acc''}')
                 end
                 while ~strcmp(tmpLine,'endheader')
                     if ~isempty(strfind(tmpLine,'nRows'))
@@ -184,42 +201,29 @@ function loadOpenSimData(cds,folderPath,dataType)
                     disp('data will be interpolated to reconstruct missing points')
                     cds.addProblem('kinect data has missing timepoints, data in the cds has been interpolated to reconstruct them')
                 end
-                %interpolate to desired time vector:
-                desiredTime=roundTime(a(1,1):dt:a(end,1));%uniformly samples a with spacing dt, then shifts time bins to be zero aligned
-                desiredTime=desiredTime(desiredTime>min(a(:,1)) & desiredTime<max(a(:,1)))';%clear out any points that fall outside the original time window due to the shift
                 
-                interpData = interp1(a(:,1),a(:,2:end),desiredTime);
+                % resample data at uniform sampling rate
+                [resampData,timevec] = resample(a(:,2:end),a(:,1));
                 
                 % Temporary until fiber velocity file is fixed: take
                 % gradient for muscle velocity
                 if strcmp(dataType,'muscle_vel')
-                    for muscle_ctr = 1:size(interpData,2)
-                        grad_interpData(:,muscle_ctr) = gradient(interpData(:,muscle_ctr),desiredTime);
+                    for muscle_ctr = 1:size(resampData,2)
+                        grad_interpData(:,muscle_ctr) = gradient(resampData(:,muscle_ctr),timevec);
                     end
-                    interpData = grad_interpData;
+                    resampData = grad_interpData;
                 end
                 
-                kin=array2table([desiredTime,interpData],'VariableNames',header);
+                kin=array2table([timevec,resampData],'VariableNames',header);
                 unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;
                 %find sampling rate and look for matching rate in analog data:
-                SR=round(1/mode(diff(kin.t)));
-                cdsFrequencies=zeros(1,length(cds.analog));
-                for k=1:length(cds.analog)
-                    cdsFrequencies(k)=round(1/mode(diff(cds.analog{k}.t)));
-                end
-                match=find(cdsFrequencies==SR);
-                %append new data into the analog cell array:
-                if isempty(match)
-                    %stick the data in a new cell at the end of the cds.analog
-                    %cell array:
-                    cds.analog{end+1}=kin;
-                else
-                    %append the new data to the table with the matching
-                    %frequency:
-                    cds.analog{match}=mergeTables(cds.analog{match},kin);
-                end
+                cds.analog{end+1}=kin;
                 foundFiles=[foundFiles;fileNameList(j)];
+                catch ME
+                    fclose(fid);
+                    rethrow(ME)
+                end
                 
                 fclose(fid);
             else
@@ -229,8 +233,9 @@ function loadOpenSimData(cds,folderPath,dataType)
            
     end
     
+    % set new data window
+    cds.setDataWindow()
     
-    cds.sanitizeTimeWindows
     logStruct=struct('folder',folderPath,'fileNames',foundFiles);
     evntData=loggingListenerEventData('loadOpenSimData',logStruct);
     notify(cds,'ranOperation',evntData)

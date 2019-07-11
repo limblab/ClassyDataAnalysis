@@ -39,7 +39,7 @@ function emgFromNSx(cds)
 
         data(:,1) = roundTime(double(0:1/emgFreq:(size(data,1)-1)/emgFreq)+timestamp/timeRes);
 
-        emgNames=[{'t'},emgNames];
+        emgNames=[{'t'};emgNames(:)];
         %build table of emgs:
         emg=array2table(data,'VariableNames',emgNames);
         emg.Properties.VariableUnits=[{'s'},repmat({'mV'},1,length(emgNames)-1)];

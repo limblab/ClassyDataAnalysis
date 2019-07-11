@@ -28,8 +28,23 @@ function getCObumpTaskTable(cds,times)
     stimMask=bitand(hex2dec('f0'),cds.words.word) == wordStim;
     stimTimes=cds.words.ts( stimMask );
     stimCodeList=cds.words.word( stimMask );
+    vibTimesAll = cds.NEV.Data.Comments.TimeStampSec;
+    vibStringAll = cds.NEV.Data.Comments.Text;
+    if ~isempty(vibStringAll)
+    vibStringOn = vibStringAll(vibStringAll(:,8)~= 'O',:);
+    vibStringOff = vibStringAll(vibStringAll(:,8) == 'O',:);
+    
+    vibOnTime = vibTimesAll(vibStringAll(:, 8) ~= 'O');
+    vibOffTime = vibTimesAll(vibStringAll(:, 8) == 'O');
+    vibWindow = [vibOnTime', vibOffTime'];
+    
+%     vibNum = vibStringAll(:,
     
     %preallocate our trial variables:
+    vibNumOn =str2num(vibStringOn(:,8:end));
+    vibNumOff = str2num(vibStringOff(:,11:end));
+    vibNum = [vibNumOn, vibNumOff];
+    end
     numTrials=numel(times.number);
     tgtOnTime=nan(numTrials,1);
     tgtID=nan(numTrials,1);   bumpTimeList=nan(numTrials,1);
@@ -676,6 +691,9 @@ function getCObumpTaskTable(cds,times)
                     stimTimeList(trial)=stimTimes(idx);
                     stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
                 end
+                
+                
+
             end
             
             % convert bump direction into degrees
@@ -828,6 +846,36 @@ function getCObumpTaskTable(cds,times)
                     stimTimeList(trial)=stimTimes(idx);
                     stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
                 end
+                
+%                 idxVibOn = find(vibOnTime > times.startTime(trial)-.4 & vibOnTime < times.endTime(trial),1);
+%                 
+%                 if ~isempty(idxVibOn)
+%                     if vibOnTime(idxVibOn) < times.startTime(trial)
+%                         vibOnTime(idxVibOn) = times.startTime(trial);
+%                         cds.addProblem('Truncated vibration times at start of trial')
+%                     end
+%                     vibOnTimeList(trial)=vibOnTime(idxVibOn);
+%                     vibNumOnList(trial) = vibNumOn(idxVibOn);
+%                 else 
+%                     vibOnTimeList(trial) = nan;
+%                     vibNumOnList(trial) = nan;
+%                 end
+% 
+%                 %% Have to put a little padding on this, because sometimes teh vibration goes a little past the end of the trial
+%                 
+%                 idxVibOff = find(vibOffTime > times.startTime(trial) & vibOffTime < times.endTime(trial)+.2,1);
+%                                
+%                 if ~isempty(idxVibOff)
+%                     if vibOffTime(idxVibOff) > times.endTime(trial)
+%                         vibOffTime(idxVibOff) = times.endTime(trial);
+%                         cds.addProblem('Truncated vibration times at end of trial')
+%                     end
+%                     vibOffTimeList(trial)=vibOffTime(idxVibOff);
+%                     vibNumOffList(trial) = vibNumOff(idxVibOff);
+%                 else
+%                     vibOffTimeList(trial) = nan;
+%                     vibNumOffList(trial) = nan;
+%                end
             end
             
             % convert bump direction into degrees
@@ -837,16 +885,17 @@ function getCObumpTaskTable(cds,times)
             trialsTable=table(ctrHold,otHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
                                 trialRedo,tgtSize,tgtAngle,round(tgtCtr,4),...
                                 bumpTimeList,abortDuringBump,ctrHoldBump,delayBump,moveBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
-                                stimTimeList,stimCode,stimDuringBump,stimInsteadOfBump,stimDelay,...
+                                stimTimeList,stimCode,stimDuringBump,stimInsteadOfBump,stimDelay,... % vibOnTimeList', vibOffTimeList',vibNumOnList', vibNumOffList',...
                                 'VariableNames',{'ctrHold','otHold','tgtOnTime','delayHold','goCueTime','movePeriod','intertrialPeriod','penaltyPeriod',...
                                 'trialRedo','tgtSize','tgtDir','tgtCtr',...
                                 'bumpTime','abortDuringBump','ctrHoldBump','delayBump','moveBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
                                 'stimTime','stimCode','stimDuringBump','stimInsteadOfBump','stimDelay'});
+                                %'vibOnTime', 'vibOffTime', 'chanVibOn', 'chanVibOff'});
 
             trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s','s',...
                                                     'bool','cm','deg','cm, cm',...
                                                     's','bool','bool','bool','bool','s','s','N','deg',...
-                                                    's','int','bool','bool','s'};
+                                                    's','int','bool','bool','s'}%, 's', 's', 'arb', 'arb'};
 
             trialsTable.Properties.VariableDescriptions={'center hold time','outer target hold time','outer target onset time','instructed delay time','go cue time','movement time','intertrial time','penalty time',...
                                                             'whether this trial is a redo','size of targets','angle of outer target','x-y position of outer target',...
@@ -854,7 +903,8 @@ function getCObumpTaskTable(cds,times)
                                                                 'did we have a delay period bump','did we have a movement period bump','the time the bump was held at peak amplitude',...
                                                                 'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
                                                                 'time of stimulus on this trial','stim code issued in stim word','flag indicating the stimulus occurred concurrent with a bump',...
-                                                                'flag indicating the simulus replaced a bump on this trial','delay after period start at which stimulus word was issued by xpc'};
+                                                                'flag indicating the simulus replaced a bump on this trial','delay after period start at which stimulus word was issued by xpc'}
+                                                                %'when vibration on comment was written', 'when vibration off comment was written', 'Which channels were vibd','Which channels have vib turn off'};
 
         otherwise
             error('getCObumpTaskTable:unrecognizedDBVersion',['the trial table code for CObump is not implemented for databursts with version#:',num2str(dbVersion)])

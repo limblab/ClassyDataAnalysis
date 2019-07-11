@@ -33,7 +33,7 @@ function sanitizeTimeWindows(cds)
     for i=1:size(timeVec,1)
         %find sig figs of the timestep:
         n=0;
-        while round(timeVec(i,3)*10^n)<1;
+        while round(timeVec(i,3)*10^n)<1
             n=n+1;
         end
         %use ceil and floor to get accurate window:
@@ -44,6 +44,7 @@ function sanitizeTimeWindows(cds)
     window=[max(timeVec(:,1)),min(timeVec(:,2))];
     meta=cds.meta;
     meta.dataWindow=window;
+    meta.duration=window(end)-window(1);
     set(cds,'meta',meta)
     %% run through all fields and make sure the data only exists between the window:
     %sub-referencing a table is very slow, so we want to avoid it at all

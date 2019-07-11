@@ -19,7 +19,7 @@ function NEVNSx2cds(cds,opts)
         
         %get the date of the file so processing that depends on when the
         %file was collected has something to work with
-        opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(1)) ...
+        opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(1)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) ...
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
         
@@ -38,14 +38,15 @@ function NEVNSx2cds(cds,opts)
         end
         
     %% the kinematics
+    
         %convert event info into encoder steps:
-        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage'}))
+        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage','multi_gadget','ball_drop'}))
             cds.kinematicsFromNEV(opts)
         end
        
 
     %% the kinetics
-        if opts.robot || strcmp(opts.task,'WF')
+        if opts.robot || any(strcmp(opts.task,{'WF','multi_gadget'}))
             cds.forceFromNSx(opts)
         end
 
@@ -82,9 +83,12 @@ function NEVNSx2cds(cds,opts)
 %             cds.getTrialTable(opts)
 %         end
     %% sanitize times so that all our data is in the same window.
-        cds.sanitizeTimeWindows
+        if ~opts.unsanitizedTimes
+            cds.sanitizeTimeWindows
+        end
     %% Set metadata. Some metadata will already be set, but this should finish the job
         cds.metaFromNEVNSx(opts)
+        cds.setDataWindow()
     %% reset the text interpreter:
         set(0, 'defaulttextinterpreter', defaultTextInterpreter);
         
