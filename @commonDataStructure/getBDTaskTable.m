@@ -72,6 +72,10 @@ function getBDTaskTable(cds,times)
     abortDuringBump=false(numTrials,1);
     stimTrial=false(numTrials,1);
     stimCode=nan(numTrials,1);
+    
+    numTargets = nan(numTrials,1);
+    correctAngle = nan(numTrials,1);
+    angleTolerance = nan(numTrials,1);
     %get the databurst version:
     dbVersion=cds.databursts.db(1,2);
     skipList=[];
@@ -228,7 +232,163 @@ function getBDTaskTable(cds,times)
                                                             'was there stimulation','how often did stim happen','code in the stim word',...
                                                             'did the cursor recenter after bump','is the correct tgt the one in the tgt direction'};
             
-       
+      
+        case 5
+            % loop thorugh our trials and build our list vectors:
+            for trial = 1:numTrials
+                %find and parse the current databurst:
+                idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
+                if isempty(idxDB)
+                    skipList=[skipList,trial];
+                    continue
+                end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
+                %from mastercon code to ensure matching when extracting data from
+                %databurst:
+                % 2         db->addByte(DATABURST_VERSION);
+                % 3         db->addByte('2');
+                % 4         db->addByte('B');
+                % 5         db->addByte('C');
+                % 6         db->addByte(BEHAVIOR_VERSION_MAJOR);
+                % 7         db->addByte(BEHAVIOR_VERSION_MINOR);
+                % 8         db->addByte((BEHAVIOR_VERSION_MICRO & 0xFF00) >> 8);
+                % 9         db->addByte(BEHAVIOR_VERSION_MICRO & 0x00FF);
+                % 10:13 	db->addFloat((float)this->tgt_angle);
+                % 14:17 	db->addFloat((float)this->bump_dir);
+                % 18        db->addByte((byte)this->params->use_random_targets);
+                % 19:22 	db->addFloat((float)this->params->target_floor);
+                % 23:26 	db->addFloat((float)this->params->target_ceiling);
+                % 27:30 	db->addFloat((float)this->bumpmag_local);
+                % 31:34 	db->addFloat((float)this->params->bump_duration);
+                % 35:38 	db->addFloat((float)this->params->bump_ramp);
+                % 39:42 	db->addFloat((float)this->params->bump_floor);
+                % 43:46 	db->addFloat((float)this->params->bump_ceiling);
+                % 47        db->addByte((byte)this->stim_trial);
+                % 48        db->addByte((byte)this->training_trial);
+                % 49:52 	db->addFloat((float)this->params->training_frequency);
+                % 53:56 	db->addFloat((float)this->params->stim_prob);
+                % 57        db->addByte((byte)this->params->recenter_cursor);
+                % 58:61 	db->addFloat((float)this->params->target_radius);
+                % 62:65 	db->addFloat((float)this->params->target_size);
+                % 66:69 	db->addFloat((float)this->params->intertrial_time);
+                % 70:73 	db->addFloat((float)this->params->penalty_time);
+                % 74:77 	db->addFloat((float)this->params->bump_hold_time);
+                % 78:81 	db->addFloat((float)this->params->ct_hold_time);
+                % 82:85 	db->addFloat((float)this->params->bump_delay_time);
+                % 86        db->addByte((byte)this->params->show_target_during_bump);
+                % 87:90 	db->addFloat((float)this->params->bump_incr);
+                % 91        db->addByte((byte)this->is_primary_target);
+                % 92:95     float num targets
+                % 96:99     float correct target angle
+                % 100:103   float angle tolerance
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+                ctrHold(trial)=bytes2float(cds.databursts.db(idxDB,78:81));
+
+                bumpDelay(trial)=bytes2float(cds.databursts.db(idxDB,82:85));
+                bumpHold(trial)=bytes2float(cds.databursts.db(idxDB,74:77));
+                intertrialPeriod(trial)=bytes2float(cds.databursts.db(idxDB,66:69));
+                penaltyPeriod(trial)=bytes2float(cds.databursts.db(idxDB,70:73));
+
+                tgtSize(trial)=bytes2float(cds.databursts.db(idxDB,62:65));
+                tgtAngle(trial)=bytes2float(cds.databursts.db(idxDB,10:13));
+                tgtRadius(trial)=bytes2float(cds.databursts.db(58:61));
+                tgtCtr(trial,:)=tgtRadius(trial)*[cos(tgtAngle(trial)*pi/180),sin(tgtAngle(trial)*pi/180)];
+
+                bumpHoldPeriod(trial)=bytes2float(cds.databursts.db(idxDB,31:34));
+                bumpRisePeriod(trial)=bytes2float(cds.databursts.db(idxDB,35:38));
+                bumpMagnitude(trial)=bytes2float(cds.databursts.db(idxDB,27:30));
+                bumpAngle(trial)=bytes2float(cds.databursts.db(idxDB,14:17));
+                tgtDuringBump(trial)=cds.databursts.db(36);
+                ctrHoldBump(trial)=~tgtDuringBump(trial) && bumpMagnitude(trial)>0;
+                delayBump(trial)=tgtDuringBump(trial) && bumpMagnitude(trial)>0;
+                moveBump(trial)=false;
+
+                stimTrial(trial)=cds.databursts.db(idxDB,47);
+                stimTrialFreq(trial)=bytes2float(cds.databursts.db(idxDB,53:56));
+                isPrimaryTarget(trial)=cds.databursts.db(idxDB,91);
+                randomTargets(trial)=cds.databursts.db(idxDB,18);
+                tgtDirFloor(trial)=bytes2float(cds.databursts.db(idxDB,19:22));
+                tgtDirCeil(trial)=bytes2float(cds.databursts.db(idxDB,23:26));
+                bumpDirFloor(trial)=bytes2float(cds.databursts.db(idxDB,39:42));
+                bumpDirCeil(trial)=bytes2float(cds.databursts.db(idxDB,43:46));
+                bumpDirStep(trial)=bytes2float(cds.databursts.db(idxDB,87:90));
+                isTrainingTrial(trial)=cds.databursts.db(idxDB,48);
+                trainingTrialFreq(trial)=bytes2float(cds.databursts.db(idxDB,49:52));
+                recenterCursor(trial)=cds.databursts.db(idxDB,57);
+                abortDuringBump(trial)=true;
+
+                numTargets(trial) = bytes2float(cds.databursts.db(idxDB,92:95));
+                correctAngle(trial) = bytes2float(cds.databursts.db(idxDB, 96:99));
+                angleTolerance(trial) = bytes2float(cds.databursts.db(idxDB, 100:103));
+
+                %now get things that rely only on words and word timing:
+                idxOT=find(otOnTimes>times.startTime(trial) & otOnTimes < times.endTime(trial),1,'first');
+                if isempty(idxOT)
+                    tgtOnTime(trial)=nan;
+                    %tgtID(trial)=nan; %target ID has no meaning in this version of the databurst
+                else
+                    tgtOnTime(trial)=otOnTimes(idxOT);
+                    %tgtID(trial)=otOnCodes(idxOT); %target ID has no meaning in this version of the databurst
+                end
+
+                % Bump code and time
+                idxBump = find(bumpTimes > times.startTime(trial) & bumpTimes < times.endTime(trial), 1, 'first');
+                if isempty(idxBump)
+                    bumpTimeList(trial) = nan;
+                    %bumpList(trial) = nan;%bump ID has no meaning in this version of the databurst
+                    bumpAngle(trial)=nan;
+                else
+                    bumpTimeList(trial) = bumpTimes(idxBump);
+                    %bumpList(trial) = bitand(hex2dec('0f'),bumpCodes(idxBump));%bump ID has no meaning in this version of the databurst
+                end
+
+                % Go cue
+                idxGo = find(goCueTime > times.startTime(trial) & goCueTime < times.endTime(trial), 1, 'first');
+                if isempty(idxGo)
+                    goCueList(trial) = nan;
+                else
+                    goCueList(trial) = goCueTime(idxGo);
+                end
+
+                %Stim code
+                idx = find(stimTimes > times.startTime(trial) & stimTimes < times.endTime(trial),1,'first');
+                if isempty(idx)
+                    stimCode(trial) = nan;
+                else
+                    stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
+                end
+            end
+
+            %build table:
+            trialsTable=table(ctrHold,tgtOnTime,goCueList,intertrialPeriod,penaltyPeriod,bumpDelay,bumpHold,...
+                                tgtSize,tgtAngle,round(tgtCtr,4),tgtRadius,tgtDuringBump,tgtDirFloor,tgtDirCeil,isTrainingTrial,trainingTrialFreq,...
+                                bumpTimeList,abortDuringBump,ctrHoldBump,delayBump,moveBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
+                                stimTrial,stimTrialFreq,stimCode,... 
+                                recenterCursor,isPrimaryTarget,...
+                                numTargets,correctAngle,angleTolerance,...
+                                'VariableNames',{'ctrHold','tgtOnTime','goCueTime','intertrialPeriod','penaltyPeriod','bumpDelay','bumpHold'...
+                                'tgtSize','tgtDir','tgtCtr','tgtRadius','tgtDuringBump','tgtDirFloor','tgtDirCeil','isTrainingTrial','trainingTrialFreq'...
+                                'bumpTime','abortDuringBump','ctrHoldBump','delayBump','moveBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
+                                'isStimTrial','stimTrialFreq','stimCode',...
+                                'recenterCursor','isPrimaryTgt',...
+                                'numTargets','correctAngle','angleTolerance'});
+
+            trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s',...
+                                                    'cm','deg','cm, cm','cm','bool','deg','deg','bool','pct',...
+                                                    's','bool','bool','bool','bool','s','s','N','deg',...
+                                                    'bool','pct','int',...
+                                                    'bool','bool',...
+                                                    'int','deg','deg'};
+            trialsTable.Properties.VariableDescriptions={'center hold time','outer target onset time','go cue time','intertrial time','penalty time','time after entering ctr tgt that bump happens','time after bump onset before go cue',...
+                                                            'size of targets','angle of outer target','x-y position of outer target','target distance from center','were targets on during bump','min tgt angle','max tgt angle','only the correct target was shown','pct of trials that only show correct target',...
+                                                            'time of bump onset','would we abort during bumps','did we have a center hold bump',...
+                                                            'did we have a delay period bump','did we have a movement period bump','the time the bump was held at peak amplitude',...
+                                                            'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
+                                                            'was there stimulation','how often did stim happen','code in the stim word',...
+                                                            'did the cursor recenter after bump','is the correct tgt the one in the tgt direction',...
+                                                            'number of targets used','correct reach angle','tolerance for reward'};
+
+
         otherwise
             error('getCObumpTaskTable:unrecognizedDBVersion',['the trial table code for BD is not implemented for databursts with version#:',num2str(dbVersion)])
     end
