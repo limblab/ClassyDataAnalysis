@@ -73,15 +73,15 @@ function NEVNSx2cds(cds,opts)
     %% trial data
         %if we have databursts and we don't have a trial table yet, compute
         %the trial data, otherwise skip it
-%         if (~isempty(cds.databursts) && isempty(cds.trials))
-%             if strcmp(opts.task,'Unknown') 
-%                 warning('NEVNSx2cds:UnknownTask','The task for this file is not known, the trial data table may be inaccurate')
-%             end
-%             cds.getTrialTable(opts)
-%         elseif (isempty(cds.databursts) && isempty(cds.trials) && strcmp(opts.task, 'Unknown'))
-%             opts.no_task = true;
-%             cds.getTrialTable(opts)
-%         end
+        if (~isempty(cds.databursts) && isempty(cds.trials))
+            if strcmp(opts.task,'Unknown') 
+                warning('NEVNSx2cds:UnknownTask','The task for this file is not known, the trial data table may be inaccurate')
+            end
+            cds.getTrialTable(opts)
+        elseif (isempty(cds.databursts) && isempty(cds.trials) && strcmp(opts.task, 'Unknown'))
+            opts.no_task = true;
+            cds.getTrialTable(opts)
+        end
     %% sanitize times so that all our data is in the same window.
         if ~opts.unsanitizedTimes
             cds.sanitizeTimeWindows
