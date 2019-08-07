@@ -99,7 +99,7 @@ function getWFTaskTable(cds,times)
 
     %build table:
     trialsTable=table(OTTimeList,goTime,targetCorners,targetCenters,targetDir,catchFlag,adaptFlag,...
-                    'VariableNames',{'tgtOn','goCue','tgtCorners','tgtCtr','tgtDir','isCatch','adapt'});
+                    'VariableNames',{'tgtOnTime','goCueTime','tgtCorners','tgtCtr','tgtDir','isCatch','adapt'});
     
     trialsTable.Properties.VariableUnits={'s','s','int','int','deg','bool','bool'};
     trialsTable.Properties.VariableDescriptions={'outer target onset time','go cue time','x-y pairs for upper left and lower right target corners','x-y pairs of the target center','Target direction position (in degrees)','flag indicating if the trial was a catch trial','flag indicating if the trial was an adaptation trial'};
