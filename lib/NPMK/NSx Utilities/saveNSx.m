@@ -46,6 +46,7 @@ if reportFlag
         return
     end
 end
+
 %%
 % Write the basic header into the file
 %FullFile

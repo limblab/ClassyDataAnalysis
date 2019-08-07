@@ -29,11 +29,18 @@ function getRingReportingTaskTable(cds,times)
     stimTimes=cds.words.ts( stimMask );
     stimCodeList=cds.words.word( stimMask );
     
+
+    wordOTHold = hex2dec('A1');
+    wordOTHoldMask = cds.words.word == wordOTHold;
+    otHoldTimes=cds.words.ts(wordOTHoldMask);
+    
     %preallocate our trial variables:
     numTrials=numel(times.number);
     tgtOnTime=nan(numTrials,1);
     bumpTimeList=nan(numTrials,1);
     goCueList=nan(numTrials,1);
+    otHoldTime = nan(numTrials,1);
+    
     ctrHold=nan(numTrials,1);
     otHold=nan(numTrials,1);
     delayHold=nan(numTrials,1);
@@ -179,6 +186,14 @@ function getRingReportingTaskTable(cds,times)
                     tgtOnTime(trial)=otOnTimes(idxOT);
                 end
 
+                % outer target hold time
+                idxOTHold=find(otHoldTimes>times.startTime(trial) & otHoldTimes < times.endTime(trial),1,'first');
+                if isempty(idxOTHold)
+                    otHoldTime(trial)=nan;
+                else
+                    otHoldTime(trial)=otHoldTimes(idxOTHold);
+                end
+                
                 % Bump code and time
                 idxBump = find(bumpTimes > times.startTime(trial) & bumpTimes < times.endTime(trial), 1, 'first');
                 if isempty(idxBump)
@@ -208,26 +223,31 @@ function getRingReportingTaskTable(cds,times)
             
             % convert bump direction into degrees
             bumpAngle = round(bumpAngle*180/pi);
+            bumpAngle(bumpAngle < -180) = bumpAngle(bumpAngle < -180) + 360;
+            bumpAngle(bumpAngle > 180) = bumpAngle(bumpAngle > 180) - 360;
+            
             tgtAngle = round(tgtAngle*180/pi);
+            tgtAngle(tgtAngle < -180) = tgtAngle(tgtAngle < -180) + 360;
+            tgtAngle(tgtAngle > 180) = tgtAngle(tgtAngle > 180) - 360;
             %build table:
-            trialsTable=table(ctrHold,otHold,tgtOnTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
+            trialsTable=table(ctrHold,otHold,tgtOnTime,otHoldTime,delayHold,goCueList,movePeriod,intertrialPeriod,penaltyPeriod,...
                                 tgtSize,tgtAngle,tgtWidth,...
                                 bumpTimeList,abortDuringBump,doBump,hideCursorDuringBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
                                 stimTimeList,stimCode,stimDuringBump,stimInsteadOfBump,stimDelay,catchTrial,...
                                 tgtRadius,showOuterRing,showOuterTarget,useSquareTargets,hideCursorDuringMovement,...
-                                'VariableNames',{'ctrHold','otHold','tgtOnTime','delayHold','goCueTime','movePeriod','intertrialPeriod','penaltyPeriod',...
+                                'VariableNames',{'ctrHold','otHold','tgtOnTime','otHoldTime','delayHold','goCueTime','movePeriod','intertrialPeriod','penaltyPeriod',...
                                 'tgtSize','tgtDir','tgtWidth',...
                                 'bumpTime','abortDuringBump','doBump','hideCursorDuringBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
                                 'stimTime','stimCode','stimDuringBump','stimInsteadOfBump','stimDelay','catchTrial',...
                                 'targetRadius','showRing','showOuterTarget','useSquareTargets','hideCursorDuringMovement'});
 
-            trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s','s',...
+            trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s','s','s',...
                                                     'cm','deg','deg',...
                                                     's','bool','bool','bool','s','s','N','deg',...
                                                     's','int','bool','bool','s','bool',...
                                                     'cm','bool','bool','bool','bool'};
 
-            trialsTable.Properties.VariableDescriptions={'center hold time','outer target hold time','outer target onset time','instructed delay time','go cue time','movement time','intertrial time','penalty time',...
+            trialsTable.Properties.VariableDescriptions={'center hold time','outer target hold time','outer target onset time','instructed delay time','time at outer target','go cue time','movement time','intertrial time','penalty time',...
                                                             'size of targets','angle of outer target','angle width of target',...
                                                             'time of bump onset','would we abort during bumps',...
                                                                 'did we have a bump','was the cursor shown during the bump','the time the bump was held at peak amplitude',...

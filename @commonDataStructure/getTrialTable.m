@@ -101,7 +101,9 @@ function getTrialTable(cds,opts)
         %try to get trial data specific to the task
         switch opts.task
             case 'RW' %Labs standard random walk task for the robot
-                cds.getRWTaskTable(times);
+                try
+                    cds.getRWTaskTable(times);
+                end
             case 'CO' %labs standard center out task for the robot
                 cds.getCOTaskTable(times);
             case 'CObump'
@@ -138,7 +140,8 @@ function getTrialTable(cds,opts)
                 cds.getTRTTaskTable(times);
             case 'RT' % reaction time task
                 cds.getReactionTimeTaskTable(times);
-                
+            case 'RR'
+                cds.getRingReportingTaskTable(times);
             otherwise
                 warning('getTrialTable:UnknownTask','The task for this data file was not set. Trial table will contain only trial start,stop and result')
                 set(cds,'trials',times)
