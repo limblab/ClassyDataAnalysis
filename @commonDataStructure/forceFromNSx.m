@@ -3,6 +3,8 @@ function forceFromNSx(cds,opts)
     %contain force data and parses them based on the options in opts and
     %the filters in the cds. Because the cds is a member of the handle
     %superclass, this function does not return anything
+    
+    keyboard
     t=[];
     force=[];
     handleforce=[];
@@ -88,7 +90,7 @@ function forceFromNSx(cds,opts)
     if isempty(cds.force)
         set(cds,'force',forces);
     elseif ~isempty(force)
-        set(cds,'force',mergeTable(cds.force,forces));
+        set(cds,'force',mergeTables(cds.force,forces));
     end
     evntData=loggingListenerEventData('forceFromNSx',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)
