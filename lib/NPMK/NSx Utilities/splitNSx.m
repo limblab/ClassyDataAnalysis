@@ -43,9 +43,9 @@ end
 
 % Getting the file name
 if ~ismac
-    [fname, path] = getFile('*.ns*', 'Choose an NSx file...');
+    [fname, path] = uigetfile('*.ns*', 'Choose an NSx file...');
 else
-    [fname, path] = getFile('*.*', 'Choose an NSx file...');
+    [fname, path] = uigetfile('*.*', 'Choose an NSx file...');
 end
 if fname == 0
     disp('No file was selected.');
