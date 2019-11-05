@@ -11,7 +11,6 @@ function [dataResampled]=resampleData(data,desiredFreq)
     %transform the singal into the resampled one. resampleData also
     %resamples the time to make sure there are no extrapolated points.
     
-    
     currentFreq=1/mode(diff(data(:,1)));%SF= sample frequency of data
     %upsample the signal:
     %dataD=interp1(data(:,1),data(:,2:end),t_upsamp);
