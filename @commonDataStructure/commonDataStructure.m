@@ -446,7 +446,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getReactionTimeTaskTable(cds,times)
         getRingReportingTaskTable(cds,times)
         getGenericTaskTable(cds)
-        getMultiGadgetTaskTable(cds)
+        getMultiGadgetTaskTable(cds,times)
         %general functions
         addProblem(cds,problem,varargin)%data preprocessing functions
         checkEmg60hz(cds)
