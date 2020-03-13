@@ -72,6 +72,10 @@ function getBDTaskTable(cds,times)
     abortDuringBump=false(numTrials,1);
     stimTrial=false(numTrials,1);
     stimCode=nan(numTrials,1);
+    
+    numTargets = nan(numTrials,1);
+    correctAngle = nan(numTrials,1);
+    angleTolerance = nan(numTrials,1);
     %get the databurst version:
     
     numTargets = nan(numTrials,1);
@@ -232,7 +236,7 @@ function getBDTaskTable(cds,times)
                                                             'was there stimulation','how often did stim happen','code in the stim word',...
                                                             'did the cursor recenter after bump','is the correct tgt the one in the tgt direction'};
             
-       
+
         case 5
             % loop thorugh our trials and build our list vectors:
             for trial = 1:numTrials

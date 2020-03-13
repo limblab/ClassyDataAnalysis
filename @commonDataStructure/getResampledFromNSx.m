@@ -8,6 +8,7 @@ function [adata,t]=getResampledFromNSx(cds,desiredFreq,achan_index)
     %achan_index. the first column will be time. Data columns will be 
     %filtered and decimated using parameters specified in filter_config. 
     
+    
     adata = [];%will preallocate below once we know how long the data is
     for c=1:length(achan_index)
         freq=cds.NSxInfo.NSx_sampling(achan_index(c));

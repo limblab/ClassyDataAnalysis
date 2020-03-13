@@ -3,6 +3,8 @@ function forceFromNSx(cds,opts)
     %contain force data and parses them based on the options in opts and
     %the filters in the cds. Because the cds is a member of the handle
     %superclass, this function does not return anything
+    
+    keyboard
     t=[];
     force=[];
     handleforce=[];
@@ -35,7 +37,7 @@ function forceFromNSx(cds,opts)
         if opts.robot % non-robot devices don't have any encoder data
             force=array2table(loadCellData(t>=min(cds.enc.t) & t<=max(cds.enc.t),:),'VariableNames',labels);
         else
-            force = array2table(loadCellData);
+            force = array2table(loadCellData,'VariableNames',labels);
         end
     end
     %forces for robot:
@@ -56,6 +58,15 @@ function forceFromNSx(cds,opts)
                 %voltage data into forces
                 t=roundTime(t,.00001);
                 handleforce=cds.handleForceFromRaw(loadCellData,t,opts);
+                %write temp into the cds
+                %sorry about the rounding time on the line below. there are some edge
+                %cases where machine precision becomes an issue and rounding the time
+                %takes care of that.
+                timePrecision = 1/cds.kinFilterConfig.sampleRate;
+                min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
+                max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
+                timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
+                forces=[timeTable,handleforce,force];
             end
         else
             handleforce=[];
@@ -63,16 +74,10 @@ function forceFromNSx(cds,opts)
                 warning('forceFromNEVNSx:noForceSignal','No force handle signal found because calc_from_raw did not find 6 channels named ''ForceHandle*''');
             end
         end
+    else
+        forces = [array2table(t),force];
     end
-    %write temp into the cds
-    %sorry about the rounding time on the line below. there are some edge
-    %cases where machine precision becomes an issue and rounding the time
-    %takes care of that.
-    timePrecision = 1/cds.kinFilterConfig.sampleRate;
-    min_t = roundTime(max([min(t), min(cds.enc.t)]),timePrecision);
-    max_t = roundTime(min([max(t), max(cds.enc.t)]),timePrecision);
-    timeTable=table(roundTime(t(roundTime(t)>=min_t & roundTime(t)<=max_t)),'VariableNames',{'t'});
-    forces=[timeTable,handleforce,force];
+
     if ~isempty(forces)
         forces.Properties.VariableUnits=[{'s'} repmat({'N'},1,size(handleforce,2)+size(force,2))];
         forces.Properties.Description='a table containing force data. First column is time, all other columns will be forces. If possible forces in x and y are identified and labeled fx and fy';
@@ -85,7 +90,7 @@ function forceFromNSx(cds,opts)
     if isempty(cds.force)
         set(cds,'force',forces);
     elseif ~isempty(force)
-        set(cds,'force',mergeTable(cds.force,forces));
+        set(cds,'force',mergeTables(cds.force,forces));
     end
     evntData=loggingListenerEventData('forceFromNSx',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)

@@ -66,7 +66,7 @@ for i=1:length(varargin)
     inputArgument = varargin{i};
     if (strcmpi(next, 'threshold'))
         next = '';
-        threshold = inputArgument;
+        threshold = inputArgument(:)'; % make sure that it is a row vector
     elseif (strcmpi(next, 'preThreshold'))
         next = '';
         preThreshold = inputArgument;
@@ -163,6 +163,6 @@ for ii = 1:length(Spikes.TimeStamp)
     Spikes.Waveform(:, ii) = Data(ts, Spikes.Electrode(ii));
 end
 % convert index to actual channel number
-Spikes.Electrode = channels(Spikes.Electrode);
+Spikes.Electrode = channels(Spikes.Electrode)'; % make sure that dimensions line up with the other vectors!
 
 
