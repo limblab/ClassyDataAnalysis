@@ -1,4 +1,4 @@
-function loadOpenSimData(cds,folderPath,dataType)
+function loadOpenSimData(cds,folderPath,dataType, deepLabCutFlag)
     %this is a method of the cds class and should be stored in the
     %@commonDataStructure folder with the other class methods.
     %
@@ -17,7 +17,10 @@ function loadOpenSimData(cds,folderPath,dataType)
     %   'elbow_pos'
     %   'elbow_vel'
     %   'elbow_acc'
-    
+    %
+    %   Given new deeplabcut pipeline, it makes more sense to shift the
+    %   times here rather than in the opensim file. Include a motion
+    %   tracking flag to know to search in the analog file.
     
     if ~strcmp(folderPath(end),filesep)
         folderPath=[folderPath,filesep];
@@ -213,7 +216,7 @@ function loadOpenSimData(cds,folderPath,dataType)
                     end
                     resampData = grad_interpData;
                 end
-                
+
                 kin=array2table([timevec,resampData],'VariableNames',header);
                 unitsLabels=[{'s'},repmat({unitLabel},[1,nCol-1])];
                 kin.Properties.VariableUnits=unitsLabels;

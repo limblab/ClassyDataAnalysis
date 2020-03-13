@@ -202,7 +202,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
             else
                 rotcal = eye(6);  
             end
-        else
+        elseif datenum(datetime)< datenum('01-Nov-2019')
             % Fx,Fy,scaleX,scaleY from ATI calibration file:
             % \\citadel\limblab\Software\ATI FT\Calibration\Lab
             % 6\FT25831.cal (this was sent back for recalibration and
@@ -219,7 +219,7 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       -0.30954 -19.51322   0.18811  -19.05310   0.48341  -19.31874]'./...
                       repmat([10.4365219 10.4365219 3.54463927 435.0360510 435.0360510 435.3391356],6,1)./1000;
             
-            Fy_invert = 1;
+            Fy_invert = -1;
             % rotation of the load cell to match forearm frame
             % (load cell is upside down and slightly rotated)
             theta_off = deg2rad(30); %angle offset of load cell to forearm frame- 3 and 27 are the empirircal measures used to generate the angle
@@ -231,7 +231,29 @@ function [fhcal,rotcal,Fy_invert, forceOffsets]=getLabParams(labnum,dateTime,rot
                       0                 0             0 -sin(theta_off) cos(theta_off)  0;...
                       0                 0             0    0             0              1]'; 
             
-             
+        else
+            % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab
+            % 6\FT25831.cal (this was sent back for recalibration and
+            % received 20180901)
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+           
+           % Fx,Fy,scaleX,scaleY from ATI calibration file:
+            % \\citadel\limblab\Software\ATI FT\Calibration\Lab 6\FT16018.cal
+            % fhcal = [Fx;Fy]./[scaleX;scaleY]
+            % force_offsets acquired empirically by recording static
+            % handle.
+            fhcal = [0.02653 0.02045 -0.10720 5.94762 0.20011 -6.12048;...
+                    0.15156 -7.60870 0.05471 3.55688 -0.09915 3.44508;...
+                    10.01343 0.36172 10.30551 0.39552 10.46860 0.38238;...
+                    -0.00146 -0.04159 0.14436 0.02302 -0.14942 0.01492;...
+                    -0.16542 -0.00272 0.08192 -0.03109 0.08426 0.03519;...
+                    0.00377 -0.09455 0.00105 -0.08402 0.00203 -0.08578]'./1000;
+            Fy_invert = 1;
+            rotcal = eye(6);
+            forceOffsets = [];
         end   
         if rothandle
             error('getLabParams:HandleRotated','Handle rotation not implemented for lab 6')  

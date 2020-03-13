@@ -397,6 +397,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         database2cds(cds,conn,filepath,varargin)
         loadOpenSimData(cds,folderPath,dataType)
         affine_xform = loadRawMarkerData(cds,marker_data_path,affine_xform)
+        affine_xform = loadRawMarkerDataDLC(cds, marker_data_path, affine_xform)
         sanitizeTimeWindows(cds)
         
     end

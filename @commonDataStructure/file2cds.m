@@ -213,7 +213,7 @@ function file2cds(cds,filePath,varargin)
                 disp([filePath,testExt])
                 filePath=[filePath,testExt];
             else
-                error('file2cds:noMatchingFile',['failed to find a file matching the input path:',filePath,'. Please check the path string'])
+                error('file2cds:noMatchingFile',['failed to find a file matching the input path:\n',filePath,'. Please check the path string'])
             end
         end
         
