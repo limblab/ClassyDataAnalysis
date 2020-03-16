@@ -22,8 +22,7 @@ function NEVNSx2cds(cds,opts)
         opts.dateTime= [int2str(cds.NEV.MetaTags.DateTimeRaw(1)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(2)) '/' int2str(cds.NEV.MetaTags.DateTimeRaw(4)) ...
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
-        
-        if strcmp(opts.task, 'freeReach')
+        if strcmp(opts.task, 'FR')
            opts.robot = false; 
         end
         %% Events:
