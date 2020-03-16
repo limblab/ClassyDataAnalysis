@@ -23,6 +23,9 @@ function NEVNSx2cds(cds,opts)
             ' ' int2str(cds.NEV.MetaTags.DateTimeRaw(5)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(6)) ':' int2str(cds.NEV.MetaTags.DateTimeRaw(7)) '.' int2str(cds.NEV.MetaTags.DateTimeRaw(8))];
         opts.duration= cds.NEV.MetaTags.DataDurationSec;
         
+        if strcmp(opts.task, 'freeReach')
+           opts.robot = false; 
+        end
         %% Events:
         %if events are already in the cds, then we keep them and ignore any
         %new words in the NEVNSx. Otherwise we load the events from the
@@ -31,7 +34,7 @@ function NEVNSx2cds(cds,opts)
             %do this first since the task check requires the words to already be processed, and task is required to work on kinematics and force
             cds.eventsFromNEV(opts)
             % if a task was not passed in, set task varable
-            if strcmp(opts.task,'Unknown')%if no task label was passed into the function call try to get one automatically
+            if strcmp(opts.task,'Unknown') %if no task label was passed into the function call try to get one automatically
                 opts=cds.getTask(opts.task,opts);
             end
             
