@@ -4,7 +4,6 @@ function forceFromNSx(cds,opts)
     %the filters in the cds. Because the cds is a member of the handle
     %superclass, this function does not return anything
     
-    keyboard
     t=[];
     force=[];
     handleforce=[];
