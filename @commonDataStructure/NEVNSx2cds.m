@@ -48,7 +48,7 @@ function NEVNSx2cds(cds,opts)
        
 
     %% the kinetics
-        if opts.robot || any(strcmp(opts.task,{'WF','multi_gadget'}))
+        if opts.robot || any(strcmp(opts.task,{'WF', 'WM', 'WI', 'WB', 'WS','multi_gadget'}))
             cds.forceFromNSx(opts)
         end
 
