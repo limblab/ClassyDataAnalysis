@@ -58,7 +58,8 @@ function file2cds(cds,filePath,varargin)
     %                   CObump: center out bump task
     %                   RW: random walk
     %                   BD: bump direction
-    %                   WF: wrist flexion
+    %                   WM: wrist movement
+    %                   WI: Isometric wrist
     %                   multi_gadget: multigadget task
     %                   UNT: uncertainty
     %                   RP:resist perturbations
