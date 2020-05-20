@@ -56,15 +56,27 @@ function file2cds(cds,filePath,varargin)
     %               viable task strings are:
     %                   CO: center out
     %                   CObump: center out bump task
+    %                   COactpas: aliased with CObump
+    %                   ball_drop
     %                   RW: random walk
     %                   BD: bump direction
     %                   WM: wrist movement
-    %                   WI: Isometric wrist
+    %                   WI: isometric wrist
+    %                   WS: wrist spring
+    %                   WB: wrist box
+    %                   WF: wrist flexion, here for compatibility but
+    %                   please don't use if you know which of the above
+    %                   four tasks your file corresponds to
     %                   multi_gadget: multigadget task
     %                   UNT: uncertainty
-    %                   RP:resist perturbations
+    %                   RP: resist perturbations
     %                   DCO: dynamic center out
     %                   UCK: 2 target cisek
+    %                   SABES: Brian Dekleva's center out sabes task
+    %                   OOR: out-out reach
+    %                   TRT: two workspace random target
+    %                   RT: reaction time
+    %                   RR: ring reporting
     %'arrayARRAYNAME'   specifies the array used for data collection.
     %               file2cds looks for the first part of the argument to
     %               match the string 'array' and then takes the remainder of

@@ -289,7 +289,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('meta:BadtaskFormat','the task field must contain a string')
             elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','COactpas','BD','DCO','multi_gadget','UNT','RP','none','Unknown','SABES','UCK','OOR','WF','TRT','RT','RR','AFC', 'FR', 'WS','WI','WM','WB'}),1))
                 %standard loading will catch 'Unknown' 
-                error('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string'])
+                error('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string. Here are the currently accepted task names: RW, CO, CObump, COactpas, WM, WI, WB, WS, WF, multi_gadget, ball_drop, BD, UNT, RP, DCO, SABES, UCK, OOR, TRT, RT, RR, AFC'])'])
             elseif ~isfield(meta,'monkey') || ~ischar(meta.monkey)
                 error('meta:BadmonkeyFormat','The monkey name must contain a string with the monkey name')
             elseif ~isfield(meta,'array') || ~ischar(meta.array)
