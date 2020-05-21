@@ -173,7 +173,7 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
             elseif ~isfield(meta,'hasTrials') || ~islogical(meta.hasTrials)
                 error('meta:NoHasTrials','meta must include a hasTrials field with a boolean flag')
             else
-                if isempty(find(strcmp(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','NoDataLoaded','WF'}),1))
+                if isempty(find(strcmp(meta.task,{'RW','CO','CObump','BD','DCO','multi_gadget','UNT','RP','NoDataLoaded','WM','WI'}),1))
                     warning('meta:UnrecognizedTask','This task string is not recognized. Standard analysis functions may fail to operate correctly using this task string')
                 end
                 ex.meta=meta;
