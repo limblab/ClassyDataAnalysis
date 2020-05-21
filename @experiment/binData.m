@@ -37,6 +37,9 @@ function binData(ex,varargin)
     bins=[];
     for i=1:length(ex.binConfig.include)
         currLabel=ex.binConfig.include(i).field;
+        if isempty(currLabel)
+            error('You need to decide which fields to bin. Set ex.binConfig.include.field')
+        end
         if strcmp(currLabel,'units') || strcmp(currLabel,'analog') 
             continue
         end
@@ -47,6 +50,7 @@ function binData(ex,varargin)
             warning('binData:noMethodForTrials','trials are not continuous data and cannot be binned. Trials will be skipped. remove the trials entry in binConfig.include to suppress this message')
             continue
         end
+%         keyboard; it isn't hitting this 
         if isempty(ex.binConfig.include(i).which)
             includeNames=ex.(currLabel).data.Properties.VariableNames(2:end);
             temp=decimateData(ex.(currLabel).data{:,:},ex.binConfig.filterConfig);
