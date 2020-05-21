@@ -151,19 +151,33 @@ function kinematicsFromNEV(cds,opts)
     
     kin=table(cds.enc.t,still,goodData,pos(:,1),pos(:,2),vx,vy,ax,ay, ...
                 'VariableNames',{'t','still','good','x','y','vx','vy','ax','ay'});
+    kin.Properties.VariableUnits={'s','bool','bool','cm','cm','cm/s','cm/s','cm/s^2','cm/s^2'};        
+    
+    if any(strcmp(opts.task, {'WF', 'WM', 'WI', 'WB', 'WS'}))
+        kin.Properties.VariableDescriptions={ 'time in seconds' ,'Flag indicating whether the cursor was still',...
+                                        'Flag indicating whether the data at this time is good, or known to have problems (0=bad, 1=good)',...
+                                        'x position in room coordinates. ','y position in room coordinates',...
+                                        'x velocity in room coordinates. ','y velocity in room coordinates',...
+                                        'x acceleration in room coordinates. ','y acceleration in room coordinates'};
+        kin.Properties.Description='Cursor signals. These are include position, velocity, acceleration, and flags indicating data quality';
 
-    kin.Properties.VariableUnits={'s','bool','bool','cm','cm','cm/s','cm/s','cm/s^2','cm/s^2'};
-    kin.Properties.VariableDescriptions={ 'time in seconds' ,'Flag indicating whether the cursor was still',...
+        if isempty(cds.cursor)
+            set(cds,'cursor',kin);
+        elseif ~isempty(kin)
+            set(cds,'cursor',mergeTables(cds.cursor,kin));
+        end
+    else 
+        kin.Properties.VariableDescriptions={ 'time in seconds' ,'Flag indicating whether the cursor was still',...
                                     'Flag indicating whether the data at this time is good, or known to have problems (0=bad, 1=good)',...
                                     'x position in room coordinates. ','y position in room coordinates',...
                                     'x velocity in room coordinates. ','y velocity in room coordinates',...
                                     'x acceleration in room coordinates. ','y acceleration in room coordinates'};
-    kin.Properties.Description='Kinematic signals. These are computed from the encoder data, and include position, velocity, acceleration, and flags indicating data quality';
-    
-    if isempty(cds.kin)
-        set(cds,'kin',kin);
-    elseif ~isempty(kin)
-        set(cds,'kin',mergeTables(cds.kin,kin));
+        kin.Properties.Description='Kinematic signals. These are computed from the encoder data, and include position, velocity, acceleration, and flags indicating data quality';
+        if isempty(cds.kin)
+            set(cds,'kin',kin);
+        elseif ~isempty(kin)
+            set(cds,'kin',mergeTables(cds.kin,kin));
+        end
     end
     evntData=loggingListenerEventData('kinematicsFromNEV',cds.kinFilterConfig);
     notify(cds,'ranOperation',evntData)
