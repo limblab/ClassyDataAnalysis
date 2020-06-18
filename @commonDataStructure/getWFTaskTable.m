@@ -108,5 +108,5 @@ function getWFTaskTable(cds,times)
     
     %cds.setField('trials',trialsTable)
     set(cds,'trials',trialsTable)
-    cds.addOperation('getWFTaskTable',mfilename('fullpath'))
+%     cds.addOperation('getWFTaskTable',mfilename('fullpath'))
 end

@@ -24,27 +24,48 @@ function getCObumpTaskTable(cds,times)
     wordGo = hex2dec('31');
     goCueTime = cds.words.ts(cds.words.word == wordGo);
     
+    vibTimesAll = cds.NEV.Data.Comments.TimeStampSec;
+    vibStringAll = cds.NEV.Data.Comments.Text;
+    if ~isempty(vibStringAll)
+        vibStringOn = vibStringAll(vibStringAll(:,8)~= 'O',:);
+        vibStringOff = vibStringAll(vibStringAll(:,8) == 'O',:);
+
+        vibOnTime = vibTimesAll(vibStringAll(:, 8) ~= 'O');
+        vibOffTime = vibTimesAll(vibStringAll(:, 8) == 'O');
+        vibWindow = [vibOnTime', vibOffTime'];
+
+    %     vibNum = vibStringAll(:,
+
+        %preallocate our trial variables:
+        vibNumOn =str2num(vibStringOn(:,8:end));
+        vibNumOff = str2num(vibStringOff(:,11:end));
+        vibNum = [vibNumOn, vibNumOff];
+    end
+    % try and use stim sync line to get stim times, if fail, use behavior
+    % code. Behavior code will be ~30ms earlier than actual stim time
     wordStim=hex2dec('60');
     stimMask=bitand(hex2dec('f0'),cds.words.word) == wordStim;
     stimTimes=cds.words.ts( stimMask );
     stimCodeList=cds.words.word( stimMask );
-    vibTimesAll = cds.NEV.Data.Comments.TimeStampSec;
-    vibStringAll = cds.NEV.Data.Comments.Text;
-    if ~isempty(vibStringAll)
-    vibStringOn = vibStringAll(vibStringAll(:,8)~= 'O',:);
-    vibStringOff = vibStringAll(vibStringAll(:,8) == 'O',:);
-    
-    vibOnTime = vibTimesAll(vibStringAll(:, 8) ~= 'O');
-    vibOffTime = vibTimesAll(vibStringAll(:, 8) == 'O');
-    vibWindow = [vibOnTime', vibOffTime'];
-    
-%     vibNum = vibStringAll(:,
-    
-    %preallocate our trial variables:
-    vibNumOn =str2num(vibStringOn(:,8:end));
-    vibNumOff = str2num(vibStringOff(:,11:end));
-    vibNum = [vibNumOn, vibNumOff];
+    flag_found_stim_times = 0;
+    for i_analog = 1:numel(cds.analog)
+        if(any(strcmpi(cds.analog{i_analog}.Properties.VariableNames,'ainp16')))
+            flag_found_stim_times = 1;
+            
+            stim_on = cds.analog{i_analog}.t(find(diff(cds.analog{i_analog}.ainp16 - mean(cds.analog{i_analog}.ainp16) > 3) > 0.5));
+            % remove stim times that are close to each other, only store
+            % beginning of train
+            
+            stim_on_mask = find(diff([0;stim_on]) > 0.3); % shift over by one so we get the first stim of each train
+            stimTimes = stim_on(stim_on_mask);
+        end
     end
+    
+    stimCodeList=cds.words.word( stimMask );
+    if(~flag_found_stim_times || numel(stimCodeList) ~= numel(stimTimes))
+        stimTimes=cds.words.ts( stimMask );
+    end
+    %preallocate our trial variables:
     numTrials=numel(times.number);
     tgtOnTime=nan(numTrials,1);
     tgtID=nan(numTrials,1);   bumpTimeList=nan(numTrials,1);
