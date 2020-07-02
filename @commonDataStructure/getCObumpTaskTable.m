@@ -62,8 +62,24 @@ function getCObumpTaskTable(cds,times)
     end
     
     stimCodeList=cds.words.word( stimMask );
-    if(~flag_found_stim_times || numel(stimCodeList) ~= numel(stimTimes))
+    if(~flag_found_stim_times)
         stimTimes=cds.words.ts( stimMask );
+    elseif(numel(stimCodeList) > numel(stimTimes)) % truncate stimCodeList to match stimTimes
+        stimCodeTimes=cds.words.ts( stimMask );
+        actualStimTimes = [];
+        for i_stim_time = 1:numel(stimCodeTimes)
+            % find nearest future actual time, if it's within 200 ms, keep.
+            % otherwise discard
+            time_diff = stimTimes - stimCodeTimes(i_stim_time);
+            time_diff(time_diff < 0) = 100000;
+            [~,nearest_idx] = min(time_diff);
+            
+            if(time_diff(nearest_idx) < 0.2)
+                actualStimTimes(end+1,1) = stimTimes(nearest_idx);
+            end
+        end
+        
+        stimTimes = actualStimTimes;
     end
     %preallocate our trial variables:
     numTrials=numel(times.number);
