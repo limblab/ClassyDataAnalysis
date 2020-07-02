@@ -64,7 +64,7 @@ function getCObumpTaskTable(cds,times)
     stimCodeList=cds.words.word( stimMask );
     if(~flag_found_stim_times)
         stimTimes=cds.words.ts( stimMask );
-    elseif(numel(stimCodeList) > numel(stimTimes)) % truncate stimCodeList to match stimTimes
+    elseif(numel(stimCodeList) ~= numel(stimTimes)) % truncate stimCodeList to match stimTimes
         stimCodeTimes=cds.words.ts( stimMask );
         actualStimTimes = [];
         for i_stim_time = 1:numel(stimCodeTimes)
@@ -80,6 +80,7 @@ function getCObumpTaskTable(cds,times)
         end
         
         stimTimes = actualStimTimes;
+        
     end
     %preallocate our trial variables:
     numTrials=numel(times.number);
