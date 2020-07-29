@@ -70,11 +70,14 @@ function addSession(ex,cds)
 
     %% kin
     if ex.meta.hasKinematics
-        if isempty(cds.kin)
+        if isempty(cds.kin) && isempty(cds.cursor)
             error('addSession:NoKinematics','cds has no kinematics')
         end
-        %load kinematics from cdsOrPath into ex
-        ex.kin.appendTable(cds.kin);
+        %load either kinematics or cursor position from cdsOrPath into ex
+        if ~isempty(cds.cursor)
+            ex.kin.appendTable(cds.cursor)
+        else
+            ex.kin.appendTable(cds.kin);
     end
     %% force
     if ex.meta.hasForce
