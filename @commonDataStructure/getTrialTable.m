@@ -110,7 +110,7 @@ function getTrialTable(cds,opts)
                 cds.getCObumpTaskTable(times);
             case 'COactpas' % aliased with CObump
                 cds.getCObumpTaskTable(times);
-            case 'WF' %wrist flexion task
+            case {'WM', 'WI', 'WB', 'WS', 'WF'} %wrist motion, wrist iso, wrist box, wrist spring tasks. they all get processed the same by CDS. wrist flexion is in here too, just for compatibility's sake, but PLEASE don't use it
                 cds.getWFTaskTable(times);
             case 'multi_gadget'
                 cds.getMultiGadgetTaskTable(times);
