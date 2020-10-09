@@ -78,6 +78,7 @@ function addSession(ex,cds)
             ex.kin.appendTable(cds.cursor)
         else
             ex.kin.appendTable(cds.kin);
+        end
     end
     %% force
     if ex.meta.hasForce
