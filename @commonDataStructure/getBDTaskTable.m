@@ -33,6 +33,44 @@ function getBDTaskTable(cds,times)
     stimTimes=cds.words.ts( stimMask );
     stimCodeList=cds.words.word( stimMask );
     
+    % fix stim times if ainp16 is present
+    flag_found_stim_times = 0;
+    for i_analog = 1:numel(cds.analog)
+        if(any(strcmpi(cds.analog{i_analog}.Properties.VariableNames,'ainp16')))
+            flag_found_stim_times = 1;
+            
+            stim_on = cds.analog{i_analog}.t(find(diff(cds.analog{i_analog}.ainp16 - mean(cds.analog{i_analog}.ainp16) > 3) > 0.5));
+            % remove stim times that are close to each other, only store
+            % beginning of train
+            
+            stim_on_mask = find(diff([0;stim_on]) > 0.3); % shift over by one so we get the first stim of each train
+            stimTimes = stim_on(stim_on_mask);
+        end
+    end
+    
+    stimCodeList=cds.words.word( stimMask );
+    if(~flag_found_stim_times)
+        stimTimes=cds.words.ts( stimMask );
+    elseif(numel(stimCodeList) ~= numel(stimTimes)) % truncate stimCodeList to match stimTimes
+        stimCodeTimes=cds.words.ts( stimMask );
+        actualStimTimes = [];
+        for i_stim_time = 1:numel(stimCodeTimes)
+            % find nearest future actual time, if it's within 200 ms, keep.
+            % otherwise discard
+            time_diff = stimTimes - stimCodeTimes(i_stim_time);
+            time_diff(time_diff < 0) = 100000;
+            [~,nearest_idx] = min(time_diff);
+            
+            if(time_diff(nearest_idx) < 0.2)
+                actualStimTimes(end+1,1) = stimTimes(nearest_idx);
+            end
+        end
+        
+        stimTimes = actualStimTimes;
+        
+    end
+    
+    
     %preallocate our trial variables:
     numTrials=numel(times.number);
     tgtOnTime=nan(numTrials,1);
@@ -40,6 +78,8 @@ function getBDTaskTable(cds,times)
     goCueList=nan(numTrials,1);
     ctrHold=nan(numTrials,1);
 
+    stimTimeList=nan(numTrials,1);
+    
     bumpDelay=nan(numTrials,1);
     bumpHold=nan(numTrials,1);
     intertrialPeriod=nan(numTrials,1);
@@ -358,8 +398,10 @@ function getBDTaskTable(cds,times)
                 idx = find(stimTimes > times.startTime(trial) & stimTimes < times.endTime(trial),1,'first');
                 if isempty(idx)
                     stimCode(trial) = nan;
+                    stimTimeList(trial) = nan;
                 else
                     stimCode(trial) = bitand(hex2dec('0f'),stimCodeList(idx));%hex2dec('0f') is a bitwise mask for the trailing bit of the word
+                    stimTimeList(trial) = stimTimes(idx);
                 end
             end
 
@@ -369,20 +411,20 @@ function getBDTaskTable(cds,times)
                                 bumpTimeList,abortDuringBump,ctrHoldBump,delayBump,moveBump,bumpHoldPeriod,bumpRisePeriod,bumpMagnitude,bumpAngle,...
                                 stimTrial,stimTrialFreq,stimCode,... 
                                 recenterCursor,isPrimaryTarget,...
-                                numTargets,correctAngle,angleTolerance,...
+                                numTargets,correctAngle,angleTolerance,stimTimeList,...
                                 'VariableNames',{'ctrHold','tgtOnTime','goCueTime','intertrialPeriod','penaltyPeriod','bumpDelay','bumpHold'...
                                 'tgtSize','tgtDir','tgtCtr','tgtRadius','tgtDuringBump','tgtDirFloor','tgtDirCeil','isTrainingTrial','trainingTrialFreq'...
                                 'bumpTime','abortDuringBump','ctrHoldBump','delayBump','moveBump','bumpHoldPeriod','bumpRisePeriod','bumpMagnitude','bumpDir',...
                                 'isStimTrial','stimTrialFreq','stimCode',...
                                 'recenterCursor','isPrimaryTgt',...
-                                'numTargets','correctAngle','angleTolerance'});
+                                'numTargets','correctAngle','angleTolerance','stimTime'});
 
             trialsTable.Properties.VariableUnits={'s','s','s','s','s','s','s',...
                                                     'cm','deg','cm, cm','cm','bool','deg','deg','bool','pct',...
                                                     's','bool','bool','bool','bool','s','s','N','deg',...
                                                     'bool','pct','int',...
                                                     'bool','bool',...
-                                                    'int','deg','deg'};
+                                                    'int','deg','deg','s'};
             trialsTable.Properties.VariableDescriptions={'center hold time','outer target onset time','go cue time','intertrial time','penalty time','time after entering ctr tgt that bump happens','time after bump onset before go cue',...
                                                             'size of targets','angle of outer target','x-y position of outer target','target distance from center','were targets on during bump','min tgt angle','max tgt angle','only the correct target was shown','pct of trials that only show correct target',...
                                                             'time of bump onset','would we abort during bumps','did we have a center hold bump',...
@@ -390,7 +432,7 @@ function getBDTaskTable(cds,times)
                                                             'the time the bump took to rise and fall from peak amplitude','magnitude of the bump','direction of the bump',...
                                                             'was there stimulation','how often did stim happen','code in the stim word',...
                                                             'did the cursor recenter after bump','is the correct tgt the one in the tgt direction',...
-                                                            'number of targets used','correct reach angle','tolerance for reward'};
+                                                            'number of targets used','correct reach angle','tolerance for reward','stimulation time'};
 
         otherwise
             error('getCObumpTaskTable:unrecognizedDBVersion',['the trial table code for BD is not implemented for databursts with version#:',num2str(dbVersion)])
