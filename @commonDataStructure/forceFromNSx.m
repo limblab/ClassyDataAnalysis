@@ -6,6 +6,7 @@ function forceFromNSx(cds,opts)
     
     t=[];
     force=[];
+    forces=[];
     handleforce=[];
     %forces for wf and other tasks that use force_ to denote force channels
     forceCols = find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'force_')));

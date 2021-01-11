@@ -288,7 +288,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('meta:BadlabnumFormat','the labnum field must be a numeric value from the following set: [-1 1 2 3 6]')
             elseif ~isfield(meta,'task') || ~ischar(meta.task)  
                 error('meta:BadtaskFormat','the task field must contain a string')
-            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','COactpas','BD','DCO','multi_gadget','UNT','RP','none','Unknown','SABES','UCK','OOR','WF','TRT','RT','RR','AFC', 'FR', 'WS','WI','WM','WB'}),1))
+            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','COactpas','BD','DCO','multi_gadget','UNT','RP','none','Unknown','SABES','UCK','OOR','WF','TRT','RT','RR','AFC', 'FR', 'WS','WI','WM','WB','RToff'}),1))
                 %standard loading will catch 'Unknown' 
                 error('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string. Here are the currently accepted task names: RW, CO, CObump, COactpas, WM, WI, WB, WS, WF, multi_gadget, ball_drop, BD, UNT, RP, DCO, SABES, UCK, OOR, TRT, RT, RR, AFC'])
             elseif ~isfield(meta,'monkey') || ~ischar(meta.monkey)
@@ -446,6 +446,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
         getUCKTaskTable(cds,times)
         getTRTTaskTable(cds,times)
         getReactionTimeTaskTable(cds,times)
+        getOffReactionTimeTaskTable(cds,times)
         getRingReportingTaskTable(cds,times)
         getGenericTaskTable(cds)
         getMultiGadgetTaskTable(cds,times)

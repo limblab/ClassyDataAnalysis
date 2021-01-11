@@ -11,6 +11,9 @@ function sanitizeTimeWindows(cds)
     if ~isempty(cds.kin)
         timeVec=[timeVec;min(cds.kin.t),max(cds.kin.t),mode(diff(cds.kin.t))];
     end
+    if(~isempty(cds.cursor))
+        timeVec=[timeVec;min(cds.cursor.t),max(cds.cursor.t),mode(diff(cds.cursor.t))];
+    end
     if ~isempty(cds.force)
         timeVec=[timeVec;min(cds.force.t),max(cds.force.t),mode(diff(cds.force.t))];
     end
