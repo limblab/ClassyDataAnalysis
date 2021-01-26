@@ -35,6 +35,11 @@ end
 % get frame_times based on videosync
 frame_times = cds.analog{a_idx}.t(diff((cds.analog{a_idx}.(sync_name) - mean(cds.analog{a_idx}.(sync_name)) > 100)) > 0.5);
 
+% remove first frame if it occurs > 1s before others
+if(frame_times(2)-frame_times(1) > 1)
+    frame_times = frame_times(2:end);
+end
+
 if(numel(frame_times) ~= numel(frame_nums))
     error('frame nums and frame times do not have the same length. Worth checking into...');
 end
