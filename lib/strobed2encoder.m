@@ -77,9 +77,22 @@ if encoding_scheme == 0
         encoder(:,3) = (strobed_events(ts_index(1:end-2)+2,2) + strobed_events(ts_index(1:end-2)+3,2)*2^8 - 32765)* 2 * pi / 18000;
     end
 elseif encoding_scheme == 1
+    
+        % Temporary fix: there's an issue with the strobing databurst in lab 1
+    % giving us a long string of zeros with really short latency, which
+    % causes this code to fail. As a temp fix we're going to delete all of
+    % those sets of zeros if the mode of the inter-databurst time is less
+    % than .11
+    if mode(diff(strobed_events(:,1))) < 1.1E4
+        strobed_events(strobed_events(:,2) == 0,:) = [];
+%         cds.addProblem('Removed excess blank databursts');
+    end
+    
+    
+    
     % Get rid of repeated numbers
     strobed_events(diff(strobed_events(:,1))<5E-5,:) = [];  
-
+        
     % get time-stamps of the first strobe in a set of four
     ts = strobed_events(:,1);
     
