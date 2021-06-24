@@ -179,6 +179,16 @@ if isfield(NEV,'ElectrodesInfo')
                     fwrite(FileID,5,'uint8');
                 case 'F'
                     fwrite(FileID,6,'uint8');
+                case 'G'
+                    fwrite(FileID,7,'uint8');
+                case 'H'
+                    fwrite(FileID,8,'uint8');
+                case 'I'
+                    fwrite(FileID,9,'uint8');
+                case 'J'
+                    fwrite(FileID,10,'uint8');
+                case 'K'
+                    fwrite(FileID,11,'uint8');
             end
         
             fwrite(FileID,NEV.ElectrodesInfo(IDX).ConnectorPin,'uint8');
@@ -387,7 +397,7 @@ if ~isempty(NEV.Data.Comments.TimeStamp)
         %ftell(FileID)-Before
         fwrite(FileID, 0,'uint8');
         %ftell(FileID)-Before
-        fwrite(FileID, NEV.Data.Comments.Color(IDX),'uint32');
+        fwrite(FileID, 0,'uint32');
         %ftell(FileID)-Before
         fwrite(FileID, NEV.Data.Comments.Text(IDX,:));
         %ftell(FileID)-Before

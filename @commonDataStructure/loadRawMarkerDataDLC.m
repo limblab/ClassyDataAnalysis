@@ -1,60 +1,72 @@
-function affine_xform = loadRawMarkerDataDLC(cds,marker_data_path,affine_xform)
+function [] = loadRawMarkerDataDLC(cds,marker_data_path)
 % Given a cds, marker data from color tracking, and a save location, will
-% spatiotemporally align the markers to the data in the CDS, smooth the
-% markers, transform the coordinates for use in OpenSim and load into cds
+% spatiotemporally align the markers to the data in the CDS, transform the coordinates for use in OpenSim and load into cds
 %
-% This function needs the KinectTracking library to operate
+% 
 %% load marker data file
-md = xlsread(marker_data_path);
-frames = md(:,1);
-time = md(:,2);
+marker_table = readtable(marker_data_path);
 
-%% 4. PUT KINECT MARKER LOCATIONS IN HANDLE COORDINATES
-% rotation_known=0; %Whether the rotation matrix is already known (from another file from that day)
-% figure out if rotation known
-if nargin>3
-    error('Too many arguments')
-elseif nargin==3
-    [md,affine_xform] = realignMarkerSpacetimeDLC(cds,md,affine_xform);
-else
-    % first file of the day, affine xform unknown
-    [md,affine_xform] = realignMarkerSpacetimeDLC(cds,md);
+% remove bad frames from maker_table
+marker_table = marker_table(marker_table.is_good_frame==1,:);
+
+%% get marker names
+% get frame_num and remove from table
+frame_nums = marker_table.fnum;
+marker_table.fnum = [];
+col_names = marker_table.Properties.VariableNames;
+% remove suffixes
+for i_col = 1:numel(col_names)
+    underscore_idx = strfind(col_names{i_col},'_');
+    col_names{i_col} = col_names{i_col}(1:underscore_idx-1);
+end
+marker_names = uniquecell(col_names);
+
+
+%% get cds time for each frame
+% find sync line. Likely called videosync
+a_idx = 0;
+sync_name = 'videosync';
+for i_analog = 1:numel(cds.analog)
+    if(any(strcmpi(cds.analog{i_analog}.Properties.VariableNames,sync_name)))
+        a_idx = i_analog;
+    end
+end
+
+% get frame_times based on videosync
+frame_times = cds.analog{a_idx}.t(diff((cds.analog{a_idx}.(sync_name) - mean(cds.analog{a_idx}.(sync_name)) > 100)) > 0.5);
+
+% remove first frame if it occurs > 1s before others
+if(frame_times(2)-frame_times(1) > 1)
+    frame_times = frame_times(2:end);
+end
+
+if(numel(frame_times) ~= numel(frame_nums))
+    error('frame nums and frame times do not have the same length. Worth checking into...');
 end
 
 
-%% 5. SMOOTH OUT MARKERS
+%% make marker table to put in cds
+% currently, we are just throwing the whole table into the cds, figuring
+% that the excess entries (score, n_cams) might be interesting to someone
+% at some point...
 
-% md = smoothMarkerData(md);
+marker_table.t = frame_times;
 
-%% 6. PUT KINECT DATA INTO OPENSIM COORDINATES
+%% 1. PUT KINECT DATA INTO OPENSIM COORDINATES
 
-[md,~] = transformForOpenSimDLC(md,cds);
+% [marker_table,~] = transformForOpenSimDLC(marker_table,cds);
 
-%% make marker table
-% find meta data
-num_markers = 8; % ONLY USED 10 MARKERS FOR ROBOT DATA
-start_idx = find(md.t>=0,1,'first');
-num_frames = length(md.t)-start_idx+1;
-marker_names = {'Shoulder_JC','Marker_6','Pronation_Pt1','Marker_5','Marker_4','Marker_3','Marker_2','Marker_1'};
-
-% convert to table
-marker_time = md.t(start_idx:end);
-marker_pos = md.pos(start_idx:end,:);
-md_table = table;
-md_table.Frame = (1:num_frames)';
-md_table.t= marker_time;
-for fn = 1:num_markers
-    md_table.(marker_names{fn}) = squeeze(marker_pos(:,3*(fn-1)+1: 3*fn));
-end
 
 %% add to CDS (passed by reference)
 %append new data into the analog cell array:
 %stick the data in a new cell at the end of the cds.analog
 %cell array:
-cds.analog{end+1}=md_table;
+
+cds.analog{end+1}=marker_table;
 
 % set new data window
 cds.setDataWindow()
+cds.sanitizeTimeWindows();
 
 logStruct=struct('fileName',marker_data_path);
 evntData=loggingListenerEventData('loadRawMarkerData',logStruct);

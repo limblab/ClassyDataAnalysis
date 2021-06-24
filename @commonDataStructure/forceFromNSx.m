@@ -6,9 +6,18 @@ function forceFromNSx(cds,opts)
     
     t=[];
     force=[];
+    forces=[];
     handleforce=[];
     %forces for wf and other tasks that use force_ to denote force channels
     forceCols = find(~cellfun('isempty',strfind(lower(cds.NSxInfo.NSx_labels),'force_')));
+    % Sometimes force columns cannot be found because the experimenters
+    % used different names, so try to find again with a very common naming
+    if isempty(forceCols)
+        forceCols = find(contains(cds.NSxInfo.NSx_labels, 'F1')|...
+                         contains(cds.NSxInfo.NSx_labels, 'F2')|...
+                         contains(cds.NSxInfo.NSx_labels, 'Fx')|...
+                         contains(cds.NSxInfo.NSx_labels, 'Fy'));
+    end
 %     keyboard
     robotForceChannels = find(~cellfun('isempty',strfind(cds.NSxInfo.NSx_labels,'ForceHandle')));
     if isempty(forceCols)&&isempty(robotForceChannels)
@@ -22,9 +31,9 @@ function forceFromNSx(cds,opts)
         for i=1:length(forceCols)
             %if we have x or y force, give the field our special
             %label so that later processing can find it easily
-            if strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'force_x')
+            if strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'force_x')||strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'Fx')||strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'F1')
                 labels(i)={'fx'};
-            elseif strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'force_y')
+            elseif strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'force_y')||strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'Fy')||strcmpi(cds.NSxInfo.NSx_labels(forceCols(i)),'F2')
                 labels(i)={'fy'};
             else
                 labels(i)=cds.NSxInfo.NSx_labels(forceCols(i));

@@ -76,6 +76,7 @@ function varargout=getGitLog(obj,path,varargin)
     %if our file is in a git repo, find the home directory for the git repo
 
     gitLog=strsplit(gitLogString,'\n');
+    gitLogStruct = [];
     if ~isempty(gitLogString)
         for i=1:length(gitLog)
             %get the commit hash
@@ -95,6 +96,7 @@ function varargout=getGitLog(obj,path,varargin)
     varargout{1}=gitLogStruct;
 
     %% if necessary parse the filelog string into a struct:
+    fileLogStruct = [];
     if nargout==2
         fileLog=strsplit(fileLogString,'\n');
         if ~isempty(fileLogString)

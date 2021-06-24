@@ -140,6 +140,8 @@ function getTrialTable(cds,opts)
                 cds.getTRTTaskTable(times);
             case 'RT' % reaction time task
                 cds.getReactionTimeTaskTable(times);
+            case 'RToff' % offset reaction time task
+                cds.getOffReactionTimeTaskTable(times);
             case 'RR'
                 cds.getRingReportingTaskTable(times);
             case 'AFC'
