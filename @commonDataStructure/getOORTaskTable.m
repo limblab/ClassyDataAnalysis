@@ -19,68 +19,134 @@ function getOORTaskTable(cds,times)
     
     %preallocate vectors:
     numTrials=numel(times.number);    
-    [startx,starty,endx,endy,forceDir] = deal(nan(numTrials,1));
+    [startx,starty,endx,endy,forceDir,forceMag] = deal(nan(numTrials,1));
     [CO_t,CH_t,GC_t,OH_t] = deal(nan(numTrials,1));
-    % For each trial complete code
-    for trial=1:numTrials
-        %find the databurst for this trial
-        idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
-        %get target and prior info from databurst
-        if ~isempty(idxDB) 
-            startx(trial)   = bytes2float(cds.databursts.db(idxDB,10:13));
-            starty(trial)   = bytes2float(cds.databursts.db(idxDB,14:17));
-            endx(trial)     = bytes2float(cds.databursts.db(idxDB,18:21));
-            endy(trial)     = bytes2float(cds.databursts.db(idxDB,22:25));
-            forceDir(trial) = 180*bytes2float(cds.databursts.db(idxDB,26:29))/pi;
+    
+    dbVersion=cds.databursts.db(1,2);
+    
+    if(dbVersion < 3) % no force magnitude. 
+        % For each trial complete code
+        for trial=1:numTrials
+            %find the databurst for this trial
+            idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
+            %get target and prior info from databurst
+            if ~isempty(idxDB) 
+                startx(trial)   = bytes2float(cds.databursts.db(idxDB,10:13));
+                starty(trial)   = bytes2float(cds.databursts.db(idxDB,14:17));
+                endx(trial)     = bytes2float(cds.databursts.db(idxDB,18:21));
+                endy(trial)     = bytes2float(cds.databursts.db(idxDB,22:25));
+                forceDir(trial) = 180*bytes2float(cds.databursts.db(idxDB,26:29))/pi;
+            end
+            % get the timestamp for the start target On
+            COT = timetrial(startTargOnTime,trial);
+            if isempty(COT)
+                CO_t(trial)=NaN;
+            else
+                CO_t(trial)=COT;
+            end
+            % get the timestamp for the start target Hold
+            CHT = timetrial(startTargHold,trial);
+            if isempty(CHT)
+                CH_t(trial)=NaN;
+            else
+                CH_t(trial)=CHT;
+            end
+            % get the timestamp for the Go cue
+            GCT = timetrial(goCueTime,trial);
+            if isempty(GCT)
+                GC_t(trial)=NaN;
+            else
+                GC_t(trial)=GCT;
+            end
+            % get the timestamp for the end target Hold
+            OHT = timetrial(endTargHoldTime,trial);
+            if isempty(OHT)
+                OH_t(trial)=NaN;
+            else
+                OH_t(trial)=OHT;
+            end
+
         end
-        % get the timestamp for the start target On
-        COT = timetrial(startTargOnTime,trial);
-        if isempty(COT)
-            CO_t(trial)=NaN;
-        else
-            CO_t(trial)=COT;
+
+        % calculate intended movement direction
+        tgtDir = mod(atan2d(endy-starty,endx-startx),360);
+
+        trialsTable=table(roundTime(CO_t,.001),roundTime(CH_t,.001),...
+                          roundTime(GC_t,.001),roundTime(OH_t,.001),...
+                          round(tgtDir),round(forceDir),...
+                          'VariableNames',{'startTargOnTime','startTargHoldTime',...
+                                           'goCueTime','endTargHoldTime',...
+                                           'tgtDir','forceDir'});
+        trialsTable.Properties.VariableUnits={'s','s','s','s','Deg','Deg'};
+        trialsTable.Properties.VariableDescriptions={'start target onset time',...
+                                                     'start target hold time',...
+                                                     'go cue time',...
+                                                     'end target hold time',...
+                                                     'end target direction',...
+                                                     'intended force direction'};
+    elseif(dbVersion==3) % includes force magnitude
+        % For each trial complete code
+        for trial=1:numTrials
+            %find the databurst for this trial
+            idxDB = find(cds.databursts.ts > times.startTime(trial) & cds.databursts.ts<times.endTime(trial), 1, 'first');
+            %get target and prior info from databurst
+            if ~isempty(idxDB) 
+                startx(trial)   = bytes2float(cds.databursts.db(idxDB,10:13));
+                starty(trial)   = bytes2float(cds.databursts.db(idxDB,14:17));
+                endx(trial)     = bytes2float(cds.databursts.db(idxDB,18:21));
+                endy(trial)     = bytes2float(cds.databursts.db(idxDB,22:25));
+                forceDir(trial) = 180*bytes2float(cds.databursts.db(idxDB,26:29))/pi;
+                forceMag(trial) = bytes2float(cds.databursts.db(idxDB,30:33));
+            end
+            % get the timestamp for the start target On
+            COT = timetrial(startTargOnTime,trial);
+            if isempty(COT)
+                CO_t(trial)=NaN;
+            else
+                CO_t(trial)=COT;
+            end
+            % get the timestamp for the start target Hold
+            CHT = timetrial(startTargHold,trial);
+            if isempty(CHT)
+                CH_t(trial)=NaN;
+            else
+                CH_t(trial)=CHT;
+            end
+            % get the timestamp for the Go cue
+            GCT = timetrial(goCueTime,trial);
+            if isempty(GCT)
+                GC_t(trial)=NaN;
+            else
+                GC_t(trial)=GCT;
+            end
+            % get the timestamp for the end target Hold
+            OHT = timetrial(endTargHoldTime,trial);
+            if isempty(OHT)
+                OH_t(trial)=NaN;
+            else
+                OH_t(trial)=OHT;
+            end
+
         end
-        % get the timestamp for the start target Hold
-        CHT = timetrial(startTargHold,trial);
-        if isempty(CHT)
-            CH_t(trial)=NaN;
-        else
-            CH_t(trial)=CHT;
-        end
-        % get the timestamp for the Go cue
-        GCT = timetrial(goCueTime,trial);
-        if isempty(GCT)
-            GC_t(trial)=NaN;
-        else
-            GC_t(trial)=GCT;
-        end
-        % get the timestamp for the end target Hold
-        OHT = timetrial(endTargHoldTime,trial);
-        if isempty(OHT)
-            OH_t(trial)=NaN;
-        else
-            OH_t(trial)=OHT;
-        end
-        
+
+        % calculate intended movement direction
+        tgtDir = mod(atan2d(endy-starty,endx-startx),360);
+
+        trialsTable=table(roundTime(CO_t,.001),roundTime(CH_t,.001),...
+                          roundTime(GC_t,.001),roundTime(OH_t,.001),...
+                          round(tgtDir),round(forceDir),forceMag,...
+                          'VariableNames',{'startTargOnTime','startTargHoldTime',...
+                                           'goCueTime','endTargHoldTime',...
+                                           'tgtDir','forceDir','forceMag'});
+        trialsTable.Properties.VariableUnits={'s','s','s','s','Deg','Deg','N'};
+        trialsTable.Properties.VariableDescriptions={'start target onset time',...
+                                                     'start target hold time',...
+                                                     'go cue time',...
+                                                     'end target hold time',...
+                                                     'end target direction',...
+                                                     'intended force direction',...
+                                                     'intended force magnitude'};
     end
-
-    % calculate intended movement direction
-    tgtDir = mod(atan2d(endy-starty,endx-startx),360);
-
-    trialsTable=table(roundTime(CO_t,.001),roundTime(CH_t,.001),...
-                      roundTime(GC_t,.001),roundTime(OH_t,.001),...
-                      round(tgtDir),round(forceDir),...
-                      'VariableNames',{'startTargOnTime','startTargHoldTime',...
-                                       'goCueTime','endTargHoldTime',...
-                                       'tgtDir','forceDir'});
-    trialsTable.Properties.VariableUnits={'s','s','s','s','Deg','Deg'};
-    trialsTable.Properties.VariableDescriptions={'start target onset time',...
-                                                 'start target hold time',...
-                                                 'go cue time',...
-                                                 'end target hold time',...
-                                                 'end target direction',...
-                                                 'intended force direction'};
-                                           
     
     trialsTable=[times,trialsTable];
     trialsTable.Properties.Description='Trial table for the Out-out task';
