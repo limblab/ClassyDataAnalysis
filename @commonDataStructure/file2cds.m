@@ -282,7 +282,7 @@ function file2cds(cds,filePath,varargin)
 %         varargin=[varargin,{'dbEmpty'}];
         cds.nev2NEVNSx(filePath,opts.recoverPreSync,opts.block);
         cds.NEVNSx2cds(opts);
-        cds.clearTempFields()
+        %cds.clearTempFields()
         %try to get open sim data:
 %         cds.loadOpenSimData(folderPath);
         if writeSummary
