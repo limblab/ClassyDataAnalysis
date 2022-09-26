@@ -288,7 +288,7 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
                 error('meta:BadlabnumFormat','the labnum field must be a numeric value from the following set: [-1 1 2 3 6]')
             elseif ~isfield(meta,'task') || ~ischar(meta.task)  
                 error('meta:BadtaskFormat','the task field must contain a string')
-            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','COactpas','BD','DCO','multi_gadget','UNT','RP','none','Unknown','SABES','UCK','OOR','WF','TRT','RT','RR','AFC', 'FR', 'WS','WI','WM','WB','RToff'}),1))
+            elseif isempty(find(strcmp(meta.task,{'RW','CO','CObump','COactpas','BD','DCO','multi_gadget','ball_drop','UNT','RP','none','Unknown','SABES','UCK','OOR','WF','TRT','RT','RR','AFC', 'FR', 'WS','WI','WM','WB','RToff'}),1))
                 %standard loading will catch 'Unknown' 
                 error('meta:UnrecognizedTask',['The task string: ',meta.task,' is not recognized. Standard analysis functions may fail to operate correctly using this task string. Here are the currently accepted task names: RW, CO, CObump, COactpas, WM, WI, WB, WS, WF, multi_gadget, ball_drop, BD, UNT, RP, DCO, SABES, UCK, OOR, TRT, RT, RR, AFC'])
             elseif ~isfield(meta,'monkey') || ~ischar(meta.monkey)
@@ -364,18 +364,18 @@ classdef commonDataStructure < matlab.mixin.SetGet & operationLogger
              for i=1:numel(cds.listenerList)
                  delete(cds.listenerList{i})
              end
-             %check to see whether we still have any listeners and issue a
-             %warning
-             if ispc
-                 eventList=findAllListeners(cds);
-                 if ~isempty(eventList)
-                     warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
-                     disp('the following events still have listeners')
-                     disp(eventList)
-                 end
-             else
-                 warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this cds instance may hide in background memory until any listeners not in the listener list are cleared')
-             end
+%              %check to see whether we still have any listeners and issue a
+%              %warning
+%              if ispc
+%                  eventList=findAllListeners(cds);
+%                  if ~isempty(eventList)
+%                      warning('delete:failedToRemoveAllListeners','there are still listeners to the cds. Matlab will keep the cds in memory until all listeners are cleared.')
+%                      disp('the following events still have listeners')
+%                      disp(eventList)
+%                  end
+%              else
+%                  warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this cds instance may hide in background memory until any listeners not in the listener list are cleared')
+%              end
         end
     end
     methods (Static = false)

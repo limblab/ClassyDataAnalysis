@@ -351,18 +351,18 @@ classdef experiment < matlab.mixin.SetGet & operationLogger %matlab.mixin.SetGet
              for i=1:numel(ex.listenerList)
                  delete(ex.listenerList{i})
              end
-             %check to see whether we still have any listeners and issue a
-             %warning
-             if ispc
-                 eventList=findAllListeners(ex);
-                 if ~isempty(eventList)
-                     warning('delete:failedToRemoveAllListeners','there are still listeners to the experiment. Matlab will keep the experiment in memory until all listeners are cleared.')
-                     disp('the following events still have listeners')
-                     disp(eventList)
-                 end
-             else
-                 warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this experiment instance may hide in background memory until any listeners not in the listener list are cleared')
-             end
+%              %check to see whether we still have any listeners and issue a
+%              %warning
+%              if ispc
+%                  eventList=findAllListeners(ex);
+%                  if ~isempty(eventList)
+%                      warning('delete:failedToRemoveAllListeners','there are still listeners to the experiment. Matlab will keep the experiment in memory until all listeners are cleared.')
+%                      disp('the following events still have listeners')
+%                      disp(eventList)
+%                  end
+%              else
+%                  warning('delete:cantCheckListenersInUnix','the utilities to keep track of listeners only exist in windows, so this experiment instance may hide in background memory until any listeners not in the listener list are cleared')
+%              end
         end
     end
     methods (Static=true)

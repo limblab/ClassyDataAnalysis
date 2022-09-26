@@ -2,25 +2,25 @@ classdef binnedData < matlab.mixin.SetGet
     properties(Access = public)
         weinerConfig
         dimReductionConfig
-        glmConfig
+        %glmConfig
         %gpfaConfig
         %faConfig
         %pcaConfig
         %ppcaConfig
-        kalmanConfig
+        %kalmanConfig
         pdConfig
     end
     properties (SetAccess = protected,GetAccess=public,SetObservable=true)
         data
         meta
         weinerData
-        glmData
+        %glmData
         pdData
         gpfaData
         faData
         pcaData
         ppcaData
-        kalmanData
+        %kalmanData
     end
     events
         ranGLMFit
@@ -48,7 +48,7 @@ classdef binnedData < matlab.mixin.SetGet
             wc.windows=[];
             set(binned,'weinerConfig',wc)
             
-             set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
+%              set(binned,'glmConfig',struct('labels',{},'posPD',0,'velPD',0,'forcePD',0,'numRep',100,'noiseModel','poisson'));
 %             gpfac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
 %             set(binned,'gpfaConfig',gpfac); 
 %             pcac=struct('units',[],'windows',[],'dimension', 8,'segLength', inf,'trialNums', -1,'trials', []);
@@ -84,12 +84,12 @@ classdef binnedData < matlab.mixin.SetGet
             set(binned,'weinerData',[]);
             PDs=[];
             set(binned,'pdData',PDs);
-            set(binned,'glmData',[]);
+%             set(binned,'glmData',[]);
             set(binned,'gpfaData',[]);
             set(binned,'faData',[]);
             set(binned,'pcaData',[]);
             set(binned,'ppcaData',[]);
-            set(binned,'kalmanData',[]);
+%             set(binned,'kalmanData',[]);
         end
     end
     methods
@@ -158,13 +158,13 @@ classdef binnedData < matlab.mixin.SetGet
             end
             binned.dimReductionConfig=drc;
         end
-        function set.glmConfig(binned,glmc)
-            if ~isempty(glmc) && ~isstruct(glmc)
-                error('glmConfig:notAStruct','glmConfig must be a struct')
-            else
-                binned.glmConfig=glmc;
-            end
-        end
+%         function set.glmConfig(binned,glmc)
+%             if ~isempty(glmc) && ~isstruct(glmc)
+%                 error('glmConfig:notAStruct','glmConfig must be a struct')
+%             else
+%                 binned.glmConfig=glmc;
+%             end
+%         end
 %         function set.gpfaConfig(binned,gpfac)
 %             if ~isstruct(gpfac)
 %                 error('gpfaConfig:notAStruct','gpfaConfig must be a struct')
@@ -172,14 +172,14 @@ classdef binnedData < matlab.mixin.SetGet
 %                 binned.gpfaConfig=gpfac;
 %             end
 %         end
-        function set.kalmanConfig(binned,kfc)
-            if ~isempty(kfc)
-                if ~isstruct(kfc)
-                    error('kalmanConfig:notAStruct','kalmanConfig must be a struct')
-                end
-            end
-            binned.kalmanConfig=kfc;
-        end
+%         function set.kalmanConfig(binned,kfc)
+%             if ~isempty(kfc)
+%                 if ~isstruct(kfc)
+%                     error('kalmanConfig:notAStruct','kalmanConfig must be a struct')
+%                 end
+%             end
+%             binned.kalmanConfig=kfc;
+%         end
 %         function set.faConfig(binned,fac)
 %             if ~isstruct(fac)
 %                 error('faConfig:notAStruct','faConfig must be a struct')
@@ -256,13 +256,13 @@ classdef binnedData < matlab.mixin.SetGet
             end
             binned.pdData=pdData;
         end
-        function set.glmData(binned,glmData)
-            warning('glmData:SetNotImplemented','set method for the glmData field of the binnedData class is not implemented')
-            if ~isempty(glmData) && ~istable(glmData)
-                error('glmData:notTable','glmData must be a table')
-            end
-            binned.glmData=glmData;
-        end
+%         function set.glmData(binned,glmData)
+%             warning('glmData:SetNotImplemented','set method for the glmData field of the binnedData class is not implemented')
+%             if ~isempty(glmData) && ~istable(glmData)
+%                 error('glmData:notTable','glmData must be a table')
+%             end
+%             binned.glmData=glmData;
+%         end
         function set.gpfaData(binned,gpfaData)
             binned.gpfaData=gpfaData;
         end
@@ -275,10 +275,10 @@ classdef binnedData < matlab.mixin.SetGet
         function set.faData(binned,faData)
             binned.faData = faData;
         end
-        function set.kalmanData(binned,kfData)
-            warning('kalmanData:SetNotImplemented','set method for the kalmanData field of the binnedData class is not implemented')
-            binned.kalmanData=[];
-        end
+%         function set.kalmanData(binned,kfData)
+%             warning('kalmanData:SetNotImplemented','set method for the kalmanData field of the binnedData class is not implemented')
+%             binned.kalmanData=[];
+%         end
     end
     methods (Static = false)
         updateBins(binned,bins)
