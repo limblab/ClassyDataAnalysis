@@ -47,6 +47,7 @@ function metaFromNEVNSx(cds,opts)
     meta.hasTriggers=~isempty(cds.triggers);
     meta.hasBumps=~isempty(find(strcmp('bumpTime',cds.trials.Properties.VariableNames),1));
     meta.hasChaoticLoad=logical(opts.hasChaoticLoad);
+    meta.hasCursor=~isempty(cds.cursor); % is there any cursor data?
     
     if meta.hasUnits
         meta.array=strjoin(unique({cds.units.array}),', ');

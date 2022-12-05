@@ -21,6 +21,9 @@ function setDataWindow(cds)
     if meta.hasForce
         meta.dataWindow=[max(meta.dataWindow(1),cds.force.t(1)),min(meta.dataWindow(2),cds.force.t(end))];
     end
+    if meta.hasCursor
+        meta.dataWindow=[max(meta.dataWindow(1),cds.cursor.t(1)),min(meta.dataWindow(2),cds.cursor.t(end))];
+    end
     if meta.hasAnalog
         for j=1:length(cds.analog)
             meta.dataWindow=[max(meta.dataWindow(1),cds.analog{j}.t(1)),min(meta.dataWindow(2),cds.analog{j}.t(end))];
