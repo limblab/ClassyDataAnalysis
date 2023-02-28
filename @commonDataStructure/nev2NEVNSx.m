@@ -39,8 +39,14 @@ function nev2NEVNSx(cds,fname,varargin)
     
     [folderPath,fileName,~]=fileparts(fname);
     
-    %get the path for files matching the filename
+    % Get the path for files matching the filename
     NEVpath = dir([folderPath filesep fileName '*.nev']);
+    % Remove the sorting suffix if present
+    if strcmp(fileName(end-1:end), '-s')
+        fileName = fileName(1:end-2);
+    else
+        NEVpath = dir([folderPath filesep fileName '.nev']);
+    end
     NSxList{1} = dir([folderPath filesep fileName '.ns1']);
     NSxList{2} = dir([folderPath filesep fileName '.ns2']);
     NSxList{3} = dir([folderPath filesep fileName '.ns3']);

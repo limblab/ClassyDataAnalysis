@@ -150,7 +150,9 @@ function file2cds(cds,filePath,varargin)
                 elseif ischar(optStr) && length(optStr)>7 && strcmp(optStr(1:7),'mapFile')
                     opts.mapFile=optStr(8:end);
                 elseif isnumeric(varargin{i})
-                    opts.labNum=varargin{i};    %Allow entering of the lab number               
+                    opts.labNum=varargin{i};    % Allow entering of the lab number
+                elseif ischar(optStr) && length(optStr) > 6 && strcmp(optStr(1:6),'sorted')
+                    sorted = str2double(optStr(7:end));
                 else 
                     error('Unrecognized option: %s', optStr);
                 end
@@ -214,17 +216,20 @@ function file2cds(cds,filePath,varargin)
                 end
             end
         end
-        %check whether the file has an extension and warn the user if it
-        %doesn't:
-        [folderPath,~,ext]=fileparts(filePath);
+        % Check whether the file has an extension and warn the user if not:
+        [folderPath, ~, ext] = fileparts(filePath);
         if isempty(ext)
             warning('file2cds:noFileExtension','the file name was given with no extension.')
-            testExt='.nev';
-            tmp=dir([filePath,testExt]);
+            if sorted == 0
+                testExt ='.nev';
+            elseif sorted == 1
+                testExt = '-s.nev';
+            end
+            tmp = dir([filePath,testExt]);
             if ~isempty(tmp)
                 disp('found matching *.nev file. Continuing assuming user wants to load:')
-                disp([filePath,testExt])
-                filePath=[filePath,testExt];
+                disp([filePath, testExt])
+                filePath = [filePath, testExt];
             else
                 error('file2cds:noMatchingFile',['failed to find a file matching the input path:\n',filePath,'. Please check the path string'])
             end
