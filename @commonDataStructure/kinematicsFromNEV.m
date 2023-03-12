@@ -14,6 +14,8 @@ function kinematicsFromNEV(cds,opts)
     end
     clear idx;
 
+    
+
     %get encoder data from serial digital data:
     if datenum(opts.dateTime) - datenum('14-Jan-2011 14:00:00') < 0 
         % The input cable for this time was bugged: Bits 0 and 8

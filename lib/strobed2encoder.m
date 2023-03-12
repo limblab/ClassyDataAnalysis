@@ -83,11 +83,11 @@ elseif encoding_scheme == 1
     % causes this code to fail. As a temp fix we're going to delete all of
     % those sets of zeros if the mode of the inter-databurst time is less
     % than .11
-    if mode(diff(strobed_events(:,1))) < 1.1E4
-        strobed_events(strobed_events(:,2) == 0,:) = [];
-%         cds.addProblem('Removed excess blank databursts');
-    end
-    
+%     if mode(diff(strobed_events(:,1))) < 1.1E4
+%         strobed_events(strobed_events(:,2) == 0,:) = [];
+% %         cds.addProblem('Removed excess blank databursts');
+%     end
+%     
     
     
     % Get rid of repeated numbers
