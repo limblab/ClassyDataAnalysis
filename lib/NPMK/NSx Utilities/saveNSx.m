@@ -2,65 +2,74 @@ function saveNSx(NSx,varargin)
 
 %% 
 % Save an .NSx file from an NSx structure (gained by using openNSx)
-% Works with file spec 2.3
+% Works with file spec 2.3 and 3.0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Use: saveNSx(NSx,optionalinputarguments)
 %   NSx:        The NSx data structure.
 %   All arguments below are optional:
 %   Filename:   A complete filepath for the output file.
 %               Default: CurrentFilename-Modified.NSx
+%   Filespec:   Save the file using the filespec specified e.g. 2.3 or 3.0
+%               Default: same as the filespec loaded
 
-%saveNSx version = '1.0.0.0';
+%saveNSx version = '1.0.0.1';
 
+% Version History
+%
+% 1.0.0.1:
+%   - Added ability to save to a specific filespec
+%
 
 %% 
-reportFlag=true;
-overwriteFlag=false;
-FilePath=[];
-if nargin > 1
-    for idx = 1:numel(varargin)
-        if strcmpi(varargin{idx}, 'noreport')
-            reportFlag = false;
-        elseif strcmpi(varargin{idx}, 'overwrite')
-            overwriteFlag=true;
-        elseif length(varargin{idx})>3 && ...
-                (strcmpi(varargin{idx}(3),'\') || ...
-                 strcmpi(varargin{idx}(1),'/') || ...
-                 strcmpi(varargin{idx}(2),'/') || ...
-                 strcmpi(varargin{idx}(1:2), '\\')) 
-            FilePath = varargin{1};
-        end
-    end
-end
 % Verify FilePath and establish overwrite paramaters
-if isempty(FilePath)
-    FilePath = [fullfile(NSx.MetaTags.FilePath,NSx.MetaTags.Filename) NSx.MetaTags.FileExt];
-    [File,Path] = uiputfile;
-    FilePath = [fullfile(Path,NSx.MetaTags.Filename(1:end-4)),'-Modified',  NSx.MetaTags.FileExt];
-end
-if reportFlag
-    Accept = input('This script will save a new file with the proper .NSx extensions, but you should retain the previous file. Do you acknowledge the risk inherent in saving modified versions of data files? (Y/N)','s');
-    if strcmpi(Accept,'y')
-    else
-        disp('Ending Script...');
-        return
+FilePath = [fullfile(NSx.MetaTags.FilePath,NSx.MetaTags.Filename) '-modified' NSx.MetaTags.FileExt];
+if length(varargin) >= 1
+    if not(isempty(varargin{1}))
+        FilePath = varargin{1};
     end
+end
+
+% save to a specific filespec
+if length(varargin) >= 2
+    if (varargin{2} == 2.3)
+        NSx.MetaTags.FileTypeID(1:8) = 'NEURALCD';
+        NSx.MetaTags.FileSpec(1:3) = '2.3';
+    end
+    if (varargin{2} == 3.0)
+        NSx.MetaTags.FileTypeID(1:8) = 'BRSMPGRP';
+        NSx.MetaTags.FileSpec(1:3) = '3.0';
+    end
+end
+
+
+disp('This script will save a new file with the proper .NSx extensions');
+disp('but you should retain the previous file. Do you acknowledge the');
+Accept = input('risk inherent in saving modified versions of data files? (Y/N)','s');
+if strcmpi(Accept,'y')
+else
+    disp('Ending Script...');
+    return
 end
 
 %%
 % Write the basic header into the file
 %FullFile
-Debug = 1;
-if exist(FilePath,'file') && ~overwriteFlag
-    disp('File already exists!');
-    OverwritePrompt = input('Would you like to overwrite? (Y/N)','s');
-    if strcmpi(OverwritePrompt,'y')
-        delete(FilePath);
-    else
-        return
-    end
+Debug = 0;
+
+if exist(FilePath)
+        if exist(FilePath)
+        disp('File already exists!');
+        OverwritePrompt = input('Would you like to overwrite? (Y/N)','s');
+        if strcmpi(OverwritePrompt,'y')
+            Overwrite = 1;
+            delete(FilePath);
+        else
+            return
+        end
+        end
 end
 
+clear Overwrite
 clear OverwritePrompt
 clear varargin
 
@@ -86,67 +95,81 @@ elseif Paused == 0
     [NumberOfChannels,LengthOfData] = size(NSx.Data);
 end
 
-
+%Identify filespec
+fspec = NSx.MetaTags.FileTypeID(1:8);
+if strcmp(fspec,'BRSMPGRP')
+    tspres = 'uint64';
+else
+    tspres = 'uint32';
+end
 
 %File Type ID
-Before = 0;
-fwrite(FileID,NSx.MetaTags.FileTypeID(1:8));
+    Before = 0;
+    fwrite(FileID,fspec);
     After = ftell(FileID);
-    if not(After-Before == 8) && Debug == 1
+    if After-Before ~= 8 && Debug == 1
         disp('error FildID')
     end
 %File spec
     Before = ftell(FileID);
-fwrite(FileID, [str2double(NSx.MetaTags.FileSpec(1)) str2double(NSx.MetaTags.FileSpec(3))], 'uint8');
+    fwrite(FileID, [str2double(NSx.MetaTags.FileSpec(1)) str2double(NSx.MetaTags.FileSpec(3))], 'uint8');
     After = ftell(FileID);
-    if not(After-Before == 2) && Debug == 1
+    if After-Before ~= 2 && Debug == 1
         disp('error File Spec')
     end
 %Bytes in Headers
     Before = ftell(FileID);
-fwrite(FileID, BytesInBasicHeader+NumberOfChannels*BytesInExtendedHeader,'uint32');
+    fwrite(FileID, BytesInBasicHeader+NumberOfChannels*BytesInExtendedHeader,'uint32');
     After = ftell(FileID);
-    if not(After-Before == 4) && Debug == 1
+    if After-Before ~= 4 && Debug == 1
         disp('error BytesInHeaders')
     end
 %Label
     Before = ftell(FileID);
-fwrite(FileID, NSx.MetaTags.SamplingLabel);
+    fwrite(FileID, NSx.MetaTags.SamplingLabel);
     After = ftell(FileID);
     if After-Before ~= 16 && Debug == 1
         disp('error label')
     end
 %Comment
     Before = ftell(FileID);
-fwrite(FileID, NSx.MetaTags.Comment);
+    if ~isempty(NSx.MetaTags.Comment)
+        fwrite(FileID, NSx.MetaTags.Comment);
+    else
+        fwrite(FileID, repmat(' ', 1, 256));
+    end
     After = ftell(FileID);
     if After-Before ~= 256 && Debug == 1
         disp('error comment')
     end
 %Period
     Before = ftell(FileID);
-fwrite(FileID, (1/NSx.MetaTags.SamplingFreq)*30000, 'uint32');
+    fwrite(FileID, (1/NSx.MetaTags.SamplingFreq)*30000, 'uint32');
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error period')
     end
 %Time Resolution of time stamps
     Before = ftell(FileID);
-fwrite(FileID, NSx.MetaTags.TimeRes,'uint32');
+    fwrite(FileID, NSx.MetaTags.TimeRes,'uint32');
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error time resolution')
     end
 %Time Origin
     Before = ftell(FileID);
-fwrite(FileID, NSx.MetaTags.DateTimeRaw,'uint16');
+    if ~isempty(NSx.MetaTags.DateTimeRaw)
+        fwrite(FileID, NSx.MetaTags.DateTimeRaw,'uint16');
+    else
+        fwrite(FileID, [1900 1 1 0 0 0 0 0],'uint16');
+    end
     After = ftell(FileID);
     if After-Before ~= 16 && Debug == 1
         disp('error Time Origin')
     end
 %Channel Count
     Before = ftell(FileID);
-fwrite(FileID, NumberOfChannels,'uint32');
+    fwrite(FileID, NumberOfChannels,'uint32');
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error Channel Count')
@@ -157,115 +180,184 @@ fwrite(FileID, NumberOfChannels,'uint32');
 %Extended header stuff
 %Number of these equal to number of channels
 for i = 1:NumberOfChannels
-    
-%Type
+    % Type
     Before = ftell(FileID);
-fwrite(FileID, 'CC');
+    fwrite(FileID, 'CC');
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error Type')
     end
-%ElectrodeID
+    % ElectrodeID
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).ElectrodeID,'uint16');
+    try 
+        fwrite(FileID, NSx.ElectrodesInfo(i).ElectrodeID,'uint16');
+    catch
+        fwrite(FileID, i,'uint16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error ElectrodeID')
     end
-%Electrode label
+    % Electrode label
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).Label);
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).Label);
+    catch
+        templabel = ['chan' num2str(i) '                '];
+        templabel(17:end) = [];
+        fwrite(FileID, templabel);
+    end
     After = ftell(FileID);
     if After-Before ~= 16 && Debug == 1
         disp('error Electrode Label')
     end
-%Physical connector
+    % Physical connector
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).ConnectorBank);
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).ConnectorBank, 'uint8');
+    catch
+        if i > 0 && i <= 32
+            fwrite(FileID, 1, 'uint8');
+        elseif i > 32 && i <= 64
+            fwrite(FileID, 2, 'uint8');
+        elseif i > 64 && i <= 96
+            fwrite(FileID, 3, 'uint8');
+        elseif i > 96 && i <= 128
+            fwrite(FileID, 4, 'uint8');
+        end
+    end
     After = ftell(FileID);
     if After-Before ~= 1 && Debug == 1
         disp('error Physical Connector')
     end
 %Physical pin
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).ConnectorPin);
+    try 
+        fwrite(FileID, NSx.ElectrodesInfo(i).ConnectorPin, 'uint8');
+    catch
+        fwrite(FileID, int2str((i-floor(i/32)*32)), 'uint8');
+    end
     After = ftell(FileID);
     if After-Before ~= 1 && Debug == 1
         disp('error Physical Pin')
     end
 %Min Digital Value
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).MinDigiValue,'int16');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).MinDigiValue,'int16');
+    catch
+        fwrite(FileID, -32764,'int16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error min Digital Value')
     end
 %Max Digital Value
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).MaxDigiValue,'int16');
+    try 
+        fwrite(FileID, NSx.ElectrodesInfo(i).MaxDigiValue,'int16');
+    catch
+        fwrite(FileID, 32764,'int16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error Max Digital value')
     end
 %Min Analog Value
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).MinAnalogValue,'int16');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).MinAnalogValue,'int16');
+    catch
+        fwrite(FileID, -8191,'int16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error Min Analog Value')
     end
 %Max Analog Value
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).MaxAnalogValue,'int16');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).MaxAnalogValue,'int16');
+    catch
+        fwrite(FileID, 8191,'int16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error Max Aanalog value')
     end
 %Units
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).AnalogUnits,'char');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).AnalogUnits,'char');
+    catch
+        fwrite(FileID, 'uv              ');
+    end
     After = ftell(FileID);
     if After-Before ~= 16 && Debug == 1
         disp('error Units')
     end
 %High Freq Corner (High frequency cutoff in mHz)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).HighFreqCorner,'uint32');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).HighFreqCorner,'uint32');
+    catch
+        fwrite(FileID, 0,'uint32');
+    end
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error High Corner')
     end
 %High Freq Order (Order of the filter used)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).HighFreqOrder,'uint32');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).HighFreqOrder,'uint32');
+    catch
+        fwrite(FileID, 0,'uint32');
+    end
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error high Order')
     end
 %High Filter Type (0 = none, 1 = butterworth)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).HighFilterType,'uint16');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).HighFilterType,'uint16');
+    catch
+        fwrite(FileID, 0,'uint16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error High Type')
     end
 %Low Freq Corner (Low frequency cutoff in mHz)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).LowFreqCorner,'uint32');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).LowFreqCorner,'uint32');
+    catch
+        fwrite(FileID, 0,'uint32');
+    end
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error Low Corner')
     end
 %Low Freq Order (0 = none)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).LowFreqOrder,'uint32');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).LowFreqOrder,'uint32');
+    catch
+        fwrite(FileID, 0,'uint32');
+    end
     After = ftell(FileID);
     if After-Before ~= 4 && Debug == 1
         disp('error Low Order')
     end
 %Low Filter Type (0 = none, 1 = butterworth)
     Before = ftell(FileID);
-fwrite(FileID, NSx.ElectrodesInfo(i).LowFilterType,'uint16');
+    try
+        fwrite(FileID, NSx.ElectrodesInfo(i).LowFilterType,'uint16');
+    catch
+        fwrite(FileID, 0,'uint16');
+    end
     After = ftell(FileID);
     if After-Before ~= 2 && Debug == 1
         disp('error Low Type')
@@ -279,11 +371,10 @@ if Paused == 0
     %Header
     fwrite(FileID, NSx.RawData.DataHeader(1));
     %Timestamp
-    fwrite(FileID, NSx.MetaTags.Timestamp,'uint32');
+    fwrite(FileID, NSx.MetaTags.Timestamp,tspres);
     %Number of data points
     fwrite(FileID, LengthOfData, 'uint32');
 
-    TotalDataPoints = LengthOfData * NumberOfChannels;
     %for i = 1:TotalDataPoints
     %Data points
     %fwrite(FileID, NSx.Data(i),'int16');
@@ -292,13 +383,12 @@ if Paused == 0
 elseif Paused == 1
     for SegmentNumber = 1:NumberOfSegments
         %Header
-        fwrite(FileID, NSx.RawData.DataHeader(1+9*(SegmentNumber-1)));
+        fwrite(FileID, 1, 'uint8');
         %Timestamp
-        fwrite(FileID, NSx.MetaTags.Timestamp(SegmentNumber),'uint32');
+        fwrite(FileID, NSx.MetaTags.Timestamp(SegmentNumber),tspres);
         %Number of data points
         fwrite(FileID, LengthOfData{SegmentNumber}, 'uint32');
 
-        TotalDataPoints = LengthOfData{SegmentNumber} * NumberOfChannels;
         %for i = 1:TotalDataPoints
         %Data points
         %fwrite(FileID, NSx.Data(i),'int16');

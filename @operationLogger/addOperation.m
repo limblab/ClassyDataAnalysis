@@ -35,10 +35,10 @@ function addOperation(obj,operation,opPath,varargin)
         [username,hostname]=obj.getUserHost();
     
     %get git log information for the specified operation file
-        [gitLog, fileLog]=obj.getGitLog(opPath);
+        %[gitLog, fileLog]=obj.getGitLog(opPath);
     %append the current data to the cds.meta.processedWith field
-        [~,fname,~]=fileparts(opPath);
-        tmp=obj.operationLog;
-        tmp=[tmp;{operation,fname,opPath,date,hostname,username,gitLog,fileLog,opData}];
-        set(obj,'operationLog',tmp)
+        % [~,fname,~]=fileparts(opPath);
+        % tmp=obj.operationLog;
+        % tmp=[tmp;{operation,fname,opPath,date,hostname,username,gitLog,fileLog,opData}];
+        % set(obj,'operationLog',tmp)
 end

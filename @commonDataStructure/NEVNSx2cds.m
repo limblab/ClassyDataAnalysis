@@ -42,7 +42,7 @@ function NEVNSx2cds(cds,opts)
     %% the kinematics
     
         %convert event info into encoder steps:
-        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage','multi_gadget','ball_drop'}))
+        if ~isempty(cds.words) && ~any(strcmp(opts.task,{'RT3D','none','cage','multi_gadget','ball_drop', 'BD'}))
             cds.kinematicsFromNEV(opts)
         end
        

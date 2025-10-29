@@ -165,8 +165,7 @@ function nev2NEVNSx(cds,fname,varargin)
                 cds.NEV.Data.SerialDigitalIO.TimeStamp(digitalMask)=[];
                 cds.NEV.Data.SerialDigitalIO.TimeStampSec(digitalMask)=[];
                 cds.NEV.Data.SerialDigitalIO.InsertionReason(digitalMask)=[];
-                cds.NEV.Data.SerialDigitalIO.UnparsedData(digitalMask)=[];
-                
+                cds.NEV.Data.SerialDigitalIO.UnparsedData(digitalMask)=[];                
             end
             cds.addProblem('detected reset events in the NEV where the cerebus clock reset to zero. ',pData)
         end
@@ -304,5 +303,6 @@ function nev2NEVNSx(cds,fname,varargin)
     end
     
     set(cds,'NSxInfo',NSxInfo)
-    
+   
+    cds.NEV.MetaTags.DataDurationSec = NSx.MetaTags.DataDurationSec; %xm 20251029
 end
